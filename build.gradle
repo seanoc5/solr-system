@@ -1,0 +1,66 @@
+plugins {
+    id 'groovy'
+    id 'java'
+    id 'idea'
+    id 'application'
+}
+
+group 'com.oconeco.solrsystem'
+version '0.3.1'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.codehaus.groovy:groovy-all:3.0.10'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+
+    // implementation, runtimeOnly, testImplementation, and testRuntimeOnly
+   implementation group: 'org.spockframework', name: 'spock-core', version: '2.0-groovy-3.0'
+
+    // https://mvnrepository.com/artifact/org.apache.solr/solr-solrj
+    implementation group: 'org.apache.solr', name: 'solr-solrj', version: '8.11.0'
+
+    implementation 'log4j:log4j:1.2.17'
+
+
+    // https://stackoverflow.com/questions/48843481/jaxp-parse-error-on-valid-xml/48843482#48843482
+//    implementation "xerces:xercesImpl:2.11.0"
+
+//    implementation(platform("org.apache.tika:tika-bom:2.3.0"))
+    // version not required since bom (platform in Gradle terms)
+//    implementation("org.apache.tika:tika-parsers-standard-package")
+
+//    implementation "org.apache.tika:tika-core:1.28.1"
+//    implementation ('org.apache.tika:tika-parsers:1.28.1'){
+//        exclude group: "xml-apis", module: "xml-apis"
+//    }
+
+    implementation "org.apache.tika:tika-core:2.3.0"
+    implementation("org.apache.tika:tika-parsers-standard-package:2.3.0"){
+//        exclude group: 'xerces', module: 'jsr305'
+        exclude group: "xml-apis", module: "xml-apis"
+    }
+
+    // https://mvnrepository.com/artifact/org.apache.tika/tika-parsers-standard-package
+//    implementation group: 'org.apache.tika', name: 'tika-parsers-standard-package', version: '2.3.0'
+
+    // https://mvnrepository.com/artifact/org.slf4j/slf4j-log4j12
+//    testImplementation group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.36', ext: 'pom'
+//    implementation "org.slf4j:slf4j-simple:1.7.36"
+//    implementation "org.slf4j:slf4j-log4j12:1.7.36"
+
+    // https://mvnrepository.com/artifact/org.apache.poi/ooxml-schemas
+//    implementation group: 'org.apache.poi', name: 'ooxml-schemas', version: '1.4'
+
+    // https://mvnrepository.com/artifact/org.apache.poi/poi-ooxml
+//    implementation group: 'org.apache.poi', name: 'poi-ooxml', version: '5.2.2'
+
+
+}
+
+test {
+    useJUnitPlatform()
+}

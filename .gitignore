@@ -1,0 +1,9 @@
+/.gradle/
+/.idea/
+/build/
+/data/
+/logs/
+/out/
+*.log
+*.class
+/logs/
