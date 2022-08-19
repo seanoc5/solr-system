@@ -21,12 +21,43 @@ import org.apache.tika.sax.BodyContentHandler
  * Looking at helper class to save solr_system (file crawl to start with content to solr
  */
 class SolrSaver {
+    public static final Logger log = Logger.getLogger(this.class.name)
+
+    // todo -- move this to (BASE) Object hierarchy, leave solrsaver to do the actual saving, not building?
     public static final String FOLDER = 'Folder'
     public static final String FILE = 'File'
+
     public static final String TRACK = 'track'
     public static final String ANALYZE = 'analyze'
-    public static final Logger log = Logger.getLogger(this.class.name)
-    final Integer SOLR_BATCH_SIZE = 1000
+
+    public static final String FLD_ID = 'id'
+    public static final String FLD_DEPTH = 'depth_i'
+    public static final String FLD_TYPE = 'type_s'
+    public static final String FLD_PATH_S = 'path_s'
+    public static final String FLD_PATH_T = 'path_t'
+    public static final String FLD_NAME_S = 'name_s'
+    public static final String FLD_NAME_T = 'name_t'
+    public static final String FLD_CONTENT_BODY = 'content_txt_en'
+    public static final String FLD_PARENT_PATH = 'parent_path_s'
+    public static final String FLD_LASTMODIFIED = 'lastModified'
+    public static final String FLD_FILENAME_SS = "filename_ss"
+    public static final String FLD_DIRNAME_SS = "dirname_ss"
+    public static final String FLD_HIDDENNAME_SS = "hiddenname_ss"
+    public static final String FLD_EXTENSION_SS = "extension_ss"
+    public static final String FLD_SUBDIR_COUNT = 'subdir_count_i'
+    public static final String FLD_FILE_COUNT = "fileCount_i"
+    public static final String FLD_DIR_COUNT = "dirCount_i"
+    public static final String FLD_DATA_SOURCE = "data_source_s"
+    public static final String FLD_TAG_SS = "tag_ss"
+    public static final String FLD_ASSIGNED_TYPES = "assignedTypes_ss"
+    public static final String FLD_SIZE = "size_i"
+    public static final String FLD_SAME_NAME_COUNT = "sameNameCount_i"
+    public static String FLD_IGNORED_FILES_COUNT = 'ignoredFilesCount_i'
+    public static String FLD_IGNORED_FILES = 'ignoredFiles'
+    public static String FLD_IGNORED_FOLDERS_COUNT = 'ignoredFoldersCount_i'
+    public static String FLD_IGNORED_FOLDERS = 'ignoredFolders'
+
+    final Integer SOLR_BATCH_SIZE = 5000
     final Integer MIN_FILE_SIZE = 10
     Long MAX_CONTENT_SIZE = 1024 * 1000 * 10 // (10 MB of text?)
     HttpSolrClient solrClient
@@ -35,28 +66,52 @@ class SolrSaver {
     Parser parser = null
     BodyContentHandler handler = null
     TikaConfig tikaConfig
+    String dataSourceName = 'undefined'
 
     /**
      * Create helper with a (non-thread safe???) solrClient that is configured for the solr server AND collection
      * todo -- revisit for better approach...
      * @param baseSolrUrl
      */
-    SolrSaver(String baseSolrUrl) {
+    SolrSaver(String baseSolrUrl, String dataSourceName) {
+        log.info "Constructor baseSolrUrl:$baseSolrUrl, CrawlName:$dataSourceName, WITHOUT tika"
         solrClient = new HttpSolrClient.Builder(baseSolrUrl).build()
-        tikaConfig = TikaConfig.getDefaultConfig()
+        this.dataSourceName = dataSourceName
+    }
+
+    SolrSaver(String baseSolrUrl, String dataSourceName, TikaConfig tikaConfig) {
+        log.info "Constructor baseSolrUrl:$baseSolrUrl, CrawlName:$dataSourceName, with TIKA config: $tikaConfig"
+        solrClient = new HttpSolrClient.Builder(baseSolrUrl).build()
+        this.tikaConfig = tikaConfig
         detector = tikaConfig.getDetector()
         parser = new AutoDetectParser()
         handler = new BodyContentHandler()
+        this.dataSourceName = dataSourceName
     }
 
 
     /**
      * Clear the collection of current data -- BEWARE
-     *
+     * todo -- add partitioning so we clear the same 'datasource' as we are about to crawl,
+     * i.e. get a job name/id based on the source paths
      */
-    UpdateResponse clearCollection() {
-        log.warn "Clearing collection: ${this.solrClient.baseURL}"
+
+    /**
+     * Clear the solr collection, but using a path of folders (and children) to clear
+     * @param pathToClear
+     * @return solr update response
+     *
+     * todo -- add logic to handle "complex" clear paths -- sym links etc....
+     */
+    UpdateResponse clearCollection(def pathToClear) {
+        log.warn "Clearing collection: ${this.solrClient.baseURL} -- pathToClear: $pathToClear"
         UpdateResponse ursp = solrClient.deleteByQuery("type_s:($FILE $FOLDER)", 100)
+        int status = ursp.getStatus()
+        if(status == 0){
+            log.debug "\t\tSuccess clearing collection with path to clear: $pathToClear"
+        } else {
+            log.warn "FAILED to clear path: $pathToClear -- solr problem/error?? $ursp"
+        }
 //        def orsp = solrClient.optimize()
 //        log.info "Optimized as well (overkill?), response:$orsp"
         return ursp
@@ -68,66 +123,28 @@ class SolrSaver {
      *
      */
     SolrInputDocument createSolrInputFolderDocument(File folder) {
-        SolrInputDocument sid = new SolrInputDocument()
-        String id = "${folder.canonicalPath}--${folder.lastModified()}"
-        sid.setField('id', id)
-        sid.setField('type_t', FOLDER)
-        sid.setField('path_t', folder.canonicalPath)
-        sid.setField('parent_path_s', folder.parentFile.canonicalPath)
-        sid.setField('name_s', folder.name)
-        sid.setField('name_t', folder.name)
-
-        Date lmDate = new Date(folder.lastModified())
-        sid.setField('lastModified', lmDate)
-
-        int fileCount = 0
-        int subDirCount = 0
-        folder.eachFile { File file ->
-            String fname = file.name
-            if (file.isFile()) {
-                fileCount++
-                sid.addField("filename_ss", fname)
-            } else if (file.isDirectory()) {
-                subDirCount++
-                sid.addField("dirname_ss", fname)
-            }
-            if (file.isHidden()  /*.name.startsWith(".")*/) {
-                sid.addField("hiddenname_ss", fname)
-            } else {
-                def parts = file.name.split('\\.')
-                if (parts.size() > 1) {
-                    sid.addField("extension_ss", parts[-1])
-                }
-            }
-        }
-//        int subdirCount = getSubdirCount(folder)
-        sid.addField('subdir_count_i', subDirCount)
-        sid.addField("fileCount_i", fileCount)
-        sid.addField("dirCount_i", subDirCount)
-        sid.addField("data_source_s", this.class.simpleName)
-        // note: this is a Lucidworks Fusion default "system" field, using it here for my convenience
-
-        return sid
     }
 
 
-/**
- * Take a list of file folders and save them to solr
- * todo -- revisit for better approach...
- * todo -- catch errors, general improvement
- * @param folders
- * @return
- */
+    /**
+     * Take a list of file folders and save them to solr
+     * todo -- revisit for better approach...
+     * todo -- catch errors, general improvement
+     * @param folders
+     * @return
+     */
     List<UpdateResponse> saveFolderList(Set<File> folders) {
         log.info "Save folders list (${folders.size()})..."
         List<UpdateResponse> updates = []
         List<SolrInputDocument> sidList = new ArrayList<>(SOLR_BATCH_SIZE)
+        int i = 0
         folders.each { File folder ->
+            i++
             SolrInputDocument sid = createSolrInputFolderDocument(folder)
 
             sidList << sid
             if (sidList.size() >= SOLR_BATCH_SIZE) {
-                log.info "\t\tAdding folder list batch (size: ${sidList.size()})..."
+                log.info "\t\t$i) Adding folder list batch (size: ${sidList.size()})..."
                 UpdateResponse uresp = solrClient.add(sidList, 1000)
                 log.debug "\t\t save folders Update resp: $uresp"
                 updates << uresp
@@ -135,7 +152,7 @@ class SolrSaver {
             }
         }
         if (sidList.size() > 0) {
-            log.info "\t\tAdding final folder list batch (size: ${sidList.size()})..."
+            log.info "\t\t$i) Adding final folder list batch (size: ${sidList.size()})..."
             UpdateResponse uresp = solrClient.add(sidList, 1000)
             updates << uresp
         }
@@ -150,16 +167,20 @@ class SolrSaver {
                 String status = details?.status
                 log.debug "File: $file -- Status: $status -- details: $details"
                 SolrInputDocument sid = buildBasicTrackSolrFields(file)
-                if (details.status == LocalFileCrawler.STATUS_INDEX) {
-                    log.debug "test 2..."
-                    addSolrIndexFields(file, sid)
+                if(tikaConfig) {
+                    if (details.status == LocalFileCrawler.STATUS_INDEX_CONTENT) {
+                        log.debug "test 2..."
+                        addSolrIndexFields(file, sid)
 
-                } else if (details.status == LocalFileCrawler.STATUS_ANALYZE) {
-                    addSolrIndexFields(file, sid)
-                    addSolrAnalyzeFields(file, sid)
+                    } else if (details.status == LocalFileCrawler.STATUS_ANALYZE) {
+                        addSolrIndexFields(file, sid)
+                        addSolrAnalyzeFields(file, sid)
 
-                } else {
-                    log.debug "falling through to default 'track'"
+                    } else {
+                        log.debug "falling through to default 'track'"
+                    }
+                } else{
+                    log.debug "No tika config, so skipping indexing the content"
                 }
                 inputDocuments << sid
             }
@@ -181,28 +202,28 @@ class SolrSaver {
     static SolrInputDocument buildBasicTrackSolrFields(File file) {
         SolrInputDocument sid = new SolrInputDocument()
         String id = "${file.canonicalPath}--${file.lastModified()}"
-        sid.setField('id', id)
-        sid.setField('type_s', FILE)
-        sid.setField('tag_ss', TRACK)
-        sid.setField('path_s', file.canonicalPath)
-        sid.setField('path_txt_en', file.canonicalPath)
-        sid.setField('parent_path_s', file.parentFile.canonicalPath)
-        sid.setField('name_s', file.name)
-        sid.setField('name_txt_en', file.name)
+        sid.setField(FLD_ID, id)
+        sid.setField(FLD_TYPE, FILE)
+        sid.setField(FLD_TAG_SS, TRACK)
+        sid.setField(FLD_PATH_T, file.canonicalPath)
+        sid.setField(FLD_PATH_S, file.canonicalPath)
+        sid.setField(FLD_PARENT_PATH, file.parentFile.canonicalPath)
+        sid.setField(FLD_NAME_S, file.name)
+        sid.setField(FLD_NAME_T, file.name)
 
         if (file.isDirectory()) {
 //            log.warn "Should not be a directory: $file"
             // todo -- make this whole class static
-            sid.setField('dirname_s', file.name)
+            sid.setField(FLD_DIRNAME_SS, file.name)
         } else if (file.isFile()) {
-            sid.setField('filename_s', file.name)
+            sid.setField(FLD_FILENAME_SS, file.name)
         }
         String ext = FilenameUtils.getExtension(file.name)
-        sid.setField('exension_s', ext)
-        sid.setField('size_i', file.size())
+        sid.setField(FLD_EXTENSION_SS, ext)
+        sid.setField(FLD_SIZE, file.size())
 
         Date lmDate = new Date(file.lastModified())
-        sid.setField('lastModified_tdt', lmDate)
+        sid.setField(FLD_LASTMODIFIED, lmDate)
         return sid
     }
 
@@ -217,9 +238,9 @@ class SolrSaver {
             if (file.size() > MIN_FILE_SIZE) {
 
                 log.debug "\t\t\t add solr INDEX fields for file: ${file.absolutePath}"
-                sid.addField('tag_ss', 'index')
+                sid.addField(FLD_TAG_SS, 'index')
 //        sid.setField('type_s', FILE)
-                sid.addField("data_source_s", this.class.simpleName)
+                sid.addField(FLD_DATA_SOURCE, this.dataSourceName)
                 // note: this is a Lucidworks Fusion default "system" field, using it here for my convenience
 
                 BodyContentHandler handler = new BodyContentHandler(-1)
@@ -244,7 +265,7 @@ class SolrSaver {
                         if (content.size() > MAX_CONTENT_SIZE) {
                             log.warn "Trunacating content size (${content.size()}) to MAX_CONTENT_SIZE: $MAX_CONTENT_SIZE"
                         }
-                        sid.addField('content_txt_en', content)
+                        sid.addField(FLD_CONTENT_BODY, content)
 
                     } else {
                         log.info "\t\t${file.absolutePath}: no content...?"
@@ -263,7 +284,7 @@ class SolrSaver {
 
 
     static void addSolrAnalyzeFields(File file, SolrInputDocument sid) {
-        sid.setField('tags', ANALYZE)
+        sid.setField(FLD_TAG_SS, ANALYZE)
         log.debug "\t\tsetting file: $file to tag: $ANALYZE"
     }
 
@@ -293,4 +314,11 @@ class SolrSaver {
         solrClient.commit()
     }
 
+    def saveDocs(ArrayList<SolrInputDocument> solrInputDocuments) {
+        solrInputDocuments.each {SolrInputDocument sid ->
+            sid.setField(FLD_DATA_SOURCE, this.dataSourceName)
+        }
+        UpdateResponse resp = solrClient.add(solrInputDocuments, 1000)
+        return resp
+    }
 }
