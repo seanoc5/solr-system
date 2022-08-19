@@ -1,5 +1,7 @@
 package com.oconeco.crawler
 
+import com.oconeco.analysis.FolderAnalyzer
+import com.oconeco.models.FolderFS
 import groovy.io.FileType
 import org.apache.commons.io.FilenameUtils
 import org.apache.log4j.Logger
@@ -11,14 +13,16 @@ class LocalFileCrawler {
 
     static final String STATUS_SKIP = 'skip'
     static final String STATUS_TRACK = 'track'
-    static final String STATUS_INDEX = 'index'
+    static final String STATUS_INDEX_CONTENT = 'indexContent'
     static List<String> folderNamesToSkip = [
             '__snapshots__',
             '.csv',
+            '.cache',
             '.gradle',
             '.git',
             '.github',
             '.idea',
+            '.m2',
             '.settings',
             '.svn',
             '.vscode',
@@ -97,57 +101,51 @@ class LocalFileCrawler {
     static Pattern FILE_EXTENSIONS_TO_ANALYZE = Pattern.compile("(aspx\\?|cfm|docx\\?|html|od.|pptx\\?|pdf|ps|pub|rss|xlsx|zhtml\\?)")
 
 
-    /**
-     * get list of folders deemed appropriate to crawl based on regex of folders to skip
-     * todo resolve better/righter approach here?
-     *
-     * @param sourceFolder
-     * @param foldersToExclude
-     * @return
-     */
-    public static Set<File> getFoldersToCrawl(File sourceFolder, Pattern foldersToExclude) {
-        log.info "Crawl source folder: ${sourceFolder.absolutePath} -- exclude regex: $foldersToExclude"
-        Set<File> foldersToCrawl = [sourceFolder]
-        sourceFolder.eachFileRecurse(FileType.DIRECTORIES) { File subfolder ->
-            if (subfolder.name ==~ foldersToExclude) {
-                log.info "\t\tSkipping folder matching skip regex: ${subfolder.name}"
-            } else {
-                log.debug "\t\tAdding folder: ${subfolder.name}"
-                foldersToCrawl << subfolder
-            }
-        }
-        return foldersToCrawl
-    }
+//    /**
+//     * get list of folders deemed appropriate to crawl based on regex of folders to skip
+//     * todo resolve better/righter approach here?
+//     *
+//     * @param sourceFolder
+//     * @param foldersToExclude
+//     * @return
+//     */
+//    public static Set<File> getFoldersToCrawl(File sourceFolder, Pattern foldersToExclude) {
+//        log.info "Crawl source folder: ${sourceFolder.absolutePath} -- exclude regex: $foldersToExclude"
+//        Set<File> foldersToCrawl = [sourceFolder]
+//        sourceFolder.eachFileRecurse(FileType.DIRECTORIES) { File subfolder ->
+//            if (subfolder.name ==~ foldersToExclude) {
+//                log.info "\t\tSkipping folder matching skip regex: ${subfolder.name}"
+//            } else {
+//                log.debug "\t\tAdding folder: ${subfolder.name}"
+//                foldersToCrawl << subfolder
+//            }
+//        }
+//        return foldersToCrawl
+//    }
 
 
     /**
-     * get set of files deemed appropriate to crawl (based on String list of foldernames (vs regex) to skip
+     * get List of files deemed appropriate to crawl (based on String list of foldernames (vs regex) to skip
      * todo resolve better/righter approach here?
      * @param sourceFolder
      * @param foldersNamesToSkip
-     * @return
+     * @return List of folders to crawl
      */
-    public static Set<File> getFoldersToCrawl(File sourceFolder, int level = 1) {
-        if (level <= 2) {
+    public static List<File> getFoldersToCrawl(File sourceFolder, Map folderNamePatterns = null, int level = 1, int statusDepth = 3) {
+        log.debug "\t\tCrawl source folder: ${sourceFolder.absolutePath} -- skip folders: $folderNamesToSkip -- level: $level"
+        if (level <= statusDepth) {
             log.info "\t\tLvl:$level) Crawl source folder: ${sourceFolder.absolutePath}"
         }
-        log.debug "\t\tCrawl source folder: ${sourceFolder.absolutePath} -- skip folders: $folderNamesToSkip -- level: $level"
+        Pattern ignoreFolderNames = folderNamePatterns[FolderAnalyzer.LBL_IGNORE]
 
-        Set<File> foldersToCrawl = [sourceFolder]
+        List<File> foldersToCrawl = [sourceFolder]
         sourceFolder.eachFile(FileType.DIRECTORIES) { File subfolder ->
-            if (subfolder.name.contains('svn')) {
-                log.debug "What? $subfolder should not be crawled"
-            }
-            if (folderNamesToSkip.contains(subfolder.name)) {
-                log.debug "\t\tSkipping folder matching skip foldername: ${subfolder.name} -- ${subfolder.canonicalPath}"
-//                foldersToCrawl << subfolder
+            boolean ignore = (subfolder.name ==~ ignoreFolderNames)
+            if (ignore) {
+                log.info "\t\t------------ Skipping folder matching skip foldername: ${subfolder.name} -- ${subfolder.canonicalPath}"
             } else {
-/*                if (subfolder.name.contains('svn')) {
-                    log.info "What? $subfolder should not be crawled"
-                }*/
                 log.debug "\tAdding folder: ${subfolder.name.padLeft(30)} -- $subfolder.absolutePath"
-//                foldersToCrawl << subfolder
-                Set<File> crawlFolders = getFoldersToCrawl(subfolder, level + 1)
+                List<File> crawlFolders = getFoldersToCrawl(subfolder, folderNamePatterns, level + 1, statusDepth)
                 foldersToCrawl.addAll(crawlFolders)
                 if (foldersToCrawl.size() > 0) {
                     log.debug "foldersToCrawl: ${foldersToCrawl.size()}"
@@ -156,6 +154,55 @@ class LocalFileCrawler {
         }
         return foldersToCrawl
     }
+
+
+    static List<FolderFS> gatherFolderFSToCrawl(File folder,Pattern ignoreFileNames,  Pattern ignoreFolderNames, int depth = 1){
+        if(depth < 3){
+            log.info "\t\tLvl:$depth) Crawl source FS folder: ${folder.absolutePath}\""
+        }
+        FolderFS ffs = new FolderFS(folder, ignoreFileNames, ignoreFolderNames, depth + 1)
+        List<FolderFS> fsFolders = [ffs]
+//        int childDepth = depth + 1
+//        folder.eachDir {File subdir ->
+//            if(subdir.name ==~ ignoreFolderNames){
+//                FolderFS subFfs = new FolderFS(subdir)
+//                subFfs.assignedTypes << BaseObject.IGNORE_LABEL
+//                log.info "IGNORE subdir: $subFfs (i.e store this folder, but don't descend)"
+//                fsFolders << subFfs
+//            } else {
+//                List<FolderFS> childFSFolders = gatherFolderFSToCrawl(subdir, ignoreFileNames, ignoreFolderNames, childDepth)
+//                fsFolders.addAll(childFSFolders)
+//            }
+//        }
+        return fsFolders
+    }
+
+
+/*
+    public static List<FolderFS> getFSFoldersToCrawl(FolderFS sourceFSFolder, Map folderNamePatterns = null, int level = 1, int statusDepth = 3) {
+        log.debug "\t\tCrawl source FS folder: ${sourceFSFolder.absolutePath} -- skip folders: $folderNamesToSkip -- level: $level"
+        if (level <= statusDepth) {
+            log.info "\t\tLvl:$level) Crawl source FS folder: ${sourceFSFolder.me.absolutePath}"
+        }
+        Pattern ignoreFolderNames = folderNamePatterns[FolderAnalyzer.LBL_IGNORE]
+
+        List<FolderFS> foldersFSToCrawl = [sourceFSFolder]
+        sourceFSFolder.me.eachFile(FileType.DIRECTORIES) { File subfolder ->
+            boolean ignore = (subfolder.name ==~ ignoreFolderNames)
+            if (ignore) {
+                log.info "\t\t------------ Skipping folder matching skip foldername: ${subfolder.name} -- ${subfolder.canonicalPath}"
+            } else {
+                log.debug "\tAdding folder: ${subfolder.name.padLeft(30)} -- $subfolder.absolutePath"
+                List<FolderFS> crawlFSFolders = getFSFoldersToCrawl(subfolder, folderNamePatterns, level + 1, statusDepth)
+                foldersFSToCrawl.addAll(crawlFolders)
+                if (foldersFSToCrawl.size() > 0) {
+                    log.debug "foldersToCrawl: ${foldersFSToCrawl.size()}"
+                }
+            }
+        }
+        return foldersFSToCrawl
+    }
+*/
 
 
     /**
@@ -230,7 +277,7 @@ class LocalFileCrawler {
 
 
     public static Map<File, Map> getFilesToCrawlList(File sourcefolder, Pattern filesToSkip = FILE_REGEX_TO_SKIP, Pattern extensionToIndex = FILE_EXTENSIONS_TO_INDEX, Pattern extensionToAnalyze = FILE_EXTENSIONS_TO_ANALYZE) {
-        log.info "Get files to crawl from folder: ($sourcefolder)"
+        log.debug "Get files to crawl from folder: ($sourcefolder)"
         Map<File, Map> filesToCrawl = [:]
 
         int i = 0
@@ -247,19 +294,19 @@ class LocalFileCrawler {
             } else if (ext) {
                 if (ext ==~ extensionToIndex) {
                     log.info "\t\t$i) Extract/Index file: $fname"
-                    filesToCrawl.put(file, [extension: ext, status: STATUS_INDEX])
+                    filesToCrawl.put(file, [extension: ext, status: STATUS_INDEX_CONTENT])
 
                 } else if (ext ==~ extensionToAnalyze) {
                     log.info "\t\t$i) ANALYZE file: $fname"
                     filesToCrawl.put(file, [extension: ext, status: STATUS_ANALYZE])
 
                 } else {
-                    log.info "\t\t$i) track file: $fname"
+                    log.debug "\t\t$i) track file: $fname"
                     filesToCrawl.put(file, [extension: ext, status: STATUS_TRACK])
                 }
 
             } else {
-                log.info "\t\t$i) track file: $fname"
+                log.debug "\t\t$i) track file: $fname"
                 filesToCrawl.put(file, [extension: ext, status: STATUS_TRACK])
             }
         }
