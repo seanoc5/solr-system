@@ -1,0 +1,2071 @@
+{
+  "objects" : {
+    "dataSources" : [ {
+      "id" : "CER",
+      "created" : "2016-09-06T20:28:53.853Z",
+      "modified" : "2016-09-06T20:28:53.853Z",
+      "connector" : "lucid.web",
+      "type" : "web",
+      "pipeline" : "Documents_Parsing",
+      "parserId" : "parser_CER",
+      "properties" : {
+        "refreshOlderThan" : -1,
+        "emitThreads" : 5,
+        "diagnosticMode" : false,
+        "f.appendTrailingSlashToLinks" : false,
+        "restrictToTreeIgnoredHostPrefixes" : [ "www." ],
+        "refreshErrors" : false,
+        "crawlDBType" : "in-memory",
+        "dedupeSaveSignature" : false,
+        "f.userAgentWebAddr" : "",
+        "delete" : true,
+        "initial_mapping" : {
+          "reservedFieldsMappingAllowed" : false,
+          "skip" : false,
+          "label" : "field-mapping",
+          "type" : "field-mapping",
+          "mappings" : [ {
+            "source" : "charSet",
+            "target" : "charSet_s",
+            "operation" : "move"
+          }, {
+            "source" : "fetchedDate",
+            "target" : "fetchedDate_dt",
+            "operation" : "move"
+          }, {
+            "source" : "lastModified",
+            "target" : "lastModified_dt",
+            "operation" : "move"
+          }, {
+            "source" : "signature",
+            "target" : "dedupeSignature_s",
+            "operation" : "move"
+          }, {
+            "source" : "contentSignature",
+            "target" : "signature_s",
+            "operation" : "move"
+          }, {
+            "source" : "length",
+            "target" : "length_l",
+            "operation" : "move"
+          }, {
+            "source" : "mimeType",
+            "target" : "mimeType_s",
+            "operation" : "move"
+          }, {
+            "source" : "parent",
+            "target" : "parent_s",
+            "operation" : "move"
+          }, {
+            "source" : "owner",
+            "target" : "owner_s",
+            "operation" : "move"
+          }, {
+            "source" : "group",
+            "target" : "group_s",
+            "operation" : "move"
+          } ],
+          "id" : "FromMap"
+        },
+        "f.discardLinkURLQueries" : false,
+        "fetchDelayMS" : 0,
+        "f.respectMetaEquivRedirects" : false,
+        "restrictToTreeUseHostAndPath" : false,
+        "refreshAll" : true,
+        "f.defaultMIMEType" : "application/octet-stream",
+        "f.filteringRootTags" : [ "body", "head" ],
+        "f.timeoutMS" : 10000,
+        "failFastOnStartLinkFailure" : true,
+        "f.userAgentEmail" : "",
+        "startLinks" : [ "https://ocm.knowlysis.com/OCM/idol/cerindex.do" ],
+        "restrictToTreeAllowSubdomains" : false,
+        "maxItems" : -1,
+        "f.scrapeLinksBeforeFiltering" : false,
+        "dedupe" : false,
+        "chunkSize" : 50,
+        "f.allowAllCertificates" : true,
+        "f.obeyRobotsDelay" : true,
+        "collection" : "OCMS",
+        "deleteErrorsAfter" : -1,
+        "f.userAgentName" : "Lucidworks-Anda/2.0",
+        "forceRefresh" : false,
+        "retryEmit" : true,
+        "delete404" : false,
+        "f.obeyRobots" : true,
+        "depth" : 1,
+        "refreshStartLinks" : false,
+        "f.maxSizeBytes" : 4194304,
+        "fetchDelayMSPerHost" : true,
+        "aliasExpiration" : 1,
+        "indexCrawlDBToSolr" : false,
+        "fetchThreads" : 5,
+        "restrictToTree" : true,
+        "retainOutlinks" : true,
+        "f.defaultCharSet" : "UTF-8"
+      }
+    }, {
+      "id" : "CEROCM",
+      "created" : "2016-09-07T17:14:29.175Z",
+      "modified" : "2016-09-07T17:14:29.175Z",
+      "connector" : "lucid.web",
+      "type" : "web",
+      "pipeline" : "Documents_Parsing",
+      "properties" : {
+        "refreshOlderThan" : -1,
+        "f.appendTrailingSlashToLinks" : false,
+        "restrictToTreeIgnoredHostPrefixes" : [ "www.", "login", "commerce", "jama" ],
+        "refreshErrors" : false,
+        "crawlDBType" : "in-memory",
+        "dedupeSaveSignature" : false,
+        "f.firefoxHeadlessBrowser" : true,
+        "f.discardLinkURLQueries" : false,
+        "fetchDelayMS" : 0,
+        "f.respectMetaEquivRedirects" : false,
+        "refreshAll" : true,
+        "f.defaultMIMEType" : "application/octet-stream",
+        "f.jsPageLoadTimeout" : 20000,
+        "restrictToTreeAllowSubdomains" : false,
+        "f.jsScriptTimeout" : 20000,
+        "f.jsAjaxTimeout" : 20000,
+        "maxItems" : -1,
+        "f.scrapeLinksBeforeFiltering" : false,
+        "dedupe" : true,
+        "trackEmbeddedIDs" : true,
+        "f.allowAllCertificates" : true,
+        "collection" : "OCM",
+        "f.credentialsFile" : "",
+        "forceRefresh" : false,
+        "delete404" : false,
+        "f.obeyRobots" : false,
+        "parserRetryCount" : 3,
+        "fetchDelayMSPerHost" : true,
+        "indexCrawlDBToSolr" : false,
+        "fetchThreads" : 1,
+        "restrictToTree" : true,
+        "retainOutlinks" : true,
+        "f.defaultCharSet" : "UTF-8",
+        "emitThreads" : 1,
+        "f.useFirefox" : true,
+        "diagnosticMode" : true,
+        "excludeRegexes" : [ ".*\\/OCM\\/idol\\/cerindex\\.do$" ],
+        "f.userAgentWebAddr" : "",
+        "delete" : true,
+        "initial_mapping" : {
+          "reservedFieldsMappingAllowed" : false,
+          "skip" : false,
+          "type" : "field-mapping",
+          "mappings" : [ {
+            "source" : "charSet",
+            "target" : "charSet_s",
+            "operation" : "move"
+          }, {
+            "source" : "fetchedDate",
+            "target" : "fetchedDate_dt",
+            "operation" : "move"
+          }, {
+            "source" : "lastModified",
+            "target" : "lastModified_dt",
+            "operation" : "move"
+          }, {
+            "source" : "signature",
+            "target" : "dedupeSignature_s",
+            "operation" : "move"
+          }, {
+            "source" : "contentSignature",
+            "target" : "signature_s",
+            "operation" : "move"
+          }, {
+            "source" : "length",
+            "target" : "length_l",
+            "operation" : "move"
+          }, {
+            "source" : "mimeType",
+            "target" : "mimeType_s",
+            "operation" : "move"
+          }, {
+            "source" : "parent",
+            "target" : "parent_s",
+            "operation" : "move"
+          }, {
+            "source" : "owner",
+            "target" : "owner_s",
+            "operation" : "move"
+          }, {
+            "source" : "group",
+            "target" : "group_s",
+            "operation" : "move"
+          } ],
+          "id" : "FromMap"
+        },
+        "restrictToTreeUseHostAndPath" : false,
+        "f.formAuth" : [ ],
+        "f.filteringRootTags" : [ "body", "head" ],
+        "f.timeoutMS" : 40000,
+        "failFastOnStartLinkFailure" : false,
+        "f.userAgentEmail" : "",
+        "startLinks" : [ "https://ocmstage.ama-assn.org/OCM/idol/cerindex.do" ],
+        "dedupeField" : "id",
+        "f.discardLinkURLAnchors" : true,
+        "chunkSize" : 100,
+        "f.obeyRobotsDelay" : true,
+        "deleteErrorsAfter" : -1,
+        "f.userAgentName" : "Lucidworks-Anda/2.0",
+        "retryEmit" : true,
+        "f.crawlJS" : false,
+        "depth" : 1,
+        "f.cookieSpec" : "browser-compatibility",
+        "refreshStartLinks" : true,
+        "f.maxSizeBytes" : 4194304,
+        "aliasExpiration" : 1
+      }
+    }, {
+      "id" : "CPT",
+      "created" : "2016-09-07T19:30:40.167Z",
+      "modified" : "2016-09-07T19:30:40.167Z",
+      "connector" : "lucid.web",
+      "type" : "web",
+      "pipeline" : "Documents_Parsing",
+      "parserId" : "_system",
+      "properties" : {
+        "refreshOlderThan" : -1,
+        "f.appendTrailingSlashToLinks" : false,
+        "restrictToTreeIgnoredHostPrefixes" : [ "www", "login", "commerce", "jama" ],
+        "refreshErrors" : true,
+        "crawlDBType" : "in-memory",
+        "dedupeSaveSignature" : false,
+        "f.firefoxHeadlessBrowser" : true,
+        "f.discardLinkURLQueries" : false,
+        "fetchDelayMS" : 0,
+        "f.respectMetaEquivRedirects" : false,
+        "refreshAll" : false,
+        "commitAfterItems" : 10000,
+        "f.defaultMIMEType" : "application/octet-stream",
+        "f.extraLoadTimeMs" : 250,
+        "f.jsPageLoadTimeout" : 10000,
+        "restrictToTreeAllowSubdomains" : false,
+        "f.jsScriptTimeout" : 10000,
+        "f.requestCounterMinWaitMs" : 5000,
+        "f.jsAjaxTimeout" : 10000,
+        "maxItems" : -1,
+        "trackEmbeddedIDs" : true,
+        "dedupe" : true,
+        "f.scrapeLinksBeforeFiltering" : false,
+        "f.allowAllCertificates" : true,
+        "collection" : "OCM",
+        "f.obeyRobotsMeta" : true,
+        "f.credentialsFile" : "",
+        "forceRefresh" : false,
+        "delete404" : false,
+        "f.obeyRobots" : false,
+        "parserRetryCount" : 3,
+        "f.quitTimeoutMs" : 5000,
+        "f.index_items_discarded" : false,
+        "fetchDelayMSPerHost" : true,
+        "indexCrawlDBToSolr" : false,
+        "fetchThreads" : 3,
+        "f.requestRetryCount" : 1,
+        "f.jsEnabledAuth" : false,
+        "restrictToTree" : true,
+        "retainOutlinks" : true,
+        "f.defaultCharSet" : "UTF-8",
+        "f.useIpAddressForSslConnections" : false,
+        "f.useRequestCounter" : true,
+        "emitThreads" : 3,
+        "f.headlessBrowser" : true,
+        "f.useFirefox" : true,
+        "f.canonicalTagsRedirectLimit" : 4,
+        "diagnosticMode" : false,
+        "f.obeyCharSet" : true,
+        "f.requestCounterMaxWaitMs" : 20000,
+        "f.followCanonicalTags" : false,
+        "excludeRegexes" : [ ".*\\/OCM\\/idol\\/cptlevelindex\\.do$", ".*\\/OCM\\/idol\\/cptindex\\.do$", ".*\\/OCM\\/idol\\/cptcodeindex\\.do$" ],
+        "f.userAgentWebAddr" : "",
+        "delete" : true,
+        "initial_mapping" : {
+          "mappings" : [ {
+            "source" : "charSet",
+            "operation" : "move",
+            "target" : "charSet_s"
+          }, {
+            "source" : "fetchedDate",
+            "operation" : "move",
+            "target" : "fetchedDate_dt"
+          }, {
+            "source" : "lastModified",
+            "operation" : "move",
+            "target" : "lastModified_dt"
+          }, {
+            "source" : "signature",
+            "operation" : "move",
+            "target" : "dedupeSignature_s"
+          }, {
+            "source" : "contentSignature",
+            "operation" : "move",
+            "target" : "signature_s"
+          }, {
+            "source" : "length",
+            "operation" : "move",
+            "target" : "length_l"
+          }, {
+            "source" : "mimeType",
+            "operation" : "move",
+            "target" : "mimeType_s"
+          }, {
+            "source" : "parent",
+            "operation" : "move",
+            "target" : "parent_s"
+          }, {
+            "source" : "owner",
+            "operation" : "move",
+            "target" : "owner_s"
+          }, {
+            "source" : "group",
+            "operation" : "move",
+            "target" : "group_s"
+          } ],
+          "reservedFieldsMappingAllowed" : false,
+          "skip" : false,
+          "id" : "FromMap",
+          "type" : "field-mapping"
+        },
+        "f.extraPageLoadDeltaChars" : 0,
+        "f.maintainCookies" : false,
+        "restrictToTreeUseHostAndPath" : false,
+        "sitemap_incremental_crawling" : false,
+        "f.screenshotFullscreen" : false,
+        "f.filteringRootTags" : [ "body", "head" ],
+        "f.timeoutMS" : 40000,
+        "failFastOnStartLinkFailure" : true,
+        "f.userAgentEmail" : "",
+        "startLinks" : [ "https://ocmstage.ama-assn.org/OCM/idol/cptlevelindex.do", "https://ocmstage.ama-assn.org/OCM/idol/cptindex.do", "https://ocmstage.ama-assn.org/OCM/idol/cptcodeindex.do" ],
+        "dedupeField" : "id",
+        "f.discardLinkURLAnchors" : true,
+        "chunkSize" : 200,
+        "f.simulateMobile" : false,
+        "f.obeyRobotsDelay" : false,
+        "f.obeyLinkNofollow" : true,
+        "f.useHighPerfJsEval" : false,
+        "deleteErrorsAfter" : -1,
+        "f.userAgentName" : "Lucidworks-Anda/2.0",
+        "retryEmit" : true,
+        "f.crawlJS" : false,
+        "depth" : 1,
+        "f.cookieSpec" : "browser-compatibility",
+        "refreshStartLinks" : true,
+        "f.maxSizeBytes" : 4194304,
+        "aliasExpiration" : 1,
+        "f.takeScreenshot" : false
+      }
+    }, {
+      "id" : "CPTAA",
+      "created" : "2016-09-07T19:31:09.780Z",
+      "modified" : "2016-09-07T19:31:09.780Z",
+      "connector" : "lucid.web",
+      "type" : "web",
+      "pipeline" : "Documents_Parsing",
+      "properties" : {
+        "refreshOlderThan" : -1,
+        "f.appendTrailingSlashToLinks" : false,
+        "restrictToTreeIgnoredHostPrefixes" : [ "www", "login", "commerce", "jama" ],
+        "refreshErrors" : true,
+        "crawlDBType" : "in-memory",
+        "dedupeSaveSignature" : false,
+        "f.firefoxHeadlessBrowser" : true,
+        "f.discardLinkURLQueries" : false,
+        "fetchDelayMS" : 0,
+        "f.respectMetaEquivRedirects" : false,
+        "refreshAll" : false,
+        "f.defaultMIMEType" : "application/octet-stream",
+        "f.jsPageLoadTimeout" : 10000,
+        "restrictToTreeAllowSubdomains" : false,
+        "f.jsScriptTimeout" : 10000,
+        "f.jsAjaxTimeout" : 10000,
+        "maxItems" : -1,
+        "trackEmbeddedIDs" : true,
+        "dedupe" : true,
+        "f.scrapeLinksBeforeFiltering" : false,
+        "f.allowAllCertificates" : true,
+        "collection" : "OCM",
+        "f.credentialsFile" : "",
+        "forceRefresh" : false,
+        "delete404" : false,
+        "f.obeyRobots" : false,
+        "parserRetryCount" : 3,
+        "fetchDelayMSPerHost" : false,
+        "indexCrawlDBToSolr" : false,
+        "fetchThreads" : 1,
+        "restrictToTree" : true,
+        "retainOutlinks" : true,
+        "f.defaultCharSet" : "UTF-8",
+        "emitThreads" : 1,
+        "f.useFirefox" : true,
+        "diagnosticMode" : false,
+        "excludeRegexes" : [ ".*\\/OCM\\/idol\\/cptaaindex\\.do$" ],
+        "f.userAgentWebAddr" : "",
+        "delete" : true,
+        "initial_mapping" : {
+          "reservedFieldsMappingAllowed" : false,
+          "skip" : false,
+          "type" : "field-mapping",
+          "mappings" : [ {
+            "source" : "charSet",
+            "target" : "charSet_s",
+            "operation" : "move"
+          }, {
+            "source" : "fetchedDate",
+            "target" : "fetchedDate_dt",
+            "operation" : "move"
+          }, {
+            "source" : "lastModified",
+            "target" : "lastModified_dt",
+            "operation" : "move"
+          }, {
+            "source" : "signature",
+            "target" : "dedupeSignature_s",
+            "operation" : "move"
+          }, {
+            "source" : "contentSignature",
+            "target" : "signature_s",
+            "operation" : "move"
+          }, {
+            "source" : "length",
+            "target" : "length_l",
+            "operation" : "move"
+          }, {
+            "source" : "mimeType",
+            "target" : "mimeType_s",
+            "operation" : "move"
+          }, {
+            "source" : "parent",
+            "target" : "parent_s",
+            "operation" : "move"
+          }, {
+            "source" : "owner",
+            "target" : "owner_s",
+            "operation" : "move"
+          }, {
+            "source" : "group",
+            "target" : "group_s",
+            "operation" : "move"
+          } ],
+          "id" : "FromMap"
+        },
+        "restrictToTreeUseHostAndPath" : false,
+        "f.filteringRootTags" : [ "body", "head" ],
+        "f.timeoutMS" : 40000,
+        "failFastOnStartLinkFailure" : true,
+        "f.userAgentEmail" : "",
+        "startLinks" : [ "https://ocmstage.ama-assn.org/OCM/idol/cptaaindex.do" ],
+        "dedupeField" : "id",
+        "f.discardLinkURLAnchors" : true,
+        "chunkSize" : 100,
+        "f.obeyRobotsDelay" : false,
+        "deleteErrorsAfter" : -1,
+        "f.userAgentName" : "Lucidworks-Anda/2.0",
+        "retryEmit" : true,
+        "f.crawlJS" : false,
+        "depth" : 1,
+        "f.cookieSpec" : "browser-compatibility",
+        "refreshStartLinks" : true,
+        "f.maxSizeBytes" : 4194304,
+        "aliasExpiration" : 1
+      }
+    }, {
+      "id" : "RBRVS",
+      "created" : "2016-09-07T19:31:42.359Z",
+      "modified" : "2016-09-07T19:31:42.359Z",
+      "connector" : "lucid.web",
+      "type" : "web",
+      "pipeline" : "Documents_Parsing",
+      "properties" : {
+        "refreshOlderThan" : -1,
+        "f.appendTrailingSlashToLinks" : false,
+        "restrictToTreeIgnoredHostPrefixes" : [ "www", "login", "commerce", "jama" ],
+        "refreshErrors" : false,
+        "crawlDBType" : "in-memory",
+        "dedupeSaveSignature" : false,
+        "f.firefoxHeadlessBrowser" : true,
+        "f.discardLinkURLQueries" : false,
+        "fetchDelayMS" : 0,
+        "f.respectMetaEquivRedirects" : false,
+        "refreshAll" : false,
+        "f.defaultMIMEType" : "application/octet-stream",
+        "f.jsPageLoadTimeout" : 10000,
+        "restrictToTreeAllowSubdomains" : false,
+        "f.jsScriptTimeout" : 10000,
+        "f.jsAjaxTimeout" : 10000,
+        "maxItems" : -1,
+        "trackEmbeddedIDs" : true,
+        "dedupe" : true,
+        "f.scrapeLinksBeforeFiltering" : false,
+        "f.allowAllCertificates" : true,
+        "collection" : "OCM",
+        "f.credentialsFile" : "",
+        "forceRefresh" : false,
+        "delete404" : false,
+        "f.obeyRobots" : false,
+        "parserRetryCount" : 3,
+        "fetchDelayMSPerHost" : true,
+        "indexCrawlDBToSolr" : false,
+        "fetchThreads" : 2,
+        "restrictToTree" : true,
+        "retainOutlinks" : true,
+        "f.defaultCharSet" : "UTF-8",
+        "emitThreads" : 2,
+        "f.useFirefox" : true,
+        "diagnosticMode" : false,
+        "excludeRegexes" : [ ".*\\/OCM\\/idol\\/rbrvsindex\\.do$" ],
+        "f.userAgentWebAddr" : "",
+        "delete" : true,
+        "initial_mapping" : {
+          "reservedFieldsMappingAllowed" : false,
+          "skip" : false,
+          "type" : "field-mapping",
+          "mappings" : [ {
+            "source" : "charSet",
+            "target" : "charSet_s",
+            "operation" : "move"
+          }, {
+            "source" : "fetchedDate",
+            "target" : "fetchedDate_dt",
+            "operation" : "move"
+          }, {
+            "source" : "lastModified",
+            "target" : "lastModified_dt",
+            "operation" : "move"
+          }, {
+            "source" : "signature",
+            "target" : "dedupeSignature_s",
+            "operation" : "move"
+          }, {
+            "source" : "contentSignature",
+            "target" : "signature_s",
+            "operation" : "move"
+          }, {
+            "source" : "length",
+            "target" : "length_l",
+            "operation" : "move"
+          }, {
+            "source" : "mimeType",
+            "target" : "mimeType_s",
+            "operation" : "move"
+          }, {
+            "source" : "parent",
+            "target" : "parent_s",
+            "operation" : "move"
+          }, {
+            "source" : "owner",
+            "target" : "owner_s",
+            "operation" : "move"
+          }, {
+            "source" : "group",
+            "target" : "group_s",
+            "operation" : "move"
+          } ],
+          "id" : "FromMap"
+        },
+        "restrictToTreeUseHostAndPath" : false,
+        "f.filteringRootTags" : [ "body", "head" ],
+        "f.timeoutMS" : 40000,
+        "failFastOnStartLinkFailure" : true,
+        "f.userAgentEmail" : "",
+        "startLinks" : [ "https://ocmstage.ama-assn.org/OCM/idol/rbrvsindex.do" ],
+        "dedupeField" : "id",
+        "f.discardLinkURLAnchors" : true,
+        "chunkSize" : 100,
+        "f.obeyRobotsDelay" : true,
+        "deleteErrorsAfter" : -1,
+        "f.userAgentName" : "Lucidworks-Anda/2.0",
+        "retryEmit" : true,
+        "f.crawlJS" : false,
+        "depth" : 1,
+        "f.cookieSpec" : "browser-compatibility",
+        "refreshStartLinks" : true,
+        "f.maxSizeBytes" : 4194304,
+        "aliasExpiration" : 1
+      }
+    }, {
+      "id" : "cptkb",
+      "created" : "2016-07-11T16:32:48.295Z",
+      "modified" : "2016-07-11T16:32:48.295Z",
+      "connector" : "lucid.web",
+      "type" : "web",
+      "description" : "Crawl CPTKB",
+      "pipeline" : "Documents_Parsing",
+      "parserId" : "parser_cptkb",
+      "properties" : {
+        "refreshOlderThan" : -1,
+        "f.sitemapURLs" : [ ],
+        "f.appendTrailingSlashToLinks" : false,
+        "restrictToTreeIgnoredHostPrefixes" : [ "www", "jama", "commerce", "login" ],
+        "refreshErrors" : true,
+        "crawlDBType" : "in-memory",
+        "dedupeSaveSignature" : false,
+        "f.firefoxHeadlessBrowser" : true,
+        "f.discardLinkURLQueries" : false,
+        "fetchDelayMS" : 0,
+        "f.respectMetaEquivRedirects" : false,
+        "refreshAll" : false,
+        "commitAfterItems" : 10000,
+        "f.defaultMIMEType" : "application/octet-stream",
+        "f.extraLoadTimeMs" : 250,
+        "f.jsPageLoadTimeout" : 10000,
+        "restrictToTreeAllowSubdomains" : false,
+        "f.jsScriptTimeout" : 10000,
+        "f.requestCounterMinWaitMs" : 5000,
+        "maxItems" : -1,
+        "f.jsAjaxTimeout" : 10000,
+        "f.scrapeLinksBeforeFiltering" : false,
+        "dedupe" : true,
+        "trackEmbeddedIDs" : true,
+        "f.allowAllCertificates" : true,
+        "collection" : "cptkb",
+        "f.obeyRobotsMeta" : false,
+        "f.credentialsFile" : "/opt/fusion/latest/data/connectors/connectors-classic/container/lucid.web/cptkb/login.json",
+        "forceRefresh" : false,
+        "delete404" : false,
+        "f.obeyRobots" : false,
+        "parserRetryCount" : 1,
+        "f.quitTimeoutMs" : 5000,
+        "f.index_items_discarded" : false,
+        "fetchDelayMSPerHost" : true,
+        "indexCrawlDBToSolr" : false,
+        "fetchThreads" : 1,
+        "f.requestRetryCount" : 1,
+        "f.jsEnabledAuth" : false,
+        "restrictToTree" : false,
+        "retainOutlinks" : true,
+        "f.defaultCharSet" : "UTF-8",
+        "f.useIpAddressForSslConnections" : false,
+        "f.useRequestCounter" : true,
+        "emitThreads" : 1,
+        "f.headlessBrowser" : true,
+        "f.useFirefox" : true,
+        "f.canonicalTagsRedirectLimit" : 4,
+        "diagnosticMode" : false,
+        "f.obeyCharSet" : true,
+        "f.requestCounterMaxWaitMs" : 20000,
+        "f.followCanonicalTags" : false,
+        "f.excludeTagIDs" : [ "header-error", "apps-header", "apps-audiencenav-med", "apps-navigation", "breadcrumbs-application", "col_left-application", "module-application", "byline", "apps-footer-rich", "apps-footer", "rmnheader", "indexIgnore" ],
+        "dedupeScript" : "function genSignature(contentObject) {\n  // do some work using the current content ...\n  return signature-built-on-contentobject;\n}",
+        "excludeRegexes" : [ ".*\\/cptkb\\/kb\\/indexer-view\\.do$" ],
+        "f.userAgentWebAddr" : "",
+        "delete" : true,
+        "initial_mapping" : {
+          "mappings" : [ {
+            "source" : "charSet",
+            "operation" : "move",
+            "target" : "charSet_s"
+          }, {
+            "source" : "fetchedDate",
+            "operation" : "move",
+            "target" : "fetchedDate_dt"
+          }, {
+            "source" : "lastModified",
+            "operation" : "move",
+            "target" : "lastModified_dt"
+          }, {
+            "source" : "signature",
+            "operation" : "move",
+            "target" : "dedupeSignature_s"
+          }, {
+            "source" : "contentSignature",
+            "operation" : "move",
+            "target" : "signature_s"
+          }, {
+            "source" : "length",
+            "operation" : "move",
+            "target" : "length_l"
+          }, {
+            "source" : "mimeType",
+            "operation" : "move",
+            "target" : "mimeType_s"
+          }, {
+            "source" : "parent",
+            "operation" : "move",
+            "target" : "parent_s"
+          }, {
+            "source" : "owner",
+            "operation" : "move",
+            "target" : "owner_s"
+          }, {
+            "source" : "group",
+            "operation" : "move",
+            "target" : "group_s"
+          } ],
+          "reservedFieldsMappingAllowed" : false,
+          "skip" : false,
+          "id" : "FromMap",
+          "type" : "field-mapping"
+        },
+        "f.extraPageLoadDeltaChars" : 0,
+        "f.maintainCookies" : false,
+        "restrictToTreeUseHostAndPath" : false,
+        "sitemap_incremental_crawling" : false,
+        "f.screenshotFullscreen" : false,
+        "f.filteringRootTags" : [ "head", "body", "header-error" ],
+        "f.timeoutMS" : 60000,
+        "failFastOnStartLinkFailure" : true,
+        "f.userAgentEmail" : "",
+        "startLinks" : [ "https://cptkb-test.ama-assn.org/cptkb/kb/indexer-view.do" ],
+        "dedupeField" : "id",
+        "f.discardLinkURLAnchors" : true,
+        "includeRegexes" : [ ".*\\/cptkb\\/admin\\/inquiry-view\\.do\\?id=.*", ".*\\/cptkb\\/kb\\/search-view\\.do\\?id=.*", ".*\\/cptkb\\/kb\\/search-vignette\\.do\\?id=.*" ],
+        "chunkSize" : 200,
+        "f.simulateMobile" : false,
+        "f.obeyRobotsDelay" : false,
+        "f.obeyLinkNofollow" : false,
+        "f.useHighPerfJsEval" : false,
+        "deleteErrorsAfter" : -1,
+        "f.userAgentName" : "Lucidworks-Anda/2.0",
+        "retryEmit" : true,
+        "f.crawlJS" : false,
+        "depth" : 3,
+        "f.cookieSpec" : "browser-compatibility",
+        "refreshStartLinks" : true,
+        "f.maxSizeBytes" : 4194304,
+        "aliasExpiration" : 1,
+        "f.takeScreenshot" : false
+      }
+    }, {
+      "id" : "cptkb-test",
+      "created" : "2019-07-11T16:53:33.039Z",
+      "modified" : "2019-07-11T16:53:33.039Z",
+      "connector" : "lucid.web",
+      "type" : "web",
+      "pipeline" : "Documents_Parsing",
+      "parserId" : "parser_cptkb",
+      "properties" : {
+        "refreshOlderThan" : -1,
+        "f.appendTrailingSlashToLinks" : false,
+        "refreshErrors" : false,
+        "restrictToTreeIgnoredHostPrefixes" : [ "www." ],
+        "dedupeSaveSignature" : false,
+        "crawlDBType" : "on-disk",
+        "f.firefoxHeadlessBrowser" : true,
+        "f.discardLinkURLQueries" : false,
+        "fetchDelayMS" : 0,
+        "f.respectMetaEquivRedirects" : false,
+        "refreshAll" : true,
+        "commitAfterItems" : 10000,
+        "f.defaultMIMEType" : "application/octet-stream",
+        "f.extraLoadTimeMs" : 250,
+        "f.jsPageLoadTimeout" : 20000,
+        "restrictToTreeAllowSubdomains" : false,
+        "f.jsScriptTimeout" : 20000,
+        "f.requestCounterMinWaitMs" : 5000,
+        "maxItems" : -1,
+        "f.jsAjaxTimeout" : 20000,
+        "dedupe" : true,
+        "f.scrapeLinksBeforeFiltering" : false,
+        "trackEmbeddedIDs" : true,
+        "f.allowAllCertificates" : true,
+        "collection" : "cptkb",
+        "f.obeyRobotsMeta" : false,
+        "f.credentialsFile" : "/opt/fusion/latest/data/connectors/connectors-classic/container/lucid.web/cptkb/login.json",
+        "forceRefresh" : false,
+        "delete404" : true,
+        "f.obeyRobots" : false,
+        "parserRetryCount" : 1,
+        "f.quitTimeoutMs" : 5000,
+        "f.index_items_discarded" : false,
+        "fetchDelayMSPerHost" : true,
+        "fetchThreads" : 1,
+        "indexCrawlDBToSolr" : false,
+        "f.requestRetryCount" : 0,
+        "f.jsEnabledAuth" : false,
+        "retainOutlinks" : false,
+        "restrictToTree" : true,
+        "f.defaultCharSet" : "UTF-8",
+        "f.useIpAddressForSslConnections" : false,
+        "f.useRequestCounter" : true,
+        "emitThreads" : 1,
+        "f.headlessBrowser" : true,
+        "f.useFirefox" : false,
+        "f.canonicalTagsRedirectLimit" : 4,
+        "f.obeyCharSet" : true,
+        "f.requestCounterMaxWaitMs" : 20000,
+        "diagnosticMode" : false,
+        "f.followCanonicalTags" : false,
+        "excludeRegexes" : [ ".*\\/cptkb\\/kb\\/indexer-view\\.do$" ],
+        "delete" : true,
+        "initial_mapping" : {
+          "mappings" : [ {
+            "source" : "charSet",
+            "operation" : "move",
+            "target" : "charSet_s"
+          }, {
+            "source" : "fetchedDate",
+            "operation" : "move",
+            "target" : "fetchedDate_dt"
+          }, {
+            "source" : "lastModified",
+            "operation" : "move",
+            "target" : "lastModified_dt"
+          }, {
+            "source" : "signature",
+            "operation" : "move",
+            "target" : "dedupeSignature_s"
+          }, {
+            "source" : "contentSignature",
+            "operation" : "move",
+            "target" : "signature_s"
+          }, {
+            "source" : "length",
+            "operation" : "move",
+            "target" : "length_l"
+          }, {
+            "source" : "mimeType",
+            "operation" : "move",
+            "target" : "mimeType_s"
+          }, {
+            "source" : "parent",
+            "operation" : "move",
+            "target" : "parent_s"
+          }, {
+            "source" : "owner",
+            "operation" : "move",
+            "target" : "owner_s"
+          }, {
+            "source" : "group",
+            "operation" : "move",
+            "target" : "group_s"
+          } ],
+          "reservedFieldsMappingAllowed" : false,
+          "skip" : false,
+          "id" : "FromMap",
+          "type" : "field-mapping"
+        },
+        "f.extraPageLoadDeltaChars" : 0,
+        "f.maintainCookies" : false,
+        "restrictToTreeUseHostAndPath" : false,
+        "sitemap_incremental_crawling" : false,
+        "f.screenshotFullscreen" : false,
+        "f.filteringRootTags" : [ "body", "head" ],
+        "startLinks" : [ "https://cptkb-test.ama-assn.org/cptkb/kb/indexer-view.do" ],
+        "failFastOnStartLinkFailure" : true,
+        "f.timeoutMS" : 40000,
+        "dedupeField" : "id",
+        "f.discardLinkURLAnchors" : true,
+        "chunkSize" : 100,
+        "f.simulateMobile" : false,
+        "includeRegexes" : [ ".*\\/cptkb\\/admin\\/inquiry-view\\.do\\?id=.*", ".*\\/cptkb\\/kb\\/search-view\\.do\\?id=.*", ".*\\/cptkb\\/kb\\/search-vignette\\.do\\?id=.*" ],
+        "f.obeyRobotsDelay" : false,
+        "f.obeyLinkNofollow" : true,
+        "f.useHighPerfJsEval" : false,
+        "deleteErrorsAfter" : -1,
+        "f.userAgentName" : "Lucidworks-Anda/2.0",
+        "retryEmit" : true,
+        "f.crawlJS" : false,
+        "depth" : -1,
+        "f.cookieSpec" : "browser-compatibility",
+        "refreshStartLinks" : false,
+        "f.maxSizeBytes" : 4194304,
+        "aliasExpiration" : 1,
+        "f.takeScreenshot" : false
+      }
+    }, {
+      "id" : "freida",
+      "created" : "2016-10-03T15:02:14.386Z",
+      "modified" : "2016-10-03T15:02:14.386Z",
+      "connector" : "lucid.web",
+      "type" : "web",
+      "pipeline" : "freida-default",
+      "parserId" : "parser_freida",
+      "properties" : {
+        "refreshOlderThan" : -1,
+        "f.appendTrailingSlashToLinks" : false,
+        "restrictToTreeIgnoredHostPrefixes" : [ "www." ],
+        "refreshErrors" : false,
+        "crawlDBType" : "in-memory",
+        "dedupeSaveSignature" : false,
+        "f.firefoxHeadlessBrowser" : true,
+        "f.discardLinkURLQueries" : false,
+        "fetchDelayMS" : 0,
+        "f.respectMetaEquivRedirects" : false,
+        "refreshAll" : false,
+        "commitAfterItems" : 10000,
+        "f.defaultMIMEType" : "application/octet-stream",
+        "f.extraLoadTimeMs" : 250,
+        "f.jsPageLoadTimeout" : 10000,
+        "restrictToTreeAllowSubdomains" : false,
+        "f.jsScriptTimeout" : 10000,
+        "f.requestCounterMinWaitMs" : 5000,
+        "f.jsAjaxTimeout" : 10000,
+        "maxItems" : -1,
+        "trackEmbeddedIDs" : true,
+        "f.scrapeLinksBeforeFiltering" : false,
+        "dedupe" : true,
+        "f.allowAllCertificates" : true,
+        "collection" : "freida",
+        "f.obeyRobotsMeta" : false,
+        "f.credentialsFile" : "",
+        "forceRefresh" : false,
+        "delete404" : false,
+        "f.obeyRobots" : false,
+        "parserRetryCount" : 0,
+        "f.quitTimeoutMs" : 5000,
+        "f.index_items_discarded" : false,
+        "fetchDelayMSPerHost" : true,
+        "indexCrawlDBToSolr" : false,
+        "fetchThreads" : 1,
+        "f.requestRetryCount" : 0,
+        "f.jsEnabledAuth" : false,
+        "restrictToTree" : true,
+        "retainOutlinks" : true,
+        "f.defaultCharSet" : "UTF-8",
+        "f.useIpAddressForSslConnections" : false,
+        "f.useRequestCounter" : true,
+        "emitThreads" : 1,
+        "f.headlessBrowser" : true,
+        "f.useFirefox" : true,
+        "f.canonicalTagsRedirectLimit" : 4,
+        "diagnosticMode" : false,
+        "f.obeyCharSet" : true,
+        "f.requestCounterMaxWaitMs" : 20000,
+        "f.followCanonicalTags" : false,
+        "excludeRegexes" : [ "^.*\\/Freida\\/search\\/idol\\/programList\\.do$" ],
+        "f.userAgentWebAddr" : "",
+        "delete" : true,
+        "initial_mapping" : {
+          "mappings" : [ {
+            "source" : "charSet",
+            "operation" : "move",
+            "target" : "charSet_s"
+          }, {
+            "source" : "fetchedDate",
+            "operation" : "move",
+            "target" : "fetchedDate_dt"
+          }, {
+            "source" : "lastModified",
+            "operation" : "move",
+            "target" : "lastModified_dt"
+          }, {
+            "source" : "signature",
+            "operation" : "move",
+            "target" : "dedupeSignature_s"
+          }, {
+            "source" : "contentSignature",
+            "operation" : "move",
+            "target" : "signature_s"
+          }, {
+            "source" : "length",
+            "operation" : "move",
+            "target" : "length_l"
+          }, {
+            "source" : "mimeType",
+            "operation" : "move",
+            "target" : "mimeType_s"
+          }, {
+            "source" : "parent",
+            "operation" : "move",
+            "target" : "parent_s"
+          }, {
+            "source" : "owner",
+            "operation" : "move",
+            "target" : "owner_s"
+          }, {
+            "source" : "group",
+            "operation" : "move",
+            "target" : "group_s"
+          } ],
+          "reservedFieldsMappingAllowed" : false,
+          "skip" : false,
+          "id" : "FromMap",
+          "type" : "field-mapping"
+        },
+        "f.extraPageLoadDeltaChars" : 0,
+        "f.maintainCookies" : false,
+        "restrictToTreeUseHostAndPath" : false,
+        "sitemap_incremental_crawling" : false,
+        "f.screenshotFullscreen" : false,
+        "f.filteringRootTags" : [ "body", "head" ],
+        "f.timeoutMS" : 20000,
+        "failFastOnStartLinkFailure" : true,
+        "f.userAgentEmail" : "",
+        "startLinks" : [ "https://freidatest.ama-assn.org/Freida/search/idol/programList.do" ],
+        "dedupeField" : "id",
+        "f.discardLinkURLAnchors" : true,
+        "includeRegexes" : [ "^.*\\/Freida\\/search\\/idol\\/programDetail\\.do\\?pgmNbr=.*" ],
+        "chunkSize" : 100,
+        "f.simulateMobile" : false,
+        "f.obeyRobotsDelay" : false,
+        "f.obeyLinkNofollow" : false,
+        "f.useHighPerfJsEval" : false,
+        "deleteErrorsAfter" : -1,
+        "f.userAgentName" : "Lucidworks-Anda/2.0",
+        "retryEmit" : true,
+        "f.crawlJS" : false,
+        "depth" : -1,
+        "f.cookieSpec" : "browser-compatibility",
+        "refreshStartLinks" : true,
+        "f.maxSizeBytes" : 4194304,
+        "aliasExpiration" : 1,
+        "f.takeScreenshot" : false
+      }
+    }, {
+      "id" : "freida-dev",
+      "created" : "2016-08-25T20:36:36.956Z",
+      "modified" : "2016-08-25T20:36:36.956Z",
+      "connector" : "lucid.web",
+      "type" : "web",
+      "description" : "FREIDA Development Crawl",
+      "pipeline" : "freida-default",
+      "parserId" : "parser_freida-dev",
+      "properties" : {
+        "refreshOlderThan" : 1,
+        "f.appendTrailingSlashToLinks" : false,
+        "restrictToTreeIgnoredHostPrefixes" : [ "www", "jama", "login", "commerce" ],
+        "refreshErrors" : false,
+        "crawlDBType" : "in-memory",
+        "dedupeSaveSignature" : false,
+        "f.firefoxHeadlessBrowser" : true,
+        "f.discardLinkURLQueries" : false,
+        "fetchDelayMS" : 0,
+        "f.respectMetaEquivRedirects" : false,
+        "refreshAll" : false,
+        "commitAfterItems" : 10000,
+        "f.defaultMIMEType" : "application/octet-stream",
+        "f.extraLoadTimeMs" : 250,
+        "f.jsPageLoadTimeout" : 10000,
+        "restrictToTreeAllowSubdomains" : false,
+        "f.jsScriptTimeout" : 10000,
+        "f.requestCounterMinWaitMs" : 5000,
+        "maxItems" : -1,
+        "f.jsAjaxTimeout" : 10000,
+        "f.scrapeLinksBeforeFiltering" : false,
+        "dedupe" : true,
+        "trackEmbeddedIDs" : true,
+        "f.allowAllCertificates" : true,
+        "f.includeTagIDs" : [ ],
+        "collection" : "freidadev",
+        "f.obeyRobotsMeta" : false,
+        "f.credentialsFile" : "/var/fusion/latest/data/connectors/connectors-classic/container/lucid.web/freida-dev/login.json",
+        "forceRefresh" : false,
+        "delete404" : false,
+        "f.obeyRobots" : false,
+        "parserRetryCount" : 0,
+        "f.quitTimeoutMs" : 5000,
+        "f.index_items_discarded" : false,
+        "fetchDelayMSPerHost" : true,
+        "indexCrawlDBToSolr" : false,
+        "fetchThreads" : 1,
+        "f.requestRetryCount" : 0,
+        "f.jsEnabledAuth" : false,
+        "restrictToTree" : true,
+        "retainOutlinks" : true,
+        "f.defaultCharSet" : "UTF-8",
+        "f.useIpAddressForSslConnections" : false,
+        "f.useRequestCounter" : true,
+        "emitThreads" : 1,
+        "f.headlessBrowser" : true,
+        "f.useFirefox" : true,
+        "f.canonicalTagsRedirectLimit" : 4,
+        "diagnosticMode" : false,
+        "excludeExtensions" : [ ],
+        "f.obeyCharSet" : true,
+        "f.requestCounterMaxWaitMs" : 20000,
+        "f.followCanonicalTags" : false,
+        "excludeRegexes" : [ "^.*\\/Freida\\/search\\/idol\\/programList\\.do$" ],
+        "f.userAgentWebAddr" : "",
+        "delete" : true,
+        "initial_mapping" : {
+          "mappings" : [ {
+            "source" : "charSet",
+            "operation" : "move",
+            "target" : "charSet_s"
+          }, {
+            "source" : "fetchedDate",
+            "operation" : "move",
+            "target" : "fetchedDate_dt"
+          }, {
+            "source" : "lastModified",
+            "operation" : "move",
+            "target" : "lastModified_dt"
+          }, {
+            "source" : "signature",
+            "operation" : "move",
+            "target" : "dedupeSignature_s"
+          }, {
+            "source" : "contentSignature",
+            "operation" : "move",
+            "target" : "signature_s"
+          }, {
+            "source" : "length",
+            "operation" : "move",
+            "target" : "length_l"
+          }, {
+            "source" : "mimeType",
+            "operation" : "move",
+            "target" : "mimeType_s"
+          }, {
+            "source" : "parent",
+            "operation" : "move",
+            "target" : "parent_s"
+          }, {
+            "source" : "owner",
+            "operation" : "move",
+            "target" : "owner_s"
+          }, {
+            "source" : "group",
+            "operation" : "move",
+            "target" : "group_s"
+          } ],
+          "reservedFieldsMappingAllowed" : false,
+          "skip" : false,
+          "id" : "FromMap",
+          "type" : "field-mapping"
+        },
+        "f.extraPageLoadDeltaChars" : 0,
+        "f.maintainCookies" : false,
+        "restrictToTreeUseHostAndPath" : false,
+        "sitemap_incremental_crawling" : false,
+        "f.screenshotFullscreen" : false,
+        "f.filteringRootTags" : [ "body", "head" ],
+        "f.timeoutMS" : 15000,
+        "failFastOnStartLinkFailure" : true,
+        "f.userAgentEmail" : "",
+        "startLinks" : [ "https://freidadev.ama-assn.org/Freida/search/idol/programList.do" ],
+        "dedupeField" : "url",
+        "f.discardLinkURLAnchors" : true,
+        "includeRegexes" : [ "^.*\\/Freida\\/search\\/idol\\/programDetail\\.do\\?pgmNbr=.*" ],
+        "chunkSize" : 100,
+        "f.simulateMobile" : false,
+        "f.obeyRobotsDelay" : true,
+        "f.obeyLinkNofollow" : false,
+        "f.useHighPerfJsEval" : false,
+        "deleteErrorsAfter" : -1,
+        "f.userAgentName" : "Lucidworks-Anda/2.0",
+        "retryEmit" : true,
+        "f.crawlJS" : false,
+        "depth" : 3,
+        "f.cookieSpec" : "browser-compatibility",
+        "refreshStartLinks" : true,
+        "f.maxSizeBytes" : 4194304,
+        "aliasExpiration" : 1,
+        "f.takeScreenshot" : false
+      }
+    }, {
+      "id" : "jtest",
+      "created" : "2019-06-08T05:20:17.040Z",
+      "modified" : "2019-06-08T05:20:17.040Z",
+      "connector" : "lucid.web",
+      "type" : "web",
+      "description" : "Testing",
+      "pipeline" : "jtest",
+      "parserId" : "default",
+      "properties" : {
+        "refreshOlderThan" : -1,
+        "f.appendTrailingSlashToLinks" : false,
+        "refreshErrors" : false,
+        "restrictToTreeIgnoredHostPrefixes" : [ "www." ],
+        "dedupeSaveSignature" : false,
+        "crawlDBType" : "on-disk",
+        "f.firefoxHeadlessBrowser" : true,
+        "f.discardLinkURLQueries" : false,
+        "fetchDelayMS" : 0,
+        "f.respectMetaEquivRedirects" : false,
+        "refreshAll" : true,
+        "commitAfterItems" : 10000,
+        "f.defaultMIMEType" : "application/octet-stream",
+        "f.extraLoadTimeMs" : 250,
+        "f.jsPageLoadTimeout" : 20000,
+        "restrictToTreeAllowSubdomains" : false,
+        "f.jsScriptTimeout" : 20000,
+        "f.requestCounterMinWaitMs" : 5000,
+        "maxItems" : -1,
+        "f.jsAjaxTimeout" : 20000,
+        "dedupe" : false,
+        "f.scrapeLinksBeforeFiltering" : false,
+        "trackEmbeddedIDs" : true,
+        "f.allowAllCertificates" : false,
+        "collection" : "jtest",
+        "f.obeyRobotsMeta" : true,
+        "forceRefresh" : false,
+        "delete404" : true,
+        "f.obeyRobots" : true,
+        "parserRetryCount" : 0,
+        "f.quitTimeoutMs" : 5000,
+        "f.index_items_discarded" : false,
+        "fetchDelayMSPerHost" : true,
+        "fetchThreads" : 5,
+        "indexCrawlDBToSolr" : false,
+        "f.requestRetryCount" : 0,
+        "f.jsEnabledAuth" : false,
+        "retainOutlinks" : false,
+        "restrictToTree" : true,
+        "f.defaultCharSet" : "UTF-8",
+        "f.useIpAddressForSslConnections" : false,
+        "f.useRequestCounter" : true,
+        "emitThreads" : 5,
+        "f.headlessBrowser" : true,
+        "f.useFirefox" : false,
+        "f.canonicalTagsRedirectLimit" : 4,
+        "f.obeyCharSet" : true,
+        "f.requestCounterMaxWaitMs" : 20000,
+        "diagnosticMode" : false,
+        "f.followCanonicalTags" : false,
+        "delete" : true,
+        "initial_mapping" : {
+          "mappings" : [ {
+            "source" : "charSet",
+            "operation" : "move",
+            "target" : "charSet_s"
+          }, {
+            "source" : "fetchedDate",
+            "operation" : "move",
+            "target" : "fetchedDate_dt"
+          }, {
+            "source" : "lastModified",
+            "operation" : "move",
+            "target" : "lastModified_dt"
+          }, {
+            "source" : "signature",
+            "operation" : "move",
+            "target" : "dedupeSignature_s"
+          }, {
+            "source" : "contentSignature",
+            "operation" : "move",
+            "target" : "signature_s"
+          }, {
+            "source" : "length",
+            "operation" : "move",
+            "target" : "length_l"
+          }, {
+            "source" : "mimeType",
+            "operation" : "move",
+            "target" : "mimeType_s"
+          }, {
+            "source" : "parent",
+            "operation" : "move",
+            "target" : "parent_s"
+          }, {
+            "source" : "owner",
+            "operation" : "move",
+            "target" : "owner_s"
+          }, {
+            "source" : "group",
+            "operation" : "move",
+            "target" : "group_s"
+          } ],
+          "reservedFieldsMappingAllowed" : false,
+          "skip" : false,
+          "id" : "Anda",
+          "type" : "field-mapping"
+        },
+        "f.extraPageLoadDeltaChars" : 0,
+        "f.maintainCookies" : false,
+        "restrictToTreeUseHostAndPath" : false,
+        "sitemap_incremental_crawling" : false,
+        "f.screenshotFullscreen" : false,
+        "f.filteringRootTags" : [ "body", "head" ],
+        "startLinks" : [ "https://commerce-test.ama-assn.org/store/search/indexing/products.jsp" ],
+        "failFastOnStartLinkFailure" : true,
+        "f.timeoutMS" : 10000,
+        "f.discardLinkURLAnchors" : true,
+        "chunkSize" : 1,
+        "f.simulateMobile" : false,
+        "f.obeyRobotsDelay" : true,
+        "f.obeyLinkNofollow" : true,
+        "f.useHighPerfJsEval" : false,
+        "deleteErrorsAfter" : -1,
+        "f.userAgentName" : "Lucidworks-Anda/2.0",
+        "retryEmit" : true,
+        "f.crawlJS" : false,
+        "depth" : -1,
+        "f.cookieSpec" : "browser-compatibility",
+        "refreshStartLinks" : false,
+        "f.maxSizeBytes" : 4194304,
+        "aliasExpiration" : 1,
+        "f.takeScreenshot" : false
+      }
+    }, {
+      "id" : "searchcpt",
+      "created" : "2016-06-30T18:09:40.373Z",
+      "modified" : "2016-06-30T18:09:40.373Z",
+      "connector" : "lucid.solrxml",
+      "type" : "solrxml",
+      "description" : "XML Import for SearchRVU Application",
+      "pipeline" : "Default_Data",
+      "properties" : {
+        "initial_mapping" : {
+          "mappings" : [ ],
+          "reservedFieldsMappingAllowed" : false,
+          "skip" : false,
+          "id" : "FromMap",
+          "type" : "field-mapping"
+        },
+        "commit_on_finish" : true,
+        "path" : "/var/fusion/latest/data/searchCPT/",
+        "include_paths" : [ ".*\\.xml" ],
+        "exclude_paths" : [ ],
+        "generate_unique_key" : true,
+        "verify_access" : true,
+        "collection" : "searchcpt",
+        "max_docs" : -1,
+        "include_datasource_metadata" : false,
+        "url" : "file:/var/fusion/4.2.1/data/searchCPT/"
+      }
+    }, {
+      "id" : "synonyms",
+      "created" : "2016-09-07T19:32:23.597Z",
+      "modified" : "2021-01-28T21:50:41.356Z",
+      "connector" : "lucidworks.fs",
+      "type" : "lucidworks.fs",
+      "pipeline" : "CSV",
+      "parserId" : "_system",
+      "properties" : {
+        "depthLimitConfig" : {
+          "maxDepth" : -1
+        },
+        "addFileMetadata" : true,
+        "maximumItemLimitConfig" : {
+          "maxItems" : -1
+        },
+        "namePatternConfig" : {
+          "inclusiveRegexes" : [ ],
+          "exclusiveRegexes" : [ ],
+          "regexCacheSize" : 10000,
+          "includedFileExtensions" : [ "csv" ],
+          "excludedFileExtensions" : [ ]
+        },
+        "includeDirectories" : false,
+        "collection" : "OCM",
+        "initialFilePaths" : [ "/var/fusion/4.2.1/data/OCM/share/synonyms/synonym_list.csv" ],
+        "sizeLimitProperties" : {
+          "maxSizeBytes" : 4194304,
+          "minSizeBytes" : 0
+        }
+      }
+    }, {
+      "id" : "uploadInstitutionGeoLocationData",
+      "created" : "2018-09-25T14:56:45.921Z",
+      "modified" : "2018-09-25T14:56:45.921Z",
+      "connector" : "lucid.web",
+      "type" : "web",
+      "description" : "For table INSTITUTION (Daily time to start 2:15AM)",
+      "pipeline" : "freida-default",
+      "parserId" : "default",
+      "properties" : {
+        "refreshOlderThan" : -1,
+        "f.appendTrailingSlashToLinks" : false,
+        "refreshErrors" : false,
+        "restrictToTreeIgnoredHostPrefixes" : [ "www." ],
+        "crawlDBType" : "in-memory",
+        "dedupeSaveSignature" : false,
+        "f.firefoxHeadlessBrowser" : true,
+        "f.discardLinkURLQueries" : false,
+        "fetchDelayMS" : 0,
+        "f.respectMetaEquivRedirects" : false,
+        "refreshAll" : true,
+        "f.defaultMIMEType" : "application/octet-stream",
+        "f.jsPageLoadTimeout" : 10000,
+        "restrictToTreeAllowSubdomains" : false,
+        "f.jsScriptTimeout" : 10000,
+        "f.jsAjaxTimeout" : 10000,
+        "maxItems" : 1,
+        "trackEmbeddedIDs" : true,
+        "f.scrapeLinksBeforeFiltering" : false,
+        "dedupe" : false,
+        "f.allowAllCertificates" : false,
+        "collection" : "freida",
+        "forceRefresh" : false,
+        "delete404" : false,
+        "f.obeyRobots" : true,
+        "parserRetryCount" : 0,
+        "fetchDelayMSPerHost" : true,
+        "fetchThreads" : 5,
+        "indexCrawlDBToSolr" : false,
+        "restrictToTree" : true,
+        "retainOutlinks" : false,
+        "f.defaultCharSet" : "UTF-8",
+        "emitThreads" : 5,
+        "f.useFirefox" : true,
+        "diagnosticMode" : false,
+        "delete" : true,
+        "initial_mapping" : {
+          "reservedFieldsMappingAllowed" : false,
+          "skip" : false,
+          "type" : "field-mapping",
+          "mappings" : [ {
+            "source" : "charSet",
+            "target" : "charSet_s",
+            "operation" : "move"
+          }, {
+            "source" : "fetchedDate",
+            "target" : "fetchedDate_dt",
+            "operation" : "move"
+          }, {
+            "source" : "lastModified",
+            "target" : "lastModified_dt",
+            "operation" : "move"
+          }, {
+            "source" : "signature",
+            "target" : "dedupeSignature_s",
+            "operation" : "move"
+          }, {
+            "source" : "contentSignature",
+            "target" : "signature_s",
+            "operation" : "move"
+          }, {
+            "source" : "length",
+            "target" : "length_l",
+            "operation" : "move"
+          }, {
+            "source" : "mimeType",
+            "target" : "mimeType_s",
+            "operation" : "move"
+          }, {
+            "source" : "parent",
+            "target" : "parent_s",
+            "operation" : "move"
+          }, {
+            "source" : "owner",
+            "target" : "owner_s",
+            "operation" : "move"
+          }, {
+            "source" : "group",
+            "target" : "group_s",
+            "operation" : "move"
+          } ],
+          "id" : "Anda"
+        },
+        "restrictToTreeUseHostAndPath" : false,
+        "f.filteringRootTags" : [ "body", "head" ],
+        "startLinks" : [ "https://freidatest.ama-assn.org/Freida/institutionUploadWithGeoLocationData.do" ],
+        "failFastOnStartLinkFailure" : true,
+        "f.timeoutMS" : 10000,
+        "f.discardLinkURLAnchors" : true,
+        "chunkSize" : 1,
+        "f.obeyRobotsDelay" : true,
+        "deleteErrorsAfter" : -1,
+        "f.userAgentName" : "Lucidworks-Anda/2.0",
+        "retryEmit" : true,
+        "f.crawlJS" : false,
+        "depth" : 1,
+        "f.cookieSpec" : "browser-compatibility",
+        "f.maxSizeBytes" : 4194304,
+        "refreshStartLinks" : false,
+        "aliasExpiration" : 1
+      }
+    }, {
+      "id" : "uploadProgramIndividualGeoLocationData",
+      "created" : "2018-09-25T14:59:59.313Z",
+      "modified" : "2018-09-25T14:59:59.313Z",
+      "connector" : "lucid.web",
+      "type" : "web",
+      "description" : "For table PROGRAM_INDIVIDUAL (Daily time to start 2:30AM)",
+      "pipeline" : "freida-default",
+      "parserId" : "default",
+      "properties" : {
+        "refreshOlderThan" : -1,
+        "f.appendTrailingSlashToLinks" : false,
+        "refreshErrors" : false,
+        "restrictToTreeIgnoredHostPrefixes" : [ "www." ],
+        "crawlDBType" : "in-memory",
+        "dedupeSaveSignature" : false,
+        "f.firefoxHeadlessBrowser" : true,
+        "f.discardLinkURLQueries" : false,
+        "fetchDelayMS" : 0,
+        "f.respectMetaEquivRedirects" : false,
+        "refreshAll" : true,
+        "f.defaultMIMEType" : "application/octet-stream",
+        "f.jsPageLoadTimeout" : 10000,
+        "restrictToTreeAllowSubdomains" : false,
+        "f.jsScriptTimeout" : 10000,
+        "f.jsAjaxTimeout" : 10000,
+        "maxItems" : 1,
+        "trackEmbeddedIDs" : true,
+        "f.scrapeLinksBeforeFiltering" : false,
+        "dedupe" : false,
+        "f.allowAllCertificates" : false,
+        "collection" : "freida",
+        "forceRefresh" : false,
+        "delete404" : false,
+        "f.obeyRobots" : true,
+        "parserRetryCount" : 0,
+        "fetchDelayMSPerHost" : true,
+        "fetchThreads" : 5,
+        "indexCrawlDBToSolr" : false,
+        "restrictToTree" : true,
+        "retainOutlinks" : false,
+        "f.defaultCharSet" : "UTF-8",
+        "emitThreads" : 5,
+        "f.useFirefox" : true,
+        "diagnosticMode" : false,
+        "delete" : true,
+        "initial_mapping" : {
+          "reservedFieldsMappingAllowed" : false,
+          "skip" : false,
+          "type" : "field-mapping",
+          "mappings" : [ {
+            "source" : "charSet",
+            "target" : "charSet_s",
+            "operation" : "move"
+          }, {
+            "source" : "fetchedDate",
+            "target" : "fetchedDate_dt",
+            "operation" : "move"
+          }, {
+            "source" : "lastModified",
+            "target" : "lastModified_dt",
+            "operation" : "move"
+          }, {
+            "source" : "signature",
+            "target" : "dedupeSignature_s",
+            "operation" : "move"
+          }, {
+            "source" : "contentSignature",
+            "target" : "signature_s",
+            "operation" : "move"
+          }, {
+            "source" : "length",
+            "target" : "length_l",
+            "operation" : "move"
+          }, {
+            "source" : "mimeType",
+            "target" : "mimeType_s",
+            "operation" : "move"
+          }, {
+            "source" : "parent",
+            "target" : "parent_s",
+            "operation" : "move"
+          }, {
+            "source" : "owner",
+            "target" : "owner_s",
+            "operation" : "move"
+          }, {
+            "source" : "group",
+            "target" : "group_s",
+            "operation" : "move"
+          } ],
+          "id" : "Anda"
+        },
+        "restrictToTreeUseHostAndPath" : false,
+        "f.filteringRootTags" : [ "body", "head" ],
+        "startLinks" : [ "https://freidatest.ama-assn.org/Freida/programIndividualUploadWithGeoLocationData.do" ],
+        "failFastOnStartLinkFailure" : true,
+        "f.timeoutMS" : 10000,
+        "f.discardLinkURLAnchors" : true,
+        "chunkSize" : 1,
+        "f.obeyRobotsDelay" : true,
+        "deleteErrorsAfter" : -1,
+        "f.userAgentName" : "Lucidworks-Anda/2.0",
+        "retryEmit" : true,
+        "f.crawlJS" : false,
+        "depth" : 1,
+        "f.cookieSpec" : "browser-compatibility",
+        "f.maxSizeBytes" : 4194304,
+        "refreshStartLinks" : false,
+        "aliasExpiration" : 1
+      }
+    }, {
+      "id" : "uploadSeoProgramData",
+      "created" : "2018-09-25T14:53:25.942Z",
+      "modified" : "2018-09-25T14:53:25.942Z",
+      "connector" : "lucid.web",
+      "type" : "web",
+      "description" : "For table PROGRAM (Daily time to start 2AM)",
+      "pipeline" : "freida-default",
+      "parserId" : "default",
+      "properties" : {
+        "refreshOlderThan" : -1,
+        "f.appendTrailingSlashToLinks" : false,
+        "refreshErrors" : false,
+        "restrictToTreeIgnoredHostPrefixes" : [ "www." ],
+        "crawlDBType" : "in-memory",
+        "dedupeSaveSignature" : false,
+        "f.firefoxHeadlessBrowser" : true,
+        "f.discardLinkURLQueries" : false,
+        "fetchDelayMS" : 0,
+        "f.respectMetaEquivRedirects" : false,
+        "refreshAll" : true,
+        "f.defaultMIMEType" : "application/octet-stream",
+        "f.jsPageLoadTimeout" : 10000,
+        "restrictToTreeAllowSubdomains" : false,
+        "f.jsScriptTimeout" : 10000,
+        "f.jsAjaxTimeout" : 10000,
+        "maxItems" : 1,
+        "trackEmbeddedIDs" : true,
+        "f.scrapeLinksBeforeFiltering" : false,
+        "dedupe" : false,
+        "f.allowAllCertificates" : false,
+        "collection" : "freida",
+        "forceRefresh" : false,
+        "delete404" : false,
+        "f.obeyRobots" : true,
+        "parserRetryCount" : 0,
+        "fetchDelayMSPerHost" : true,
+        "fetchThreads" : 1,
+        "indexCrawlDBToSolr" : false,
+        "restrictToTree" : true,
+        "retainOutlinks" : false,
+        "f.defaultCharSet" : "UTF-8",
+        "emitThreads" : 1,
+        "f.useFirefox" : true,
+        "diagnosticMode" : false,
+        "delete" : true,
+        "initial_mapping" : {
+          "reservedFieldsMappingAllowed" : false,
+          "skip" : false,
+          "type" : "field-mapping",
+          "mappings" : [ {
+            "source" : "charSet",
+            "target" : "charSet_s",
+            "operation" : "move"
+          }, {
+            "source" : "fetchedDate",
+            "target" : "fetchedDate_dt",
+            "operation" : "move"
+          }, {
+            "source" : "lastModified",
+            "target" : "lastModified_dt",
+            "operation" : "move"
+          }, {
+            "source" : "signature",
+            "target" : "dedupeSignature_s",
+            "operation" : "move"
+          }, {
+            "source" : "contentSignature",
+            "target" : "signature_s",
+            "operation" : "move"
+          }, {
+            "source" : "length",
+            "target" : "length_l",
+            "operation" : "move"
+          }, {
+            "source" : "mimeType",
+            "target" : "mimeType_s",
+            "operation" : "move"
+          }, {
+            "source" : "parent",
+            "target" : "parent_s",
+            "operation" : "move"
+          }, {
+            "source" : "owner",
+            "target" : "owner_s",
+            "operation" : "move"
+          }, {
+            "source" : "group",
+            "target" : "group_s",
+            "operation" : "move"
+          } ],
+          "id" : "FromMap"
+        },
+        "restrictToTreeUseHostAndPath" : false,
+        "f.filteringRootTags" : [ "body", "head" ],
+        "startLinks" : [ "https://freidatest.ama-assn.org/Freida/programsUploadWithSeoData.do" ],
+        "failFastOnStartLinkFailure" : true,
+        "f.timeoutMS" : 120000,
+        "f.discardLinkURLAnchors" : true,
+        "chunkSize" : 1,
+        "f.obeyRobotsDelay" : true,
+        "deleteErrorsAfter" : -1,
+        "f.userAgentName" : "Lucidworks-Anda/2.0",
+        "retryEmit" : true,
+        "f.crawlJS" : false,
+        "depth" : 1,
+        "f.cookieSpec" : "browser-compatibility",
+        "f.maxSizeBytes" : 4194304,
+        "refreshStartLinks" : false,
+        "aliasExpiration" : 1
+      }
+    }, {
+      "id" : "vacantEmailNotification",
+      "created" : "2018-02-15T16:29:26.670Z",
+      "modified" : "2018-02-15T16:29:26.670Z",
+      "connector" : "lucid.web",
+      "type" : "web",
+      "description" : "This needs to be requested once per day to trigger an email to Vacancy Users",
+      "pipeline" : "Documents_Parsing",
+      "parserId" : "parser_vacantEmailNotification",
+      "properties" : {
+        "refreshOlderThan" : -1,
+        "emitThreads" : 1,
+        "diagnosticMode" : false,
+        "f.appendTrailingSlashToLinks" : false,
+        "restrictToTreeIgnoredHostPrefixes" : [ "www." ],
+        "refreshErrors" : false,
+        "crawlDBType" : "in-memory",
+        "dedupeSaveSignature" : false,
+        "f.userAgentWebAddr" : "",
+        "delete" : true,
+        "initial_mapping" : {
+          "reservedFieldsMappingAllowed" : false,
+          "skip" : false,
+          "label" : "field-mapping",
+          "type" : "field-mapping",
+          "mappings" : [ {
+            "source" : "charSet",
+            "target" : "charSet_s",
+            "operation" : "move"
+          }, {
+            "source" : "fetchedDate",
+            "target" : "fetchedDate_dt",
+            "operation" : "move"
+          }, {
+            "source" : "lastModified",
+            "target" : "lastModified_dt",
+            "operation" : "move"
+          }, {
+            "source" : "signature",
+            "target" : "dedupeSignature_s",
+            "operation" : "move"
+          }, {
+            "source" : "contentSignature",
+            "target" : "signature_s",
+            "operation" : "move"
+          }, {
+            "source" : "length",
+            "target" : "length_l",
+            "operation" : "move"
+          }, {
+            "source" : "mimeType",
+            "target" : "mimeType_s",
+            "operation" : "move"
+          }, {
+            "source" : "parent",
+            "target" : "parent_s",
+            "operation" : "move"
+          }, {
+            "source" : "owner",
+            "target" : "owner_s",
+            "operation" : "move"
+          }, {
+            "source" : "group",
+            "target" : "group_s",
+            "operation" : "move"
+          } ],
+          "id" : "FromMap"
+        },
+        "f.discardLinkURLQueries" : false,
+        "fetchDelayMS" : 0,
+        "f.respectMetaEquivRedirects" : false,
+        "restrictToTreeUseHostAndPath" : false,
+        "refreshAll" : false,
+        "f.defaultMIMEType" : "application/octet-stream",
+        "f.filteringRootTags" : [ "body", "head" ],
+        "f.timeoutMS" : 10000,
+        "failFastOnStartLinkFailure" : true,
+        "f.userAgentEmail" : "",
+        "startLinks" : [ "https://freidatest.ama-assn.org/Freida/vacantNotificationEmails.do" ],
+        "restrictToTreeAllowSubdomains" : false,
+        "maxItems" : 1,
+        "f.scrapeLinksBeforeFiltering" : false,
+        "dedupe" : false,
+        "chunkSize" : 50,
+        "f.allowAllCertificates" : false,
+        "f.obeyRobotsDelay" : true,
+        "collection" : "freida",
+        "deleteErrorsAfter" : -1,
+        "f.userAgentName" : "Lucidworks-Anda/2.0",
+        "f.credentialsFile" : "/var/fusion/data/connectors/container/lucid.anda/freida/login.json",
+        "forceRefresh" : true,
+        "retryEmit" : true,
+        "delete404" : false,
+        "f.obeyRobots" : true,
+        "depth" : 1,
+        "refreshStartLinks" : true,
+        "f.maxSizeBytes" : 4194304,
+        "fetchDelayMSPerHost" : true,
+        "aliasExpiration" : 1,
+        "indexCrawlDBToSolr" : false,
+        "fetchThreads" : 1,
+        "restrictToTree" : true,
+        "retainOutlinks" : true,
+        "f.defaultCharSet" : "UTF-8"
+      }
+    }, {
+      "id" : "webstore",
+      "created" : "2016-11-18T21:17:03.695Z",
+      "modified" : "2016-11-18T21:17:03.695Z",
+      "connector" : "lucid.web",
+      "type" : "web",
+      "pipeline" : "Documents_Parsing",
+      "parserId" : "_system",
+      "properties" : {
+        "refreshOlderThan" : -1,
+        "f.appendTrailingSlashToLinks" : false,
+        "restrictToTreeIgnoredHostPrefixes" : [ "www", "login", "jama" ],
+        "refreshErrors" : false,
+        "crawlDBType" : "in-memory",
+        "dedupeSaveSignature" : false,
+        "f.firefoxHeadlessBrowser" : true,
+        "f.discardLinkURLQueries" : false,
+        "fetchDelayMS" : 0,
+        "f.respectMetaEquivRedirects" : false,
+        "refreshAll" : false,
+        "commitAfterItems" : 10000,
+        "f.defaultMIMEType" : "application/octet-stream",
+        "f.extraLoadTimeMs" : 250,
+        "f.jsPageLoadTimeout" : 10000,
+        "restrictToTreeAllowSubdomains" : false,
+        "f.jsScriptTimeout" : 10000,
+        "f.requestCounterMinWaitMs" : 5000,
+        "f.jsAjaxTimeout" : 10000,
+        "maxItems" : -1,
+        "dedupe" : true,
+        "f.scrapeLinksBeforeFiltering" : false,
+        "trackEmbeddedIDs" : true,
+        "f.allowAllCertificates" : false,
+        "collection" : "webstore",
+        "f.obeyRobotsMeta" : false,
+        "forceRefresh" : false,
+        "delete404" : false,
+        "f.obeyRobots" : false,
+        "parserRetryCount" : 0,
+        "f.quitTimeoutMs" : 5000,
+        "f.index_items_discarded" : false,
+        "fetchDelayMSPerHost" : true,
+        "f.excludeTagClasses" : [ "relatedArea marginTop", "col-footer" ],
+        "indexCrawlDBToSolr" : false,
+        "fetchThreads" : 1,
+        "f.requestRetryCount" : 0,
+        "f.jsEnabledAuth" : false,
+        "restrictToTree" : true,
+        "retainOutlinks" : true,
+        "f.defaultCharSet" : "UTF-8",
+        "f.useIpAddressForSslConnections" : false,
+        "f.useRequestCounter" : true,
+        "emitThreads" : 1,
+        "f.headlessBrowser" : true,
+        "f.useFirefox" : true,
+        "f.canonicalTagsRedirectLimit" : 4,
+        "diagnosticMode" : false,
+        "f.obeyCharSet" : true,
+        "f.requestCounterMaxWaitMs" : 20000,
+        "f.followCanonicalTags" : false,
+        "f.excludeTagIDs" : [ "footer", "footerInfo" ],
+        "excludeRegexes" : [ ".*navAction.*", ".*\\/store\\/search\\/indexing\\/products\\.jsp$" ],
+        "f.userAgentWebAddr" : "",
+        "delete" : true,
+        "initial_mapping" : {
+          "mappings" : [ {
+            "source" : "charSet",
+            "operation" : "move",
+            "target" : "charSet_s"
+          }, {
+            "source" : "fetchedDate",
+            "operation" : "move",
+            "target" : "fetchedDate_dt"
+          }, {
+            "source" : "lastModified",
+            "operation" : "move",
+            "target" : "lastModified_dt"
+          }, {
+            "source" : "signature",
+            "operation" : "move",
+            "target" : "dedupeSignature_s"
+          }, {
+            "source" : "contentSignature",
+            "operation" : "move",
+            "target" : "signature_s"
+          }, {
+            "source" : "length",
+            "operation" : "move",
+            "target" : "length_l"
+          }, {
+            "source" : "mimeType",
+            "operation" : "move",
+            "target" : "mimeType_s"
+          }, {
+            "source" : "parent",
+            "operation" : "move",
+            "target" : "parent_s"
+          }, {
+            "source" : "owner",
+            "operation" : "move",
+            "target" : "owner_s"
+          }, {
+            "source" : "group",
+            "operation" : "move",
+            "target" : "group_s"
+          } ],
+          "reservedFieldsMappingAllowed" : false,
+          "skip" : false,
+          "id" : "FromMap",
+          "type" : "field-mapping"
+        },
+        "f.extraPageLoadDeltaChars" : 0,
+        "f.maintainCookies" : false,
+        "restrictToTreeUseHostAndPath" : false,
+        "sitemap_incremental_crawling" : false,
+        "f.screenshotFullscreen" : false,
+        "f.filteringRootTags" : [ "body", "head" ],
+        "f.timeoutMS" : 20000,
+        "failFastOnStartLinkFailure" : true,
+        "f.userAgentEmail" : "",
+        "startLinks" : [ "https://commerce-test.ama-assn.org/store/search/indexing/products.jsp" ],
+        "dedupeField" : "id",
+        "f.discardLinkURLAnchors" : true,
+        "includeRegexes" : [ ".*\\/product.jsp.*" ],
+        "chunkSize" : 100,
+        "f.simulateMobile" : false,
+        "f.obeyRobotsDelay" : true,
+        "f.obeyLinkNofollow" : false,
+        "f.useHighPerfJsEval" : false,
+        "deleteErrorsAfter" : -1,
+        "f.userAgentName" : "Lucidworks-Anda/2.0",
+        "retryEmit" : true,
+        "f.crawlJS" : false,
+        "depth" : -1,
+        "f.cookieSpec" : "browser-compatibility",
+        "refreshStartLinks" : true,
+        "f.maxSizeBytes" : 4194304,
+        "aliasExpiration" : 1,
+        "f.takeScreenshot" : false
+      }
+    }, {
+      "id" : "webstore_dev",
+      "created" : "2016-10-26T18:54:21.003Z",
+      "modified" : "2016-10-26T18:54:21.003Z",
+      "connector" : "lucid.web",
+      "type" : "web",
+      "pipeline" : "Documents_Parsing",
+      "parserId" : "_system",
+      "properties" : {
+        "f.excludeSelectors" : [ ],
+        "refreshOlderThan" : -1,
+        "f.sitemapURLs" : [ ],
+        "f.appendTrailingSlashToLinks" : false,
+        "restrictToTreeIgnoredHostPrefixes" : [ "www", "login", "jama" ],
+        "refreshErrors" : false,
+        "crawlDBType" : "in-memory",
+        "dedupeSaveSignature" : false,
+        "f.firefoxHeadlessBrowser" : true,
+        "f.discardLinkURLQueries" : false,
+        "fetchDelayMS" : 0,
+        "f.respectMetaEquivRedirects" : false,
+        "refreshAll" : true,
+        "commitAfterItems" : 10000,
+        "f.defaultMIMEType" : "application/octet-stream",
+        "f.extraLoadTimeMs" : 250,
+        "f.jsPageLoadTimeout" : 10000,
+        "restrictToTreeAllowSubdomains" : false,
+        "f.jsScriptTimeout" : 10000,
+        "f.requestCounterMinWaitMs" : 5000,
+        "f.jsAjaxTimeout" : 10000,
+        "maxItems" : -1,
+        "dedupe" : true,
+        "f.scrapeLinksBeforeFiltering" : false,
+        "trackEmbeddedIDs" : true,
+        "f.allowAllCertificates" : true,
+        "collection" : "webstoredev",
+        "f.obeyRobotsMeta" : false,
+        "forceRefresh" : false,
+        "delete404" : false,
+        "f.obeyRobots" : false,
+        "parserRetryCount" : 0,
+        "f.quitTimeoutMs" : 5000,
+        "f.index_items_discarded" : false,
+        "fetchDelayMSPerHost" : true,
+        "f.excludeTagClasses" : [ "relatedArea marginTop", "col-footer" ],
+        "indexCrawlDBToSolr" : false,
+        "fetchThreads" : 1,
+        "f.requestRetryCount" : 0,
+        "f.jsEnabledAuth" : false,
+        "restrictToTree" : true,
+        "retainOutlinks" : true,
+        "f.defaultCharSet" : "UTF-8",
+        "f.useIpAddressForSslConnections" : false,
+        "f.useRequestCounter" : true,
+        "emitThreads" : 1,
+        "f.headlessBrowser" : true,
+        "f.useFirefox" : true,
+        "f.canonicalTagsRedirectLimit" : 4,
+        "diagnosticMode" : false,
+        "f.obeyCharSet" : true,
+        "f.requestCounterMaxWaitMs" : 20000,
+        "f.followCanonicalTags" : false,
+        "f.excludeTagIDs" : [ "footer", "footerInfo" ],
+        "excludeRegexes" : [ ".*navAction.*", ".*\\/store\\/search\\/indexing\\/products\\.jsp$" ],
+        "f.userAgentWebAddr" : "",
+        "delete" : true,
+        "initial_mapping" : {
+          "mappings" : [ {
+            "source" : "charSet",
+            "operation" : "move",
+            "target" : "charSet_s"
+          }, {
+            "source" : "fetchedDate",
+            "operation" : "move",
+            "target" : "fetchedDate_dt"
+          }, {
+            "source" : "lastModified",
+            "operation" : "move",
+            "target" : "lastModified_dt"
+          }, {
+            "source" : "signature",
+            "operation" : "move",
+            "target" : "dedupeSignature_s"
+          }, {
+            "source" : "contentSignature",
+            "operation" : "move",
+            "target" : "signature_s"
+          }, {
+            "source" : "length",
+            "operation" : "move",
+            "target" : "length_l"
+          }, {
+            "source" : "mimeType",
+            "operation" : "move",
+            "target" : "mimeType_s"
+          }, {
+            "source" : "parent",
+            "operation" : "move",
+            "target" : "parent_s"
+          }, {
+            "source" : "owner",
+            "operation" : "move",
+            "target" : "owner_s"
+          }, {
+            "source" : "group",
+            "operation" : "move",
+            "target" : "group_s"
+          } ],
+          "reservedFieldsMappingAllowed" : false,
+          "skip" : false,
+          "id" : "FromMap",
+          "type" : "field-mapping"
+        },
+        "f.extraPageLoadDeltaChars" : 0,
+        "f.maintainCookies" : false,
+        "restrictToTreeUseHostAndPath" : false,
+        "sitemap_incremental_crawling" : false,
+        "f.screenshotFullscreen" : false,
+        "f.filteringRootTags" : [ "body", "head" ],
+        "f.timeoutMS" : 10000,
+        "failFastOnStartLinkFailure" : true,
+        "f.userAgentEmail" : "",
+        "startLinks" : [ "https://commerce-dev.ama-assn.org/store/search/indexing/products.jsp" ],
+        "dedupeField" : "id",
+        "includeExtensions" : [ ],
+        "f.discardLinkURLAnchors" : true,
+        "includeRegexes" : [ ".*\\/product.jsp.*" ],
+        "chunkSize" : 100,
+        "f.simulateMobile" : false,
+        "f.obeyRobotsDelay" : true,
+        "f.obeyLinkNofollow" : false,
+        "f.useHighPerfJsEval" : false,
+        "f.bulkStartLinks" : "",
+        "deleteErrorsAfter" : -1,
+        "f.userAgentName" : "Lucidworks-Anda/2.0",
+        "retryEmit" : true,
+        "f.crawlJS" : false,
+        "depth" : -1,
+        "f.cookieSpec" : "browser-compatibility",
+        "refreshStartLinks" : true,
+        "f.maxSizeBytes" : 4194304,
+        "aliasExpiration" : 1,
+        "f.takeScreenshot" : false
+      }
+    } ]
+  },
+  "metadata" : {
+    "formatVersion" : "1",
+    "exportedBy" : "72b6a428-2dc5-401e-be9d-bff99e0d4ee0",
+    "exportedDate" : "2021-09-07T19:09:35.697Z",
+    "fusionVersion" : "4.2.1",
+    "fusionGuid" : "6ca66163-1a31-4ac2-a4ce-3d5de98c0c53"
+  }
+}
