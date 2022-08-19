@@ -21,9 +21,10 @@ dependencies {
    implementation group: 'org.spockframework', name: 'spock-core', version: '2.0-groovy-3.0'
 
     // https://mvnrepository.com/artifact/org.apache.solr/solr-solrj
-    implementation group: 'org.apache.solr', name: 'solr-solrj', version: '8.11.0'
+    implementation group: 'org.apache.solr', name: 'solr-solrj', version: '8.11.1'
 
     implementation 'log4j:log4j:1.2.17'
+//    implementation 'log4j:core'
 
 
     // https://stackoverflow.com/questions/48843481/jaxp-parse-error-on-valid-xml/48843482#48843482
@@ -50,7 +51,7 @@ dependencies {
     // https://mvnrepository.com/artifact/org.slf4j/slf4j-log4j12
 //    testImplementation group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.36', ext: 'pom'
 //    implementation "org.slf4j:slf4j-simple:1.7.36"
-//    implementation "org.slf4j:slf4j-log4j12:1.7.36"
+    implementation "org.slf4j:slf4j-log4j12:1.7.36"
 
     // https://mvnrepository.com/artifact/org.apache.poi/ooxml-schemas
 //    implementation group: 'org.apache.poi', name: 'ooxml-schemas', version: '1.4'
