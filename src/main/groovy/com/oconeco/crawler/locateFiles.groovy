@@ -21,6 +21,19 @@ String solrUrl = options.solrUrl
 
 def startFolders = options.fs
 log.info "Start folders: $startFolders"
+String configLocation = options.config
+File cfgFile = new File(configLocation)
+if (!cfgFile.exists()) {
+    cfgFile = new File(getClass().getResource(configLocation).toURI())
+    if (cfgFile.exists()) {
+        log.info "Found config file (${configLocation}) in resources: ${cfgFile.absolutePath}"
+    } else {
+        throw new IllegalArgumentException("Config file: $cfgFile does not exist, bailing...")
+    }
+} else {
+    log.info "cfg file: ${cfgFile.absolutePath}"
+}
+ConfigObject config = new ConfigSlurper().parse(cfgFile.toURI().toURL())
 
 Date start = new Date()
 SolrSaver solrSaver = new SolrSaver(solrUrl, 'Documents Locate')
@@ -30,13 +43,16 @@ if (wipeContent){
     def foo = solrSaver.clearCollection()
     log.info "Clear results: $foo"
 }
+
+def fileNamePatterns = config.files.namePatterns
+def folderNamePatterns = config.folders.namePatterns
 Long fileCount = 0
 startFolders.each { String sf ->
     File startFolder = new File(sf)
     log.info "Crawling parent folder: $startFolder"
 
     // get list of non-noisy folders to crawl (or compare against stored info (check if we need to crawl...
-    Set<File> foldersToCrawl = LocalFileCrawler.getFoldersToCrawl(startFolder)
+    Set<File> foldersToCrawl = LocalFileCrawler.getFoldersToCrawl(startFolder, fileNamePatterns)
 
     def uresplist = solrSaver.saveFolderList(foldersToCrawl)
     log.debug "Starting Folder ($sf) Update responses: $uresplist"
