@@ -78,6 +78,11 @@ Starting solr:
 
 
 
+
 ## various notes:
 
 https://en.wikipedia.org/wiki/List_of_archive_formats
+
+There is a nice Solr interface available at:
+https://github.com/mrseanr/solr-admin-pro
+It is more solr admin than user query/browsing, but still quite nice.
