@@ -1,6 +1,7 @@
 package com.oconeco.models
 
 import com.oconeco.analysis.BaseAnalyzer
+import com.oconeco.analysis.FolderAnalyzer
 import com.oconeco.persistence.SolrSaver
 import org.apache.commons.io.FilenameUtils
 import org.apache.log4j.Logger
@@ -35,28 +36,15 @@ class FileFS extends BaseObject {
         extension = FilenameUtils.getExtension(f.name)
     }
 
-//    linkFolders(FileFS parentFolder) {
-//        log.info "linkFolders(parentFolder:${parentFolder.directory.name})"
-//        if (parentFolder) {
-//            log.info "\t\tLink parent and child/this folder... "
-//            parentFolder.subdirFolders << this
-//            if (!parentFolder.depth > 0) {
-//                log.warn "Parent (${parentFolder.directory} depth was 0, set to 1 (is this the start of the crawl?)"
-//                parentFolder.depth = 1
-//            }
-//            this.parentFolder = parentFolder
-//            this.depth = parentFolder.depth + 1
-//        }
-//    }
 
     // todo -- should this be object.analze, or analyzer.analyze(object)???
     def analyze(BaseAnalyzer analyzer) {
-        log.info "Analyze Folder: $this with analyzer:$analyzer"
+        log.info "MORE CODE here:: Analyze Folder: $this with analyzer:$analyzer"
     }
 
     String toString() {
         String s = null
-        if(assignedTypes) {
+        if (assignedTypes) {
             s = "${type}: ${name} :: (${assignedTypes[0]})"
         } else {
             s = "${type}: ${name}"
@@ -64,14 +52,35 @@ class FileFS extends BaseObject {
         return s
     }
 
-    SolrInputDocument toSolrInputDocument(){
+    SolrInputDocument toSolrInputDocument() {
         File f = me
         SolrInputDocument sid = super.toSolrInputDocument()
 //        sid.addField(SolrSaver.FLD_SIZE, size)
-        if(extension) {
+        if (extension) {
             sid.addField(SolrSaver.FLD_EXTENSION_SS, extension)
+            sid.addField(SolrSaver.FLD_NAME_SIZE_S, "${f.name}:${f.size()}")
         }
 //        sid.addField(SolrSaver.FLD_DEPTH, depth)
         return sid
+    }
+
+    boolean isArchive(FileFS ffs) {
+        int fileSignature = 0;
+        File f = ffs.me
+        try (RandomAccessFile raf = new RandomAccessFile(f, "r")) {
+            fileSignature = raf.readInt();
+        } catch (IOException e) {
+            log.warn "File ($ffs) io exception checking if we have an archive: $e"
+        }
+        boolean isArchive = fileSignature == 0x504B0304 || fileSignature == 0x504B0506 || fileSignature == 0x504B0708 || fileSignature== 529205248 || fileSignature== 529205268
+        if(ffs.assignedTypes.contains(FolderAnalyzer.ARCHIVE)) {
+            if(!isArchive) {
+                log.info "Should be archive: $ffs -> ($fileSignature) -- $isArchive"
+            } else {
+                log.debug "is archive: $ffs"
+            }
+        }
+        return isArchive
+
     }
 }

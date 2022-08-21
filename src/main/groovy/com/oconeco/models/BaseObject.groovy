@@ -58,7 +58,7 @@ abstract class BaseObject {
         sid.setField(SolrSaver.FLD_SIZE, size)
         sid.setField(SolrSaver.FLD_DEPTH, depth)
         sid.setField(SolrSaver.FLD_ASSIGNED_TYPES, assignedTypes)
-        sid.setField(SolrSaver.FLD_TAG_SS, taggedTypes)
+        if(taggedTypes) sid.setField(SolrSaver.FLD_TAG_SS, taggedTypes)
 
 //        sid.addField(SolrSaver.FLD_, )
 //        sid.addField(SolrSaver.FLD_, )

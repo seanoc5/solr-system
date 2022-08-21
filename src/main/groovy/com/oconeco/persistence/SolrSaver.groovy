@@ -50,8 +50,11 @@ class SolrSaver {
     public static final String FLD_DATA_SOURCE = "data_source_s"
     public static final String FLD_TAG_SS = "tag_ss"
     public static final String FLD_ASSIGNED_TYPES = "assignedTypes_ss"
+    public static final String FLD_CHILDASSIGNED_TYPES = "childAssignedTypes_ss"
     public static final String FLD_SIZE = "size_i"
     public static final String FLD_SAME_NAME_COUNT = "sameNameCount_i"
+    public static final String FLD_NAME_SIZE_S = "nameSize_s"
+
     public static String FLD_IGNORED_FILES_COUNT = 'ignoredFilesCount_i'
     public static String FLD_IGNORED_FILES = 'ignoredFiles'
     public static String FLD_IGNORED_FOLDERS_COUNT = 'ignoredFoldersCount_i'

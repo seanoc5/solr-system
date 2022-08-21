@@ -3,6 +3,7 @@ package com.oconeco.crawler
 import com.oconeco.analysis.FolderAnalyzer
 import com.oconeco.helpers.SolrCrawlArgParser
 import com.oconeco.models.FolderFS
+import com.oconeco.models.RecursingFolderFS
 import com.oconeco.persistence.SolrSaver
 import org.apache.log4j.Logger
 import org.apache.solr.common.SolrInputDocument
@@ -54,7 +55,7 @@ startFolders.each { String crawlName, String sf ->
     log.info "Crawling parent folder: $startFolder"
 
     File f = new File(sf)
-    FolderFS folderFS = new FolderFS(f, 1, ignoreFiles, ignoreFolders)
+    RecursingFolderFS folderFS = new RecursingFolderFS(f, 1, ignoreFiles, ignoreFolders)
 
     // ------------------ Solr Stuff -------------------
     SolrSaver solrSaver = new SolrSaver(solrUrl, crawlName)

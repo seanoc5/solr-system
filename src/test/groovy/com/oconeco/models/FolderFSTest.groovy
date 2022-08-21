@@ -20,13 +20,13 @@ class FolderFSTest extends Specification {
         FolderFS folder = new FolderFS(src, 1)
 
         then:
-        folder.size == 195194
+        folder.size == 711575
         folder.countTotal == 20
 
         folder.filesFS.size() == 18
         folder.countFiles == 18
 
-        folder.childFolders.size() == 2
+        folder.subDirectories.size() == 2
         folder.countSubdirs == 2
     }
 
@@ -39,13 +39,13 @@ class FolderFSTest extends Specification {
         FolderFS folder = new FolderFS(src, 1, ~/.*\.(pem|go|xml)$/, ~/(ignoreMe|ignoreYou)/)
 
         then:
-        folder.size == 126373
+        folder.size == 642754
         folder.countTotal == 15
 
         folder.filesFS.size() == 14
         folder.countFiles == 14
 
-        folder.childFolders.size() == 1
+        folder.subDirectories.size() == 1
         folder.countSubdirs == 1
 
         folder.ignoredFolders.size() == 1
@@ -62,7 +62,7 @@ class FolderFSTest extends Specification {
         then:
         folder.filesFS.size()==14
         solrDocs.size() == 15
-        folder.childFolders.size()==1
+        folder.subDirectories.size()==1
         folder.ignoredFolders.size()==1
         folder.ignoredFiles.size()==4
     }
@@ -80,8 +80,8 @@ class FolderFSTest extends Specification {
         List keys = assignmentGroupedFiles.keySet().toList()
 
         then:
-        keys.size == 7
-        keys == ['archive', 'techDev', 'office', 'config', 'instructions', 'data', 'media']
+        keys.size == 8
+        keys == ['techDev', 'archive', 'office', 'config', 'instructions', 'data', 'control', 'media']
 
     }
 

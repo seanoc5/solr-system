@@ -39,7 +39,9 @@ class FolderFS extends BaseObject {
     List<Long> filesSizes = []
     // more useful metadata
     FolderFS parentFolder = null
+    List<File> subDirectories = []
     List<FolderFS> childFolders = []
+    List<String> childAssignedTypes = []
     List<FileFS> ignoredFiles = []
     List<FolderFS> ignoredFolders = []
 
@@ -56,10 +58,14 @@ class FolderFS extends BaseObject {
 //    List tempFiles = []
 //    List symLinks = []
 //    List hardLinks = []
+    FolderFS(String srcPath, int depth = 1, Pattern ignoreFilesPattern = null, Pattern ignoreSubdirectories = null) {
+        this(new File(srcPath), depth, ignoreFilesPattern, ignoreSubdirectories)
+        log.debug "convenience constructor taking a string path($srcPath) and calling proper constructor with file..."
+    }
 
 
-    FolderFS(File srcFolder, int depth = 1, Pattern ignoreFilesPattern = null, Pattern ignoreSubdirectories = null, boolean recurse = false) {
-        log.info "FolderFS [$depth] ::::  (srcFolder:${srcFolder.absolutePath}) constructor"
+    FolderFS(File srcFolder, int depth = 1, Pattern ignoreFilesPattern = null, Pattern ignoreSubdirectories = null) {
+        log.info "$depth) ${srcFolder.absolutePath}) FolderFS constructor"
         if (srcFolder?.exists()) {
             id = srcFolder.absolutePath
             me = srcFolder
@@ -69,35 +75,41 @@ class FolderFS extends BaseObject {
             log.debug "\t\tFiltering folder with ignore pattern: $ignoreFilesPattern "
             srcFolder.eachFile { File f ->
                 if (f.isFile()) {
-                    if (ignoreFilesPattern && f.name ==~ ignoreFilesPattern) {
-                        FileFS ffs = new FileFS(f, depth)
+//                    FileFS ffs = processFile(ignoreFilesPattern, f, depth)
+                    FileFS ffs = new FileFS(f)
+                    if(f.name ==~ ignoreFilesPattern) {
                         ignoredFiles << ffs
-                        log.info "\t\t\tIGNORING ____file: $f because it matches ignoreFiles pattern: $ignoreFilesPattern"
                     } else {
-                        processFile(f, depth)
+                        filesFS << ffs
                         diskSpace += f.size()
-
                     }
+                    log.debug "\t\tProcessed file: $ffs"
                 } else if (f.isDirectory()) {
-                    if(f.name ==~ ignoreSubdirectories) {
-                        log.info "\t\t\tIGNORING ++++FOLDER:$f because name matches ignore subdir pattern: $ignoreSubdirectories"
-                        FolderFS ffs = new FolderFS(f, depth + 1, ignoreFilesPattern, IGNORE_ALL)
-                        ignoredFolders << ffs
-                    } else {
-                        log.debug "FolderFS ($srcFolder) processing subdir:$f "
-                        FolderFS ffs = new FolderFS(f, depth+1, ignoreFilesPattern, ignoreSubdirectories)
-                        childFolders << ffs
-                    }
+                    processDirectory(f, ignoreSubdirectories, depth, ignoreFilesPattern, srcFolder)
                 }
             }
 
             countFiles = filesFS.size()
-            countSubdirs = childFolders.size()
+            countSubdirs = subDirectories.size()
             countTotal = countFiles + countSubdirs
             this.size = diskSpace
 
         } else {
             throw new IllegalArgumentException("Sourc folder (${srcFolder.absolutePath}) does not exist!")
+        }
+    }
+
+
+    public void processDirectory(File f, Pattern ignoreSubdirectories, int depth, Pattern ignoreFilesPattern, File srcFolder) {
+        if (f.name ==~ ignoreSubdirectories) {
+            log.info "\t\t\tIGNORING ++++FOLDER:$f because name matches ignore subdir pattern: $ignoreSubdirectories"
+            FolderFS ffs = new FolderFS(f, depth + 1, ignoreFilesPattern, IGNORE_ALL)
+            ignoredFolders << ffs
+        } else {
+            log.debug "FolderFS ($srcFolder) processing subdir:$f "
+            subDirectories << f
+//            FolderFS ffs = new FolderFS(f, depth + 1, ignoreFilesPattern, ignoreSubdirectories)
+//            childFolders << ffs
         }
     }
 
@@ -108,16 +120,16 @@ class FolderFS extends BaseObject {
      * @param ignoreFiles
      * @param f
      */
-    public void processFile(File f, int depth = 1) {
-
-        FileFS fileFS = new FileFS(f)
-        filesFS << fileFS
-
-        fileDates << f.lastModified()
-        filesSizes << f.size()
-
-        // todo detect/process links (hard or symbolic), also sockets, and other outliers
-    }
+//    public void processFile(File f, int depth = 1) {
+//
+//        FileFS fileFS = new FileFS(f)
+//        filesFS << fileFS
+//
+//        fileDates << f.lastModified()
+//        filesSizes << f.size()
+//
+//        // todo detect/process links (hard or symbolic), also sockets, and other outliers
+//    }
 
 /*    def linkFolders(FolderFS parentFolder) {
         log.info "linkFolders(parentFolder:${parentFolder.me.name})"
@@ -139,10 +151,12 @@ class FolderFS extends BaseObject {
             throw new IllegalArgumentException("Analyzer not instance of Folder Analyzer, throwing error...")
         }
         FolderAnalyzer analyzer = baseAnalyzer
-        analyzer.assignFolderType(this)
-        def foo = analyzer.assignFileTypes(filesFS)
+        childAssignedTypes = analyzer.assignFileTypes(filesFS)
+//        def archiveResults = analyzer.analyzeArchives(filesFS)
 
-        return foo      // todo-- improve return value
+        List<String> folderLabels = analyzer.assignFolderType(this)
+
+        return childAssignedTypes + folderLabels      // todo-- improve return value
     }
 
     String toString() {
@@ -168,6 +182,9 @@ class FolderFS extends BaseObject {
         }
         if (sameNameCount > 1){
             sid.setField(SolrSaver.FLD_SAME_NAME_COUNT, sameNameCount)
+        }
+        if(childAssignedTypes){
+            sid.setField(SolrSaver.FLD_CHILDASSIGNED_TYPES, childAssignedTypes)
         }
 
         sidList << sid

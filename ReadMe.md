@@ -75,3 +75,9 @@ Starting solr:
    - system
    - archive/backup
    - web (?)
+
+
+
+## various notes:
+
+https://en.wikipedia.org/wiki/List_of_archive_formats
