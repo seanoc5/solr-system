@@ -3,6 +3,9 @@ import org.apache.log4j.Logger
 
 import java.util.regex.Pattern
 
+/**
+ * @deprecated early test for processing files, see @locateFoldersFSConstructor
+ */
 //DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(dir)))
 Logger log = Logger.getLogger(this.class.name);
 
