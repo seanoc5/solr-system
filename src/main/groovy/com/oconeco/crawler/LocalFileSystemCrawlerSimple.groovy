@@ -9,6 +9,10 @@ import org.apache.log4j.Logger
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 /**
+ * @deprecated early test for processing files, see @locateFoldersFSConstructor
+ */
+
+/**
  * Crawl file system but check stored info and only update folders/files which are newer than stored info
  * todo -- finish comparison code
  * Created by sean on 11/4/15.
