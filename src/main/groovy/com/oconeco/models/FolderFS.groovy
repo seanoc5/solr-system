@@ -1,6 +1,7 @@
 package com.oconeco.models
 
 import com.oconeco.analysis.BaseAnalyzer
+import com.oconeco.analysis.FileAnalyzer
 import com.oconeco.analysis.FolderAnalyzer
 import com.oconeco.persistence.SolrSaver
 import org.apache.log4j.Logger
@@ -43,49 +44,51 @@ class FolderFS extends BaseObject {
     List<FolderFS> childFolders = []
     List<String> childAssignedTypes = []
     List<FileFS> ignoredFiles = []
+
+    // todo -- do we need/want both Files and FolderFSs??
     List<FolderFS> ignoredFolders = []
+    List<File> ignoredDirectories = []
 
     /** in a given crawl, count 'duplicate' names as a metric for the anaylzer */
     int sameNameCount = 0
     public static final Pattern IGNORE_ALL = ~/.*/
 
-//    List<String> systemFileType = []
-//    List<String> folderPermissions = []
-//    List filePermissions = []
-//    List contentFiles = []
-//    List supportFiles = []
-//    List hiddenFiles = []
-//    List tempFiles = []
-//    List symLinks = []
-//    List hardLinks = []
-    FolderFS(String srcPath, int depth = 1, Pattern ignoreFilesPattern = null, Pattern ignoreSubdirectories = null) {
-        this(new File(srcPath), depth, ignoreFilesPattern, ignoreSubdirectories)
+    FolderFS(String srcPath, int depth = 1, Pattern ignoreFilesPattern = null, Pattern ignoreSubdirectories = null, Boolean recurse = false) {
+        this(new File(srcPath), depth, ignoreFilesPattern, ignoreSubdirectories, recurse)
         log.debug "convenience constructor taking a string path($srcPath) and calling proper constructor with file..."
     }
 
 
-    FolderFS(File srcFolder, int depth = 1, Pattern ignoreFilesPattern = null, Pattern ignoreSubdirectories = null) {
-        log.info "$depth) ${srcFolder.absolutePath}) FolderFS constructor"
+    /**
+     * This constructor has the ability to recurse through the filesystem and build tree
+     * @param srcFolder
+     * @param depth
+     * @param ignoreFilesPattern
+     * @param ignoreSubdirectories
+     */
+    FolderFS(File srcFolder, int depth = 1, Pattern ignoreFilesPattern = null, Pattern ignoreSubdirectories = null, boolean recurse = false, FolderFS parentFolderFS = null) {
+        log.debug '\t'*depth + "$depth) ${srcFolder.absolutePath}) FolderFS constructor"
         if (srcFolder?.exists()) {
             id = srcFolder.absolutePath
             me = srcFolder
             name = srcFolder.name
             type = TYPE
             long diskSpace = 0
+            lastModifiedDate = new Date(srcFolder.lastModified())
+            this.depth = depth
             log.debug "\t\tFiltering folder with ignore pattern: $ignoreFilesPattern "
             srcFolder.eachFile { File f ->
                 if (f.isFile()) {
-//                    FileFS ffs = processFile(ignoreFilesPattern, f, depth)
-                    FileFS ffs = new FileFS(f)
-                    if(f.name ==~ ignoreFilesPattern) {
+                    FileFS ffs = new FileFS(f, depth)
+                    if (f.name ==~ ignoreFilesPattern) {
                         ignoredFiles << ffs
                     } else {
                         filesFS << ffs
                         diskSpace += f.size()
                     }
-                    log.debug "\t\tProcessed file: $ffs"
+//                    log.debug "\t\tProcessed file: $ffs"
                 } else if (f.isDirectory()) {
-                    processDirectory(f, ignoreSubdirectories, depth, ignoreFilesPattern, srcFolder)
+                    processDirectory(f, depth, ignoreSubdirectories, ignoreFilesPattern, srcFolder, recurse, parentFolderFS)
                 }
             }
 
@@ -100,16 +103,24 @@ class FolderFS extends BaseObject {
     }
 
 
-    public void processDirectory(File f, Pattern ignoreSubdirectories, int depth, Pattern ignoreFilesPattern, File srcFolder) {
+    public void processDirectory(File f, int depth, Pattern ignoreSubdirectories, Pattern ignoreFilesPattern, File srcFolder, boolean recurse = false, FolderFS parentFS = null) {
         if (f.name ==~ ignoreSubdirectories) {
             log.info "\t\t\tIGNORING ++++FOLDER:$f because name matches ignore subdir pattern: $ignoreSubdirectories"
-            FolderFS ffs = new FolderFS(f, depth + 1, ignoreFilesPattern, IGNORE_ALL)
-            ignoredFolders << ffs
+//            FolderFS ffs = new FolderFS(f, depth + 1, ignoreFilesPattern, IGNORE_ALL)
+//            ignoredFolders << ffs
+            ignoredDirectories << f
         } else {
             log.debug "FolderFS ($srcFolder) processing subdir:$f "
             subDirectories << f
-//            FolderFS ffs = new FolderFS(f, depth + 1, ignoreFilesPattern, ignoreSubdirectories)
-//            childFolders << ffs
+            if (recurse) {
+                int nextDepth = depth + 1
+                log.debug "recurse into subfolder: $f -- depth:($nextDepth}"
+                this.parentFolder = parentFS
+                FolderFS ffs = new FolderFS(f, nextDepth, ignoreFilesPattern, ignoreSubdirectories, recurse, this)
+                childFolders << ffs
+            } else {
+                log.debug "param 'recurse' ($recurse) not true, skipping recursive tree crawling"
+            }
         }
     }
 
@@ -145,56 +156,89 @@ class FolderFS extends BaseObject {
         }
     }*/
 
-    def analyze(BaseAnalyzer baseAnalyzer) {
+    List<String> analyze(BaseAnalyzer analyzer) {
         log.debug "Analyze Folder: ${((String) this).padRight(30)}  --->  ${this.me.absolutePath}"
-        if (!baseAnalyzer instanceof FolderAnalyzer) {
+        if (!folderAnalyzer instanceof FolderAnalyzer) {
             throw new IllegalArgumentException("Analyzer not instance of Folder Analyzer, throwing error...")
         }
-        FolderAnalyzer analyzer = baseAnalyzer
-        childAssignedTypes = analyzer.assignFileTypes(filesFS)
-//        def archiveResults = analyzer.analyzeArchives(filesFS)
+        FolderAnalyzer folderAnalyzer = (FolderAnalyzer)analyzer
 
-        List<String> folderLabels = analyzer.assignFolderType(this)
+        List<String> labels = folderAnalyzer.assignFolderLabels(this)
+        return labels
+    }
 
-        return childAssignedTypes + folderLabels      // todo-- improve return value
+    List<String> analyze(FolderAnalyzer folderAnalyzer, FileAnalyzer fileAnalyzer = null) {
+        log.debug "Analyze Folder: ${((String) this).padRight(30)}  --->  ${this.me.absolutePath}"
+        List<String> folderLabels = []  // analyze(folderAnalyzer)
+
+        if(fileAnalyzer) {
+            List<String> labels = fileAnalyzer.analyze(filesFS)
+            folderLabels.addAll(labels)
+        }
+//        return childAssignedTypes + folderLabels      // todo-- improve return value
+        return folderLabels
     }
 
     String toString() {
-        return "($type):$name"
+        return "${depth}] ($type):$name"
     }
 
-    List<SolrInputDocument> toSolrInputDocumentList() {
+    List<SolrInputDocument> toSolrInputDocumentList(String crawlName = null) {
         List<SolrInputDocument> sidList = []
 
-        SolrInputDocument sid = super.toSolrInputDocument()
-        sid.setField(SolrSaver.FLD_SUBDIR_COUNT, countSubdirs)
-        sid.setField(SolrSaver.FLD_FILE_COUNT, countFiles)
+        SolrInputDocument sidFolder = super.toSolrInputDocument()
+        sidFolder.setField(SolrSaver.FLD_SUBDIR_COUNT, countSubdirs)
+        sidFolder.setField(SolrSaver.FLD_FILE_COUNT, countFiles)
+
+//        def updateTime =
+
+        if(crawlName){
+            sidFolder.setField(SolrSaver.FLD_DATA_SOURCE, crawlName)
+        }
 
         if (ignoredFiles) {
-            sid.setField(SolrSaver.FLD_IGNORED_FILES + '_ss', ignoredFiles.collect{ it.name})
-            sid.setField(SolrSaver.FLD_IGNORED_FILES + '_txt', ignoredFiles.collect{ it.name})
-            sid.setField(SolrSaver.FLD_IGNORED_FILES_COUNT, ignoredFiles.size())
+            sidFolder.setField(SolrSaver.FLD_IGNORED_FILES + '_ss', ignoredFiles.collect { it.name })
+            sidFolder.setField(SolrSaver.FLD_IGNORED_FILES + '_txt', ignoredFiles.collect { it.name })
+            sidFolder.setField(SolrSaver.FLD_IGNORED_FILES_COUNT, ignoredFiles.size())
         }
-        if (ignoredFolders) {
-            sid.setField(SolrSaver.FLD_IGNORED_FOLDERS + '_ss', ignoredFolders.collect{ it.name})
-            sid.setField(SolrSaver.FLD_IGNORED_FOLDERS + '_txt', ignoredFolders.collect{ it.name})
-            sid.setField(SolrSaver.FLD_IGNORED_FOLDERS_COUNT, ignoredFolders.size())
+        if (ignoredDirectories) {
+            sidFolder.setField(SolrSaver.FLD_IGNORED_FOLDERS + '_ss', ignoredDirectories.collect { it.name })
+            sidFolder.setField(SolrSaver.FLD_IGNORED_FOLDERS + '_txt', ignoredDirectories.collect { it.name })
+            sidFolder.setField(SolrSaver.FLD_IGNORED_FOLDERS_COUNT, ignoredDirectories.size())
         }
-        if (sameNameCount > 1){
-            sid.setField(SolrSaver.FLD_SAME_NAME_COUNT, sameNameCount)
+        if (sameNameCount > 1) {
+            sidFolder.setField(SolrSaver.FLD_SAME_NAME_COUNT, sameNameCount)
         }
-        if(childAssignedTypes){
-            sid.setField(SolrSaver.FLD_CHILDASSIGNED_TYPES, childAssignedTypes)
+        if (childAssignedTypes) {
+            sidFolder.setField(SolrSaver.FLD_CHILDASSIGNED_TYPES, childAssignedTypes)
         }
+        sidFolder.addField(SolrSaver.FLD_NAME_SIZE_S, "${name}:${size}")
 
-        sidList << sid
+        sidList << sidFolder
 
         List<String> assignments = []
         filesFS.each { FileFS ffs ->
-            SolrInputDocument sidFfs = ffs.toSolrInputDocument()
+            SolrInputDocument sidFfs = ffs.toSolrInputDocument(crawlName)
             sidList << sidFfs
         }
 
         return sidList
+    }
+
+
+    /**
+     * recursing method to gather up all (current & descendant) folders in a flat list (i.e. to save to solr)
+     * @return flattened list of Folder objects
+     */
+    List<FolderFS> getAllSubFolders(){
+        log.debug '\t'*depth + "${name} ($depth) get subfolders: ${childFolders}"
+        List<FolderFS> allFolders = []
+        this.childFolders.each {FolderFS subFolder ->
+            allFolders << subFolder
+            List<FolderFS> foldersFS = subFolder.getAllSubFolders()
+            allFolders.addAll(foldersFS)
+        }
+//        allFolders << this
+        return allFolders
     }
 }

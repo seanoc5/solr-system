@@ -92,13 +92,13 @@ class LocalFileSystemCrawlerSimple {
      */
     static Map<String, Long> getKnownFolderMap(File baseFolder, Long lastCrawlTime) {
         Map<String, Date> knownFolders = [:]
-        log.warn "Override this testCrawl method (assuming all folders older than October 2015 have already been crawled/known..."
+        log.warn "Override this misc.testCrawl method (assuming all folders older than October 2015 have already been crawled/known..."
         baseFolder.eachFileRecurse(FileType.DIRECTORIES) { File folder ->
             if (folder.lastModified() <= lastCrawlTime) {
-                log.debug "\t\tFolder last mod (${folder.lastModified()}) is older than testCrawl last crawl time: (${lastCrawlTime}) assume 'NOT KNOWN': $folder"
+                log.debug "\t\tFolder last mod (${folder.lastModified()}) is older than misc.testCrawl last crawl time: (${lastCrawlTime}) assume 'NOT KNOWN': $folder"
                 knownFolders.put(folder.path, folder.lastModified())
             } else {
-                log.debug "Folder last mod (${folder.lastModified()}) is newer than testCrawl last crawl time: (${lastCrawlTime}) assume 'KNOWN': $folder"
+                log.debug "Folder last mod (${folder.lastModified()}) is newer than misc.testCrawl last crawl time: (${lastCrawlTime}) assume 'KNOWN': $folder"
             }
         }
         return knownFolders
@@ -284,7 +284,7 @@ class LocalFileSystemCrawlerSimple {
 
     /**
      * * Check if this file is newer than what is known/saved in the system
-     *  todo add logic to testCrawl, have moved from analysis focus to currency
+     *  todo add logic to misc.testCrawl, have moved from analysis focus to currency
      * @param file
      * @param knownFiles
      * @return

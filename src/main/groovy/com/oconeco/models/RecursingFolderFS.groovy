@@ -19,16 +19,19 @@ import java.util.regex.Pattern
  * structure for handling information about a folder from the FS (filesystem),
  * handles both basic information from the filesystem, and analysis results from some process
  * todo -- switch to NIO Files and Paths
+ * @deprecated added recurse param to FolderFS, use that instead
  */
 class RecursingFolderFS extends FolderFS {
     public static final String TYPE = 'Folder'
-    Logger log = Logger.getLogger(this.class.name);
+
+    static final Logger log = Logger.getLogger(this.class.name);
 
 
-    RecursingFolderFS(File srcFolder, int depth = 1, Pattern ignoreFilesPattern = null, Pattern ignoreSubdirectories = null) {
-        super(srcFolder, depth, ignoreFilesPattern, ignoreSubdirectories)
+    RecursingFolderFS(File srcFolder, int depth = 1, Pattern ignoreFilesPattern = null, Pattern ignoreSubdirectories = null, boolean recurse = true) {
+        super(srcFolder, depth, ignoreFilesPattern, ignoreSubdirectories, recurse)
+        log.warn "This is deprecated -- remove me..."
 
-        log.info "FolderFS [$depth] ::::  (srcFolder:${srcFolder.absolutePath}) constructor"
+        log.debug "FolderFS [$depth] ::::  (srcFolder:${srcFolder.absolutePath}) constructor"
         if (srcFolder?.exists()) {
             id = srcFolder.absolutePath
             me = srcFolder
@@ -41,7 +44,7 @@ class RecursingFolderFS extends FolderFS {
                     if (ignoreFilesPattern && f.name ==~ ignoreFilesPattern) {
                         FileFS ffs = new FileFS(f, depth)
                         ignoredFiles << ffs
-                        log.info "\t\t\tIGNORING ____file: $f because it matches ignoreFiles pattern: $ignoreFilesPattern"
+                        log.info "\t\t\tIGNORING file: $f because it matches ignoreFiles pattern: $ignoreFilesPattern"
                     } else {
                         processFile(f, depth)
                         diskSpace += f.size()
@@ -78,7 +81,6 @@ class RecursingFolderFS extends FolderFS {
      * @param f
      */
     public void processFile(File f, int depth = 1) {
-
         FileFS fileFS = new FileFS(f)
         filesFS << fileFS
 
@@ -102,13 +104,13 @@ class RecursingFolderFS extends FolderFS {
         }
     }*/
 
-    def analyze(BaseAnalyzer baseAnalyzer) {
+    List<String> analyze(BaseAnalyzer baseAnalyzer) {
         log.debug "Analyze Folder: ${((String) this).padRight(30)}  --->  ${this.me.absolutePath}"
         if (!baseAnalyzer instanceof FolderAnalyzer) {
             throw new IllegalArgumentException("Analyzer not instance of Folder Analyzer, throwing error...")
         }
         FolderAnalyzer analyzer = baseAnalyzer
-        analyzer.assignFolderType(this)
+        List<String> labels = analyzer.analyze(this)
         def foo = analyzer.assignFileTypes(filesFS)
 
         return foo      // todo-- improve return value

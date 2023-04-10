@@ -1,4 +1,4 @@
-package com.oconeco.crawler
+package misc
 
 import org.apache.log4j.Logger
 

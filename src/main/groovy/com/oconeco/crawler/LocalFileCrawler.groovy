@@ -1,5 +1,6 @@
 package com.oconeco.crawler
 
+
 import com.oconeco.analysis.FolderAnalyzer
 import com.oconeco.models.FolderFS
 import groovy.io.FileType
@@ -8,12 +9,9 @@ import org.apache.log4j.Logger
 
 import java.util.regex.Pattern
 
-class LocalFileCrawler {
+class LocalFileCrawler extends BaseCrawler{
     private static Logger log = Logger.getLogger(this.class.name);
 
-    static final String STATUS_SKIP = 'skip'
-    static final String STATUS_TRACK = 'track'
-    static final String STATUS_INDEX_CONTENT = 'indexContent'
     static List<String> folderNamesToSkip = [
             '__snapshots__',
             '.csv',
@@ -62,7 +60,7 @@ class LocalFileCrawler {
             'taglib',
             'temp',
             'templates',
-            'testCrawl',
+            'misc.testCrawl',
             'test',
             'tests',
             'themes',
@@ -83,46 +81,33 @@ class LocalFileCrawler {
 //            '',
     ]
 
-    static final String STATUS_ANALYZE = 'analyze'
-
     // don't process these files, don't add them to the index, assume you will never even want to find if a file exists or not.
-    static Pattern FILE_REGEX_TO_SKIP = Pattern.compile(/([.~]*lock.*|_.*|.*\.te?mp$|.*\.class$|robots.txt|.*\.odb$|.*\.pos)/)
-//    static Pattern FILE_REGEX_TO_SKIP = Pattern.compile('(\\~\\$.*|_.*|.*\\.te?mp$|.*\\.class$|robots.txt|.*\\.odb$|.*\\.pos)')
+    static Pattern FILE_REGEX_TO_SKIP = ~/([.~]*lock.*|_.*|.*\.te?mp$|.*\.class$|robots.txt|.*\.odb$|.*\.pos)/
 
     // NOTE: this is the default operation: track not skip or index, no need to specify these, this is the catch-all
     // track the file metdata and that it exissts, but don't extract, index, or analyze
     // static Pattern FILE_REGEX_TO_TRACK = Pattern.compile('(.*json|.*csv|.*xml)')
 
     // INDEXING file is meant to run an extraction process (i.e. tika) and then send that info to solr for indexing/persistence/searchability (analysis below goes one step further)
-    static Pattern FILE_EXTENSIONS_TO_INDEX = Pattern.compile(/(bash.*|csv|groovy|ics|ipynb|java|lst|md|php|py|rdf|rss|scala|sh|tab|te?xt|tsv)/)
-//    Pattern FILE_EXTENSIONS_TO_INDEX = Pattern.compile(/.*[._](csv|groovy|history|ics|ini|java|log|php|rdf|rss|xml)$/)
+    static Pattern FILE_EXTENSIONS_TO_INDEX = ~/(bash.*|csv|groovy|ics|ipynb|java|lst|md|php|py|rdf|rss|scala|sh|tab|te?xt|tsv)/
 
     // ANALYSIS is meant to go beyond indexing, and actually do more qualitative analysis (NLP, content sectioning, tagging,...)
-    static Pattern FILE_EXTENSIONS_TO_ANALYZE = Pattern.compile("(aspx\\?|cfm|docx\\?|html|od.|pptx\\?|pdf|ps|pub|rss|xlsx|zhtml\\?)")
+    static Pattern FILE_EXTENSIONS_TO_ANALYZE = ~"(aspx\\?|cfm|docx\\?|html|od.|pptx\\?|pdf|ps|pub|rss|xlsx|zhtml\\?)"
 
+    LocalFileCrawler(String name, String location, Object source) {
+        super(name, location, source)
+    }
 
-//    /**
-//     * get list of folders deemed appropriate to crawl based on regex of folders to skip
-//     * todo resolve better/righter approach here?
-//     *
-//     * @param sourceFolder
-//     * @param foldersToExclude
-//     * @return
-//     */
-//    public static Set<File> getFoldersToCrawl(File sourceFolder, Pattern foldersToExclude) {
-//        log.info "Crawl source folder: ${sourceFolder.absolutePath} -- exclude regex: $foldersToExclude"
-//        Set<File> foldersToCrawl = [sourceFolder]
-//        sourceFolder.eachFileRecurse(FileType.DIRECTORIES) { File subfolder ->
-//            if (subfolder.name ==~ foldersToExclude) {
-//                log.info "\t\tSkipping folder matching skip regex: ${subfolder.name}"
-//            } else {
-//                log.debug "\t\tAdding folder: ${subfolder.name}"
-//                foldersToCrawl << subfolder
-//            }
-//        }
-//        return foldersToCrawl
-//    }
+    @Override
+    def startCrawl(def startFolder, Map namePatterns) {
+        log.info "Start crawl (startfolder: $startFolder) with name patterns map: $namePatterns"
+        throw new AbstractMethodError("Incomplete code problem, someone complete this function: startCrawl(Map namePatterns)")
+        return null
+    }
 
+    def gatherFoldersToCrawl(File sourceFolder, FolderAnalyzer folderAnalyzer){
+
+    }
 
     /**
      * get List of files deemed appropriate to crawl (based on String list of foldernames (vs regex) to skip
@@ -130,6 +115,7 @@ class LocalFileCrawler {
      * @param sourceFolder
      * @param foldersNamesToSkip
      * @return List of folders to crawl
+     * @deprecated look to getFoldersToCrawlMap for more recent approach...
      */
     public static List<File> getFoldersToCrawl(File sourceFolder, Map folderNamePatterns = null, int level = 1, int statusDepth = 3) {
         log.debug "\t\tCrawl source folder: ${sourceFolder.absolutePath} -- skip folders: $folderNamesToSkip -- level: $level"
@@ -137,12 +123,18 @@ class LocalFileCrawler {
             log.info "\t\tLvl:$level) Crawl source folder: ${sourceFolder.absolutePath}"
         }
         Pattern ignoreFolderNames = folderNamePatterns[FolderAnalyzer.LBL_IGNORE]
+        if (ignoreFolderNames) {
+            log.debug "Got folder names to ignore: ${ignoreFolderNames}"
+        } else {
+            log.info "No folder names to ignore, nothing matching (${FolderAnalyzer.LBL_IGNORE}) in folderNamePatterns:(${folderNamePatterns})"
+        }
 
         List<File> foldersToCrawl = [sourceFolder]
+        List<File> foldersToIgnore = []
         sourceFolder.eachFile(FileType.DIRECTORIES) { File subfolder ->
             boolean ignore = (subfolder.name ==~ ignoreFolderNames)
             if (ignore) {
-                log.info "\t\t------------ Skipping folder matching skip foldername: ${subfolder.name} -- ${subfolder.canonicalPath}"
+                log.info "\t\t------------ Skipping folder matching skip foldername: ${subfolder.name} \t\t--\t\t ${subfolder.canonicalPath}"
             } else {
                 log.debug "\tAdding folder: ${subfolder.name.padLeft(30)} -- $subfolder.absolutePath"
                 List<File> crawlFolders = getFoldersToCrawl(subfolder, folderNamePatterns, level + 1, statusDepth)
@@ -155,12 +147,69 @@ class LocalFileCrawler {
         return foldersToCrawl
     }
 
+    /**
+     * Get map results of folders to crawl, with ignored files list as well
+     * @param sourceFolder
+     * @param folderNamePatterns
+     * @param level
+     * @param statusDepth
+     * @return map of folders to crawl, as well as those folders we chose to ignore...
+     * todo -- remove list-only version above?
+     */
+    public static Map<String, List<File>> getFoldersToCrawlMap(File sourceFolder, Map folderNamePatterns = null, int level = 1, int statusDepth = 3) {
+        log.debug "\t\tCrawl source folder: ${sourceFolder.absolutePath} -- skip folders: $folderNamesToSkip -- level: $level"
+        if (level <= statusDepth) {
+            log.info "\t\tLvl:$level) Crawl source folder: ${sourceFolder.absolutePath}"
+        }
+        Pattern ignoreFolderNames = folderNamePatterns[FolderAnalyzer.LBL_IGNORE]
+        if (ignoreFolderNames) {
+            log.debug "Got folder names to ignore: ${ignoreFolderNames}"
+        } else {
+            log.info "No folder names to ignore, nothing matching (${FolderAnalyzer.LBL_IGNORE}) in folderNamePatterns:(${folderNamePatterns})"
+        }
 
-    static List<FolderFS> gatherFolderFSToCrawl(File folder,Pattern ignoreFileNames,  Pattern ignoreFolderNames, int depth = 1){
-        if(depth < 3){
+//        List<File> foldersToCrawl = [sourceFolder]
+//        List<File> foldersToIgnore = []
+        Map<String, List<File>> crawlMap = [foldersToCrawl: [sourceFolder], foldersToIgnore: []]
+        sourceFolder.eachFile(FileType.DIRECTORIES) { File subfolder ->
+            boolean ignore = (subfolder.name ==~ ignoreFolderNames)
+            if (ignore) {
+                log.info "\t\t------------ Skipping folder matching skip foldername: ${subfolder.name} -- ${subfolder.canonicalPath}"
+                crawlMap.foldersToIgnore << subfolder
+            } else {
+                log.debug "\tAdding folder: ${subfolder.name.padLeft(30)} -- $subfolder.absolutePath"
+                Map<String, List<File>> subCrawlMap = getFoldersToCrawlMap(subfolder, folderNamePatterns, level + 1, statusDepth)
+
+                if (subCrawlMap.foldersToCrawl?.size() > 0) {
+                    log.debug "foldersToCrawl: ${subCrawlMap.foldersToCrawl.size()}"
+                    crawlMap.foldersToCrawl.addAll(subCrawlMap.foldersToCrawl)
+                } else {
+                    log.info "No subFolders to crawl: ${subCrawlMap.foldersToCrawl}"
+                }
+                if (subCrawlMap.foldersToIgnore) {
+                    log.debug "Found sub folders to ignore: ${subCrawlMap.foldersToIgnore}"
+                    crawlMap.foldersToIgnore.addAll(subCrawlMap.foldersToIgnore)
+                }
+            }
+        }
+        return crawlMap
+    }
+
+
+    /**
+     * FolderFS constructor can recurse through all child folders and build a tree of files to index (as well as ignore certain files and folders)
+     * Is this approach too heavy? Any value of this over a separate crawler process?
+     * @param folder
+     * @param ignoreFileNames
+     * @param ignoreFolderNames
+     * @param depth
+     * @return
+     */
+    static List<FolderFS> gatherFolderFSToCrawl(File folder, Pattern ignoreFileNames, Pattern ignoreFolderNames, int depth = 1) {
+        if (depth < 3) {
             log.info "\t\tLvl:$depth) Crawl source FS folder: ${folder.absolutePath}\""
         }
-        FolderFS ffs = new FolderFS(folder, ignoreFileNames, ignoreFolderNames, depth + 1)
+        FolderFS ffs = new FolderFS(folder, depth + 1, ignoreFileNames, ignoreFolderNames)
         List<FolderFS> fsFolders = [ffs]
 //        int childDepth = depth + 1
 //        folder.eachDir {File subdir ->
@@ -334,6 +383,5 @@ class LocalFileCrawler {
         }
         return foldersToCrawl
     }*/
-
 
 }

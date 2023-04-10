@@ -1,3 +1,5 @@
+package misc
+
 import groovy.io.FileType
 import org.apache.log4j.Logger
 import org.apache.tika.exception.TikaException

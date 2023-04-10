@@ -71,7 +71,8 @@ skip = ~/(te?mp|cache|delete)/
         ConfigSlurper slurper = new ConfigSlurper()
         ConfigObject config = slurper.parse(cfgUrl)
         List folderNames = ['/a/one/.csv/foo', 'bin/foo', 'c:\\fonts\\', '/home/sean/passme', 'c:\\goodwindows.doc']
-        List<String> foldersToSkip = config.folders.namesToSkip
+        def foldersToSkip = config.folders.namesToSkip
+//        List<String> foldersToSkip = config.folders.namesToSkip
 
         when:
         List filtered = folderNames.findAll{ foldersToSkip.contains(it)}

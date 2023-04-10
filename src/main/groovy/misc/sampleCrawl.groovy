@@ -1,64 +1,57 @@
-package com.oconeco.crawler
+package misc
 
-import com.oconeco.helpers.SolrCrawlArgParser
+import com.oconeco.crawler.LocalFileCrawler
 import com.oconeco.persistence.SolrSaver
+import groovy.cli.picocli.CliBuilder
+import groovy.cli.picocli.OptionAccessor
 import org.apache.log4j.Logger
 import org.apache.solr.client.solrj.response.UpdateResponse
 import org.apache.solr.common.SolrInputDocument
-/**
- * Script to function much like slocate in linux.
- * Crawl all folders (with skip configs to skip things we don't care about).
- * When folders are complete:
- * <li>crawl all files (with config to skip files</li>
- * <li>also configs on what should have contents extracted
- * <li>and config on what content should be "analyzed"
- */
-Logger log = Logger.getLogger(this.class.name);
-log.info "Start ${this.class.name}, with args: $args"
 
-def options = SolrCrawlArgParser.parse(this.class.simpleName, args)
+Logger log = Logger.getLogger(this.class.name);
+log.info "Start ${this.class.name}..."
+
+String toolName = this.class.name
+
+CliBuilder cli = new CliBuilder(usage: "${toolName}.groovy -fhttp://myFusion5addr:6764 -uadmin -psecret123 -s~/data/MyApp.objects.json -m ~/Fusion/migration/F4/mappingFolder", width: 160)
+cli.with {
+    h longOpt: 'help', 'Show usage information'
+    c longOpt: 'config', args: 1, required: false, 'optional configuration file to be parsed/slurped with configSlurper'
+    s longOpt: 'solrUrl', args: 1, required: true, 'Solr url with protocol, host, and port (if any)'
+    f longOpt: 'folders', args:'+', 'Parent folder(s) to crawl'
+}
+
+OptionAccessor options = cli.parse(args)
+
 String solrUrl = options.solrUrl
 
-def startFolders = options.fs
+def startFolders = options.folders
+startFolders = ['/home/sean/work/OconEco']
 log.info "Start folders: $startFolders"
-String configLocation = options.config
-File cfgFile = new File(configLocation)
-if (!cfgFile.exists()) {
-    cfgFile = new File(getClass().getResource(configLocation).toURI())
-    if (cfgFile.exists()) {
-        log.info "Found config file (${configLocation}) in resources: ${cfgFile.absolutePath}"
-    } else {
-        throw new IllegalArgumentException("Config file: $cfgFile does not exist, bailing...")
-    }
-} else {
-    log.info "cfg file: ${cfgFile.absolutePath}"
-}
-ConfigObject config = new ConfigSlurper().parse(cfgFile.toURI().toURL())
 
 Date start = new Date()
-SolrSaver solrSaver = new SolrSaver(solrUrl, 'Documents Locate')
-boolean wipeContent = options.wipeContent
-if (wipeContent){
-    log.warn "Wiping previous crawl data (BEWARE!!!)..."
-    def foo = solrSaver.clearCollection()
+SolrSaver solrSaver = new SolrSaver(solrUrl, 'TetstCrawl')
+boolean clear = false
+if (clear){
+    String q = "${SolrSaver.FLD_DATA_SOURCE}:\"${crawlName}\""
+    log.warn "Wiping previous crawl data (BEWARE!!!), delete query: ($q)"
+    def foo = solrSaver.deleteDocuments(q)
     log.info "Clear results: $foo"
 }
-
-def fileNamePatterns = config.files.namePatterns
-def folderNamePatterns = config.folders.namePatterns
 Long fileCount = 0
 startFolders.each { String sf ->
     File startFolder = new File(sf)
     log.info "Crawling parent folder: $startFolder"
 
     // get list of non-noisy folders to crawl (or compare against stored info (check if we need to crawl...
-    Set<File> foldersToCrawl = LocalFileCrawler.getFoldersToCrawl(startFolder, fileNamePatterns)
+    Set<File> foldersToCrawl = LocalFileCrawler.getFoldersToCrawl(startFolder)
+    // see if there are common folders -- dev-time informational/insight only
+    //def foldersGroups = foldersToCrawl.groupBy { it.name }
 
     def uresplist = solrSaver.saveFolderList(foldersToCrawl)
     log.debug "Starting Folder ($sf) Update responses: $uresplist"
 
     log.info "Folders size: ${foldersToCrawl.size()}"
-
 
     foldersToCrawl.each { File crawlableFolder ->
         log.info "$fileCount) folder: ${crawlableFolder.absolutePath}"

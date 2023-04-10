@@ -1,5 +1,6 @@
-package com.oconeco.crawler
+package misc
 
+import com.oconeco.crawler.LocalFileCrawler
 import org.apache.log4j.Logger
 
 /**

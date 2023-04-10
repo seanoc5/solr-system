@@ -4,10 +4,11 @@ solrUrl = "http://localhost:8983/solr/solr_system"
 
 // todo -- these name: path entries are not yet used, still reading path and name from cli args
 dataSources {
-    localFiles {
-        MyDesktop: '/home/sean/Desktop'
-        MyDocuments: '/home/sean/Documents'
-        MyPictures: '/home/sean/Pictures'
+    localFolders {
+//        MyDocuments = '/home/sean/Documents'
+//        MyDesktop = '/home/sean/Desktop'
+//        MyPictures = '/home/sean/Pictures'
+        SeanHome = '/home/sean'
     }
 }
 
@@ -26,19 +27,20 @@ files.namePatterns = [
         data        : ~/.*(csv|jsonl?d?|lst|pbix|tab|tsv)/,
         media       : ~/.*(avi|jpe?g|ogg|mp3|mpe?g|png|wav)/,
         logs        : ~/.*(logs?\.?\d*)/,       // attempting to allow singular or plural (option s after log, and 0 or more digits)
-        archive     : ~/.*(arc|gz|parquet|rar|tar.gz|zip)/,
+        archive     : ~/.*(arc|cab|dmg|gz|jar|parquet|rar|zip|tar\.(bz2?|gz|Z)|war|zip)/,
+        compressed  : ~/.*\.(bz2?|gz|z|Z)/,
         web         : ~/.*(html?)/,
         system      : ~/.*(_SUCCESS|bat|bin|bkup|cache|class|cookies|deb|gcc|lib|\.old|pkg|rpm|#$)/,
 ]
 
 // folder names can be matches to assign tags for a given folder (name matching)
 folders.namePatterns = [
-        ignore : ~/(__snapshots__|\.bsp|\.cache|\.csv|\.gradle|\.git|\.github|\.idea|\.settings|\.svn|\.vscode|_global|ignore.*|runtime)/,
+        ignore : ~/(__snapshots__|\.bsp|\.?cache|\.csv|\.gradle|\.git|\.github|\.idea|\.settings|\.svn|\.vscode|_global|ignore.*|runtime)/,
         content: ~/(content)/,
-        office: ~/(?i).*(documents)/,
+        office : ~/(?i).*(documents)/,
         techDev: ~/.*(groovy|gradle|classes)/,
         system : ~/(_global)/,
         techDev: ~/(.gradle|compile|groovy|java|main|scala|src|target|test|resources|wrapper)/,
-        test: ~/(?i).*(test)/,
-        work: ~/(?i).*(lucidworks|oconeco|work)/,
+        test   : ~/(?i).*(test)/,
+        work   : ~/(?i).*(lucidworks|oconeco|work)/,
 ]
