@@ -48,10 +48,11 @@ Edit `solr.in.sh` or for windows `solr.in.cmd` uncomment (or add) memory setting
 or pass memory flag `-m` on the command line:
 ${solr_home}/bin/solr start -c -m 4g
 
-start solr: 
-Linux/mac: `/opt/solr/solr.8.11.2/bin/solr start -c -m 4g
+start solr: \
+**Linux/mac:** `/opt/apache/solr/bin/solr start -c -m 4g  -s /opt/apache/solr-8.11.1/server/solr/`
 
-Windows: `c:\work\solr\solr.8.11.2\bin start -c -m 4g``
+**Windows:** `c:\work\solr\solr.8.11.2\bin start -c -m 4g` -s "c:\data\solr"   
+Note: untestsed windows command
 
 **Note:** -c tells solr to start in `cloud` mode, which is the default for any recent solr distribution.
 

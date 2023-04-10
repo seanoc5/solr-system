@@ -26,6 +26,22 @@ dependencies {
     implementation group: 'org.apache.lucene', name: 'lucene-analyzers-common', version: '8.11.1'
     // https://mvnrepository.com/artifact/org.apache.lucene/lucene-core
     implementation group: 'org.apache.lucene', name: 'lucene-core', version: '8.11.1'
+    // https://mvnrepository.com/artifact/org.apache.solr/solr-test-framework
+    testImplementation group: 'org.apache.solr', name: 'solr-test-framework', version: '8.11.1'
+
+/*
+    // old solr version: 8.11.1 -> 9.1.0
+    // https://mvnrepository.com/artifact/org.apache.solr/solr-solrj
+    implementation group: 'org.apache.solr', name: 'solr-solrj', version: '9.1.0'
+    // https://mvnrepository.com/artifact/org.apache.lucene/lucene-analyzers-common
+    implementation group: 'org.apache.lucene', name: 'lucene-analyzers-common', version: '9.1.0'
+    // https://mvnrepository.com/artifact/org.apache.lucene/lucene-core
+    implementation group: 'org.apache.lucene', name: 'lucene-core', version: '9.1.0'
+    // https://mvnrepository.com/artifact/org.apache.solr/solr-test-framework
+    testImplementation group: 'org.apache.solr', name: 'solr-test-framework', version: '9.1.0'
+*/
+
+
 
     // https://mvnrepository.com/artifact/com.google.guava/guava
     implementation group: 'com.google.guava', name: 'guava', version: '31.1-jre'
