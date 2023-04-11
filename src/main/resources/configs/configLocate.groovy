@@ -5,17 +5,18 @@ solrUrl = "http://localhost:8983/solr/solr_system"
 // todo -- these name: path entries are not yet used, still reading path and name from cli args
 dataSources {
     localFolders {
-//        MyDocuments = '/home/sean/Documents'
-//        MyDesktop = '/home/sean/Desktop'
-//        MyPictures = '/home/sean/Pictures'
-        SeanHome = '/home/sean'
+        MyDocuments = '/home/sean/Documents'
+        MyDesktop = '/home/sean/Desktop'
+        MyPictures = '/home/sean/Pictures'
+//        SeanHome = '/home/sean'
+        Opt = '/opt/'
     }
 }
 
 // note: all of the labels below are optional/customizable. You probably want to leave the `ignore`, `index`, and `analyze` labels as is, they have special meaning
 
 // edit and customize these entries. The namePattern name is the assigned tag, the regex pattern (`~` is the pattern operator) are the matching regexes for the label/tag
-files.namePatterns = [
+namePatterns.files = [
         ignore      : ~/([.~]*lock.*|_.*|.*\.te?mp$|.*\.class$|robots.txt)/,
         index       : ~/(bash.*|csv|groovy|ics|ipynb|java|lst|md|php|py|rdf|rss|scala|sh|tab|te?xt|tsv)/,
         analyze     : ~/(aspx\?|cfm|docx\?|html|od.|pptx\?|pdf|ps|pub|rss|xlsx|zhtml\?)/,
@@ -34,7 +35,7 @@ files.namePatterns = [
 ]
 
 // folder names can be matches to assign tags for a given folder (name matching)
-folders.namePatterns = [
+namePatterns.folders = [
         ignore : ~/(__snapshots__|\.bsp|\.?cache|\.csv|\.gradle|\.git|\.github|\.idea|\.settings|\.svn|\.vscode|_global|ignore.*|runtime)/,
         content: ~/(content)/,
         office : ~/(?i).*(documents)/,

@@ -45,9 +45,9 @@ long start = System.currentTimeMillis()
 Map startFolders = config.dataSources.localFolders
 log.info "Start folders from config file: ${config.dataSources.localFolders}"
 FolderAnalyzer analyzer = new FolderAnalyzer(config)
-Pattern ignoreFolders = config.folders.namePatterns.ignore ?: analyzer.DEFAULT_FOLDERNAME_PATTERNS.ignore
+Pattern ignoreFolders = config.namePatterns.folders.ignore ?: analyzer.DEFAULT_FOLDERNAME_PATTERNS.ignore
 log.info "Ignore FOLDERS: $ignoreFolders"
-Pattern ignoreFiles = config.files.namePatterns.ignore ?: analyzer.DEFAULT_FOLDERNAME_PATTERNS.ignore
+Pattern ignoreFiles = config.namePatterns.files.ignore ?: analyzer.DEFAULT_FOLDERNAME_PATTERNS.ignore
 log.info "Ignore files: $ignoreFiles"
 
 // ------------------ Solr Stuff -------------------

@@ -1,7 +1,7 @@
 package misc
 
 import com.oconeco.crawler.LocalFileCrawler
-import com.oconeco.helpers.SolrCrawlArgParser
+import com.oconeco.helpers.SolrCrawlConfig
 import com.oconeco.persistence.SolrSaver
 import org.apache.log4j.Logger
 import org.apache.solr.client.solrj.response.UpdateResponse
@@ -18,9 +18,9 @@ Logger log = Logger.getLogger(this.class.name);
 log.info "Start ${this.class.name}, with args: $args"
 
 
-def options = SolrCrawlArgParser.parse(this.class.simpleName, args)
-
-
+SolrCrawlConfig scc = new SolrCrawlConfig(this.class.simpleName, args)
+ConfigObject config = scc.config
+/*
 String configLocation = options.config
 File cfgFile = new File(configLocation)
 def resourcesRoot = getClass().getResource('/')
@@ -42,16 +42,18 @@ if (!cfgFile.exists()) {
     log.info "cfg file: ${cfgFile.absolutePath}"
 }
 ConfigObject config = new ConfigSlurper().parse(cfgFile.toURI().toURL())
+*/
 
 Map<String,String> startFolders = config.dataSources.localFolders
 String solrUrl = config.solrUrl         //options.solrUrl
 log.info "Start folders: $startFolders -- solr url: $solrUrl"
 
 
+// todo - replace 'Documents Locate' with param
 SolrSaver solrSaver = new SolrSaver(solrUrl, 'Documents Locate')
 log.info "Solr Saver created: $solrSaver"
 
-boolean wipeContent = options.wipeContent
+boolean wipeContent = scc.options.wipeContent
 if (wipeContent) {
     log.warn "Wiping previous crawl data (BEWARE!!!)..."
     def foo = solrSaver.clearCollection()
@@ -60,8 +62,8 @@ if (wipeContent) {
     log.debug "Not wiping content/collection, "
 }
 
-def fileNamePatterns = config.files.namePatterns
-def folderNamePatterns = config.folders.namePatterns
+def fileNamePatterns = config.namePatterns.files
+def folderNamePatterns = config.namePatterns.folders
 Long fileCount = 0
 Date startTimeAll = new Date()
 

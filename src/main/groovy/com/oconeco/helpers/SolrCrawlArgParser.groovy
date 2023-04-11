@@ -1,6 +1,5 @@
 package com.oconeco.helpers
 
-
 import groovy.cli.picocli.CliBuilder
 import groovy.cli.picocli.OptionAccessor
 import org.apache.log4j.Logger
@@ -22,7 +21,7 @@ class SolrCrawlArgParser {
 //    ConfigObject config = null
 
 
-    public static OptionAccessor parse(String toolName, String[] args) {
+    public static groovy.cli.internal.OptionAccessor parse(String toolName, String[] args) {
         CliBuilder cli = new CliBuilder(usage: "${toolName}.groovy --config=configLocate.groovy", width: 160)
         cli.with {
             h longOpt: 'help', 'Show usage information'

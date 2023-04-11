@@ -33,8 +33,8 @@ class FileAnalyzer extends BaseAnalyzer {
 
     FileAnalyzer(ConfigObject config) {
         log.info "Config constructor..."
-        if(config?.files?.namePatterns){
-            filenamePatterns = config?.files?.namePatterns
+        if(config?.namePatterns?.files){
+            filenamePatterns = config?.namePatterns?.files
             log.info "using file name patterns (($filenamePatterns)) from config object."
         } else {
             log.warn "No valid config files.namePatterns!! falling back to default: $DEFAULT_FILENAME_PATTERNS"

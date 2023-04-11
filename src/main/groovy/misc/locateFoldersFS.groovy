@@ -56,12 +56,12 @@ if (wipeContent) {
 
 // ------------------ Folder stuff -------------------
 FolderAnalyzer analyzer = new FolderAnalyzer(config)
-Pattern ignoreFolders = config.folders.namePatterns.ignore
+Pattern ignoreFolders = config.namePatterns.folders.ignore
 if(!ignoreFolders){
     ignoreFolders =  analyzer.DEFAULT_FOLDERNAME_PATTERNS.ignore
     log.info "No config setting found for ignore folders, going with defaut: ${ignoreFolders}"
 }
-Pattern ignoreFiles = config.files.namePatterns.ignore ?: analyzer.DEFAULT_FOLDERNAME_PATTERNS.ignore
+Pattern ignoreFiles = config.namePatterns.files.ignore ?: analyzer.DEFAULT_FOLDERNAME_PATTERNS.ignore
 if(!ignoreFiles){
     ignoreFiles =  analyzer.DEFAULT_FILENAME_PATTERNS.ignore
     log.info "No config setting found for ignore FILES, going with defaut: ${ignoreFiles}"

@@ -1,9 +1,12 @@
 package com.oconeco.helpers
 
-
-import groovy.cli.picocli.CliBuilder
-import groovy.cli.picocli.OptionAccessor
+import groovy.cli.commons.CliBuilder
+import groovy.cli.commons.OptionAccessor
 import org.apache.log4j.Logger
+
+
+//import groovy.cli.picocli.CliBuilder
+//import groovy.cli.picocli.OptionAccessor
 
 /**
  * @author :    sean
@@ -23,10 +26,12 @@ class SolrCrawlConfig {
 
 
     SolrCrawlConfig(String toolName, String[] args) {
-        CliBuilder cli = new CliBuilder(usage: "${toolName}.groovy --config=configLocate.groovy", width: 160)
+        CliBuilder cli = new CliBuilder()
+//        CliBuilder cli = new CliBuilder(usage: "${toolName}.groovy --config=configLocate.groovy", width: 160)
         cli.with {
             h longOpt: 'help', 'Show usage information'
             c longOpt: 'config', args: 1, required: true, argName: 'ConfigFile', 'optional configuration file/url to be parsed/slurped with configSlurper'
+            d longOpt: 'datasource', 'Name/Label and directory to crawl', args: '2', valueSeparator: ':', required: false
             f longOpt: 'folders', 'Parent folder(s) to crawl', args: '+', valueSeparator: ',', required: false
             n longOpt: 'name', args: 1, required: false, 'Name of crawl to be added to all solr input docs (files and folders)'
             s longOpt: 'solrUrl', args: 1, required: false, 'Solr url with protocol, host, and port (if any)'
@@ -39,6 +44,17 @@ class SolrCrawlConfig {
         if (options.help) {
             cli.usage()
             System.exit(0)
+        }
+
+        if(options.datasource){
+            def ds = options.datasource
+            log.info "Datasource(s): $ds"
+        }
+
+        if(options.folders){
+            def folders = options.folders
+            def fs = options.fs
+            log.info "Folders(s): $fs"
         }
 
         if (options.config) {
@@ -76,7 +92,8 @@ class SolrCrawlConfig {
         }
 
         if(options.folders){
-            config.folders
+            log.info "Setting config.folders from options.folders (${options.folders})"
+            config.folders = options.folders
         }
     }
 

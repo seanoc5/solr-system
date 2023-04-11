@@ -42,9 +42,9 @@ long start = System.currentTimeMillis()
 
 // ------------------ Folder stuff -------------------
 FolderAnalyzer analyzer = new FolderAnalyzer(config)
-Pattern ignoreFolders = config.folders.namePatterns.ignore ?: analyzer.DEFAULT_FOLDERNAME_PATTERNS.ignore
+Pattern ignoreFolders = config.namePatterns.folders.ignore ?: analyzer.DEFAULT_FOLDERNAME_PATTERNS.ignore
 log.info "Ignore FOLDERS: $ignoreFolders"
-Pattern ignoreFiles = config.files.namePatterns.ignore ?: analyzer.DEFAULT_FOLDERNAME_PATTERNS.ignore
+Pattern ignoreFiles = config.namePatterns.files.ignore ?: analyzer.DEFAULT_FOLDERNAME_PATTERNS.ignore
 log.info "Ignore files: $ignoreFiles"
 Map startFolders = config.dataSources.localFolders
 

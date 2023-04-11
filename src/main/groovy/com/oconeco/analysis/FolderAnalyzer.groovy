@@ -64,13 +64,13 @@ class FolderAnalyzer extends BaseAnalyzer {
 
     FolderAnalyzer(ConfigObject config) {
         this.config = config
-        if (config.folders.namePatterns) {
-            folderNamePatterns = config.folders.namePatterns
-            log.info "Loading Folder analzer of foldernames from 'config.files.namePatterns': ${folderNamePatterns.collect { '\n\t\t' + it }}"
+        if (config.namePatterns?.folders) {
+            folderNamePatterns = config.namePatterns.folders
+            log.info "Loading Folder analzer of foldernames from 'config.namePatterns.files': ${folderNamePatterns.collect { '\n\t\t' + it }}"
         }
-        if (config.files.namePatterns) {
-            fileNamePatterns = config.files.namePatterns
-            log.info "Loading Folder analzer of filenames from 'config.files.namePatterns': ${fileNamePatterns.collect { '\n\t\t' + it }}"
+        if (config.namePatterns?.files) {
+            fileNamePatterns = config.namePatterns.files
+            log.info "Loading Folder analzer of filenames from 'config.namePatterns.files': ${fileNamePatterns.collect { '\n\t\t' + it }}"
         }
 
     }
