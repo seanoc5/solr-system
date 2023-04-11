@@ -2,7 +2,7 @@ package com.oconeco.helpers
 
 import spock.lang.Specification
 
-class SolrCrawlConfigTest extends Specification {
+class SolrCrawlArgParserTest extends Specification {
     def "GetOptions from constructor"() {
         given:
         URL cfgUrl = this.class.getClassLoader().getResource('configs/configLocate.groovy')
