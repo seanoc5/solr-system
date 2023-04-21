@@ -5,7 +5,7 @@ import com.oconeco.models.FolderFS
 import org.apache.commons.io.FilenameUtils
 import org.apache.log4j.Logger
 import org.apache.solr.client.solrj.SolrQuery
-import org.apache.solr.client.solrj.impl.HttpSolrClient
+import org.apache.solr.client.solrj.impl.Http2SolrClient
 import org.apache.solr.client.solrj.response.QueryResponse
 import org.apache.solr.client.solrj.response.UpdateResponse
 import org.apache.solr.common.SolrInputDocument
@@ -66,7 +66,7 @@ class SolrSaver {
     final Integer SOLR_BATCH_SIZE = 5000
     final Integer MIN_FILE_SIZE = 10
     Long MAX_CONTENT_SIZE = 1024 * 1000 * 10 // (10 MB of text?)
-    HttpSolrClient solrClient
+    Http2SolrClient solrClient
 
     Detector detector = null
     Parser parser = null
@@ -104,7 +104,8 @@ class SolrSaver {
 
     public void buildSolrClient(String baseSolrUrl) {
         log.info "Build solr client with baseSolrUrl: $baseSolrUrl"
-        solrClient = new HttpSolrClient.Builder(baseSolrUrl).build()
+//        solrClient = new HttpSolrClient.Builder(baseSolrUrl).build()
+        solrClient = new Http2SolrClient.Builder(baseSolrUrl).build()
     }
 
 
@@ -122,7 +123,7 @@ class SolrSaver {
      *
      * todo -- add logic to handle "complex" clear paths -- sym links etc....
      */
-    UpdateResponse deleteDocuments(String deleteQuery, int commitWithinMS = 1000) {
+    UpdateResponse deleteDocuments(String deleteQuery, int commitWithinMS = 10) {
         log.warn "Clearing collection: ${this.solrClient.baseURL} -- deleteQuery: $deleteQuery (commit within: $commitWithinMS)"
         UpdateResponse ursp = solrClient.deleteByQuery(deleteQuery, commitWithinMS)
         int status = ursp.getStatus()
@@ -152,7 +153,7 @@ class SolrSaver {
      * @param folders
      * @return
      */
-    List<UpdateResponse> saveFolderList(List<File> folders) {
+    List<UpdateResponse> saveFolderList(List<File> folders, String dataSourceLabel = 'unlabeled') {
         log.info "Save folders list (${folders.size()})..."
         List<UpdateResponse> updates = []
         List<SolrInputDocument> sidList = new ArrayList<>(SOLR_BATCH_SIZE)
@@ -160,6 +161,7 @@ class SolrSaver {
         folders.each { File folder ->
             i++
             SolrInputDocument sid = createSolrInputFolderDocument(folder)
+            sid.setField(SolrSaver.FLD_DATA_SOURCE, dataSourceLabel)
 
             sidList << sid
             if (sidList.size() >= SOLR_BATCH_SIZE) {
@@ -180,13 +182,16 @@ class SolrSaver {
     }
 
 
-    List<SolrInputDocument> buildFilesToCrawlInputList(Map<File, Map> filesToCrawl) {
+    List<SolrInputDocument> buildFilesToCrawlInputList(Map<File, Map> filesToCrawl, String dsLabel = '') {
         List<SolrInputDocument> inputDocuments = []
         if (filesToCrawl?.size() > 0) {
             filesToCrawl.each { File file, Map details ->
                 String status = details?.status
                 log.debug "File: $file -- Status: $status -- details: $details"
                 SolrInputDocument sid = buildBasicTrackSolrFields(file)
+                if(dsLabel){
+                    sid.setField(SolrSaver.FLD_DATA_SOURCE, dsLabel)
+                }
                 if (tikaConfig) {
                     if (details.status == LocalFileCrawler.STATUS_INDEX_CONTENT) {
                         log.debug "test 2..."
@@ -219,7 +224,7 @@ class SolrSaver {
      * @param filesToTrack
      * @return
      */
-    static SolrInputDocument buildBasicTrackSolrFields(File file) {
+    static SolrInputDocument buildBasicTrackSolrFields(File file, String dsLabel = '') {
         SolrInputDocument sid = new SolrInputDocument()
         String id = "${file.canonicalPath}--${file.lastModified()}"
         sid.setField(FLD_ID, id)
@@ -230,6 +235,9 @@ class SolrSaver {
         sid.setField(FLD_PARENT_PATH, file.parentFile.canonicalPath)
         sid.setField(FLD_NAME_S, file.name)
         sid.setField(FLD_NAME_T, file.name)
+        if(dsLabel){
+            sid.setField(FLD_DATA_SOURCE, dsLabel)
+        }
 
         if (file.isDirectory()) {
 //            log.warn "Should not be a directory: $file"
@@ -349,6 +357,14 @@ class SolrSaver {
         QueryResponse resp = solrClient.query(sq)
         long docCount= resp.getResults().numFound
         return docCount
+    }
+
+    QueryResponse query(String query = '*:*') {
+        SolrQuery sq = new SolrQuery(query)
+//        sq.setFields('')
+//        sq.setRows(0)
+        QueryResponse resp = solrClient.query(sq)
+        return resp
     }
 
 
