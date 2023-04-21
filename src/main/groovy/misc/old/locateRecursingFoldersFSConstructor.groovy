@@ -1,4 +1,4 @@
-package misc
+package misc.old
 
 import com.oconeco.analysis.FolderAnalyzer
 import com.oconeco.helpers.SolrCrawlArgParser
