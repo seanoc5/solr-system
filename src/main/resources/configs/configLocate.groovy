@@ -5,11 +5,19 @@ solrUrl = "http://localhost:8983/solr/solr_system"
 // todo -- these name: path entries are not yet used, still reading path and name from cli args
 dataSources {
     localFolders {
-        MyDocuments = '/home/sean/Documents'
         MyDesktop = '/home/sean/Desktop'
+        MyDocuments = '/home/sean/Documents'
+        Downloads = '/home/sean/Downloads'
         MyPictures = '/home/sean/Pictures'
+
+        SeanConfig = '/home/sean/.config'
+        SeanLocal = '/home/sean/.local'
+        Work = '/home/sean/work'
+        Backups = '/home/sean/bkup'
 //        SeanHome = '/home/sean'
-        Opt = '/opt/'
+        Etc = '/etc'
+        Opt = '/opt'
+        Var = '/var'
     }
 }
 
@@ -17,7 +25,7 @@ dataSources {
 
 // edit and customize these entries. The namePattern name is the assigned tag, the regex pattern (`~` is the pattern operator) are the matching regexes for the label/tag
 namePatterns.files = [
-        ignore      : ~/([.~]*lock.*|_.*|.*\.te?mp$|.*\.class$|robots.txt)/,
+        ignore      : ~/(|[.~]*lock.*|_.*|.*\.te?mp$|.*\.class$|robots.txt)/,
         index       : ~/(bash.*|csv|groovy|ics|ipynb|java|lst|md|php|py|rdf|rss|scala|sh|tab|te?xt|tsv)/,
         analyze     : ~/(aspx\?|cfm|docx\?|html|od.|pptx\?|pdf|ps|pub|rss|xlsx|zhtml\?)/,
         office      : ~/.*(accdb|docx?|ods|odp|odt|pdf|pptx?|rtf|txt|vsdx?|xmind|xlsx?)/,
@@ -36,7 +44,7 @@ namePatterns.files = [
 
 // folder names can be matches to assign tags for a given folder (name matching)
 namePatterns.folders = [
-        ignore : ~/(__snapshots__|\.bsp|\.?cache|\.csv|\.gradle|\.git|\.github|\.idea|\.settings|\.svn|\.vscode|_global|ignore.*|runtime)/,
+        ignore : ~/(@angular|__snapshots__|\.bsp|\.?cache|\.csv|\.gradle|\.git|\.github|\.idea|\.settings|\.svn|\.vscode|_global|ignore.*|lib|node.modules|runtime)/,
         content: ~/(content)/,
         office : ~/(?i).*(documents)/,
         techDev: ~/.*(groovy|gradle|classes)/,
