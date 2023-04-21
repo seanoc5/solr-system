@@ -20,29 +20,7 @@ log.info "Start ${this.class.name}, with args: $args"
 
 SolrCrawlConfig scc = new SolrCrawlConfig(this.class.simpleName, args)
 ConfigObject config = scc.config
-/*
-String configLocation = options.config
-File cfgFile = new File(configLocation)
-def resourcesRoot = getClass().getResource('/')
-log.info "Starting with resources root: $resourcesRoot"
-if (!cfgFile.exists()) {
-    URL cfgUrl = getClass().getResource(configLocation)
-    log.warn "could not find config file: ${cfgFile.absolutePath}, trying resource path: $cfgUrl"
-    if (cfgUrl) {
-        cfgFile = new File(cfgUrl.toURI())
-        if (cfgFile.exists()) {
-            log.info "Found config file (${configLocation}) in resources: ${cfgFile.absolutePath}"
-        } else {
-            throw new IllegalArgumentException("Config file: $cfgFile does not exist, bailing...")
-        }
-    } else {
-        log.warn "No config url found?? "
-    }
-} else {
-    log.info "cfg file: ${cfgFile.absolutePath}"
-}
-ConfigObject config = new ConfigSlurper().parse(cfgFile.toURI().toURL())
-*/
+
 
 Map<String,String> startFolders = config.dataSources.localFolders
 String solrUrl = config.solrUrl         //options.solrUrl
@@ -54,37 +32,45 @@ SolrSaver solrSaver = new SolrSaver(solrUrl, 'Documents Locate')
 log.info "Solr Saver created: $solrSaver"
 
 boolean wipeContent = scc.options.wipeContent
-if (wipeContent) {
-    log.warn "Wiping previous crawl data (BEWARE!!!)..."
-    def foo = solrSaver.clearCollection()
-    log.info "Clear results: $foo"
-} else {
-    log.debug "Not wiping content/collection, "
-}
 
 def fileNamePatterns = config.namePatterns.files
 def folderNamePatterns = config.namePatterns.folders
 Long fileCount = 0
 Date startTimeAll = new Date()
 
-startFolders.each { String label, String sf ->
+startFolders.each { String dsLabel, String sf ->
     Date startTimeFolder = new Date()
 
     File startFolder = new File(sf)
-    log.info "Crawling parent folder: $label :: $sf"
+    log.info "Crawling parent folder: $dsLabel :: $sf"
 
     Date start = new Date()
-    solrSaver.setDataSourceName(label)
+    solrSaver.setDataSourceName(dsLabel)
+    if (wipeContent) {
+        String query = "${SolrSaver.FLD_DATA_SOURCE}:\"${dsLabel}\""
+        long existingCount = solrSaver.getDocumentCount(query)
+        log.info "Found existing count: $existingCount"
+        if(existingCount> 0) {
+            log.warn "Wiping previous crawl data (BEWARE!!!), label:'$dsLabel'!!!! - "
+            def foo = solrSaver.deleteDocuments(query)
+            log.info "Clear results: $foo"
+        } else {
+            log.info "\t\tskipping delete command for data source '$dsLabel', since we found $existingCount (0, right?) existing docs in current data source -- delete query would have been: $query"
+        }
+    } else {
+        log.debug "Not wiping content/collection, "
+    }
+
 
     // get list of non-noisy folders to crawl (or compare against stored info (check if we need to crawl...
-    Map<String, List<File>> resultsMap = LocalFileCrawler.getFoldersToCrawlMap(startFolder, fileNamePatterns)
+    Map<String, List<File>> resultsMap = LocalFileCrawler.getFoldersToCrawlMap(startFolder, folderNamePatterns)
     List<File> crawlFolders = resultsMap.foldersToCrawl
 //    Set<File> foldersToCrawl = LocalFileCrawler.getFoldersToCrawl(startFolder, fileNamePatterns)
     log.info "Folders to crawl(${crawlFolders.size()})"
     log.debug "\t\tFolders to crawl: ${crawlFolders}"
 
 
-    def uresplist = solrSaver.saveFolderList(crawlFolders)
+    def uresplist = solrSaver.saveFolderList(crawlFolders, dsLabel)
     log.debug "Starting Folder ($sf) Update responses: $uresplist"
 
     log.info "Crawl Folders size: ${crawlFolders.size()}"
@@ -94,7 +80,7 @@ startFolders.each { String label, String sf ->
         Map<File, Map> filesToCrawlMap = LocalFileCrawler.getFilesToCrawlList(crawlableFolder, LocalFileCrawler.FILE_REGEX_TO_SKIP, LocalFileCrawler.FILE_EXTENSIONS_TO_INDEX, LocalFileCrawler.FILE_EXTENSIONS_TO_ANALYZE)
         log.info "\t\t$fileCount) folder: ${crawlableFolder.absolutePath} -- files to crawl count: ${filesToCrawlMap.size()}"
         fileCount += filesToCrawlMap.size()
-        List<SolrInputDocument> sidList = solrSaver.buildFilesToCrawlInputList(filesToCrawlMap)
+        List<SolrInputDocument> sidList = solrSaver.buildFilesToCrawlInputList(filesToCrawlMap, dsLabel)
         if (sidList) {
 //            log.info "Files to crawl list size: ${filesToCrawlMap.size()}"
             UpdateResponse response = solrSaver.saveFilesCollection(sidList)
