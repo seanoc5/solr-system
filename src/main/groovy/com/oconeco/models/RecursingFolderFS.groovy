@@ -19,7 +19,7 @@ import java.util.regex.Pattern
  * structure for handling information about a folder from the FS (filesystem),
  * handles both basic information from the filesystem, and analysis results from some process
  * todo -- switch to NIO Files and Paths
- * @deprecated added recurse param to FolderFS, use that instead
+ * @deprecated added recurse param to FolderFS, use that instead -- also: drop constructor based approach altogether???
  */
 class RecursingFolderFS extends FolderFS {
     public static final String TYPE = 'Folder'

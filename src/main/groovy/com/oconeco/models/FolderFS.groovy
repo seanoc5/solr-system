@@ -52,10 +52,20 @@ class FolderFS extends BaseObject {
     /** in a given crawl, count 'duplicate' names as a metric for the anaylzer */
     int sameNameCount = 0
     public static final Pattern IGNORE_ALL = ~/.*/
+    public static final String
 
+    /**
+     * over-engineered constructor-based crawling, not my favorite idea....
+     * @param srcPath
+     * @param depth
+     * @param ignoreFilesPattern
+     * @param ignoreSubdirectories
+     * @param recurse
+     * @deprecated I don't think the constructor approach is right, deprecating in favor of more explicit (and less surprising) method based approach (the original approach)
+     */
     FolderFS(String srcPath, int depth = 1, Pattern ignoreFilesPattern = null, Pattern ignoreSubdirectories = null, Boolean recurse = false) {
         this(new File(srcPath), depth, ignoreFilesPattern, ignoreSubdirectories, recurse)
-        log.debug "convenience constructor taking a string path($srcPath) and calling proper constructor with file..."
+//        log.debug "convenience constructor taking a string path($srcPath) and calling proper constructor with file..."
     }
 
 
@@ -65,9 +75,10 @@ class FolderFS extends BaseObject {
      * @param depth
      * @param ignoreFilesPattern
      * @param ignoreSubdirectories
+     * @deprecated I don't think the constructor approach is right, deprecating in favor of more explicit (and less surprising) method based approach (the original approach)
      */
     FolderFS(File srcFolder, int depth = 1, Pattern ignoreFilesPattern = null, Pattern ignoreSubdirectories = null, boolean recurse = false, FolderFS parentFolderFS = null) {
-        log.debug '\t'*depth + "$depth) ${srcFolder.absolutePath}) FolderFS constructor"
+        log.debug '\t' * depth + "$depth) ${srcFolder.absolutePath}) FolderFS constructor"
         if (srcFolder?.exists()) {
             id = srcFolder.absolutePath
             me = srcFolder
@@ -161,7 +172,7 @@ class FolderFS extends BaseObject {
         if (!folderAnalyzer instanceof FolderAnalyzer) {
             throw new IllegalArgumentException("Analyzer not instance of Folder Analyzer, throwing error...")
         }
-        FolderAnalyzer folderAnalyzer = (FolderAnalyzer)analyzer
+        FolderAnalyzer folderAnalyzer = (FolderAnalyzer) analyzer
 
         List<String> labels = folderAnalyzer.assignFolderLabels(this)
         return labels
@@ -171,7 +182,7 @@ class FolderFS extends BaseObject {
         log.debug "Analyze Folder: ${((String) this).padRight(30)}  --->  ${this.me.absolutePath}"
         List<String> folderLabels = []  // analyze(folderAnalyzer)
 
-        if(fileAnalyzer) {
+        if (fileAnalyzer) {
             List<String> labels = fileAnalyzer.analyze(filesFS)
             folderLabels.addAll(labels)
         }
@@ -192,7 +203,7 @@ class FolderFS extends BaseObject {
 
 //        def updateTime =
 
-        if(crawlName){
+        if (crawlName) {
             sidFolder.setField(SolrSaver.FLD_DATA_SOURCE, crawlName)
         }
 
@@ -230,10 +241,10 @@ class FolderFS extends BaseObject {
      * recursing method to gather up all (current & descendant) folders in a flat list (i.e. to save to solr)
      * @return flattened list of Folder objects
      */
-    List<FolderFS> getAllSubFolders(){
-        log.debug '\t'*depth + "${name} ($depth) get subfolders: ${childFolders}"
+    List<FolderFS> getAllSubFolders() {
+        log.debug '\t' * depth + "${name} ($depth) get subfolders: ${childFolders}"
         List<FolderFS> allFolders = []
-        this.childFolders.each {FolderFS subFolder ->
+        this.childFolders.each { FolderFS subFolder ->
             allFolders << subFolder
             List<FolderFS> foldersFS = subFolder.getAllSubFolders()
             allFolders.addAll(foldersFS)
