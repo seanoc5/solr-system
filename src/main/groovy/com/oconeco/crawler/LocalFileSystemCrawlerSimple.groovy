@@ -16,6 +16,8 @@ import java.util.regex.Pattern
  * Crawl file system but check stored info and only update folders/files which are newer than stored info
  * todo -- finish comparison code
  * Created by sean on 11/4/15.
+ * @deprecated - look at FolderAnalyzer and FileAnalyzer
+ *
  */
 class LocalFileSystemCrawlerSimple {
     static Pattern FILE_REGEX_TO_SKIP = Pattern.compile('(\\~\\$.*|_.*|.*\\.te?mp$|.*\\.class$|robots.txt|.*\\.odb$|.*json|.*\\.pos)')

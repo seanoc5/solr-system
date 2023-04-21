@@ -203,7 +203,8 @@ class LocalFileCrawler extends BaseCrawler{
      * @param ignoreFileNames
      * @param ignoreFolderNames
      * @param depth
-     * @return
+     * @return list of FolderFS
+     * @deprecated I don't think the constructor approach is right, deprecating in favor of more explicit (and less surprising) method based approach (the original approach)
      */
     static List<FolderFS> gatherFolderFSToCrawl(File folder, Pattern ignoreFileNames, Pattern ignoreFolderNames, int depth = 1) {
         if (depth < 3) {
@@ -325,6 +326,14 @@ class LocalFileCrawler extends BaseCrawler{
     }
 
 
+    /**
+     *
+     * @param sourcefolder
+     * @param filesToSkip
+     * @param extensionToIndex
+     * @param extensionToAnalyze
+     * @return
+     */
     public static Map<File, Map> getFilesToCrawlList(File sourcefolder, Pattern filesToSkip = FILE_REGEX_TO_SKIP, Pattern extensionToIndex = FILE_EXTENSIONS_TO_INDEX, Pattern extensionToAnalyze = FILE_EXTENSIONS_TO_ANALYZE) {
         log.debug "Get files to crawl from folder: ($sourcefolder)"
         Map<File, Map> filesToCrawl = [:]
