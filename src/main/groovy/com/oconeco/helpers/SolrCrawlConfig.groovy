@@ -45,18 +45,6 @@ class SolrCrawlConfig {
             cli.usage()
             System.exit(0)
         }
-
-        if(options.datasource){
-            def ds = options.datasource
-            log.info "Datasource(s): $ds"
-        }
-
-        if(options.folders){
-            def folders = options.folders
-            def fs = options.fs
-            log.info "Folders(s): $fs"
-        }
-
         if (options.config) {
             String cfg = options.config
             ConfigSlurper configSlurper = new ConfigSlurper()
@@ -91,10 +79,25 @@ class SolrCrawlConfig {
             System.exit(-2)
         }
 
+
+        if(options.datasource){
+            def datasrc = options.datasource
+            def ds = options.ds
+            log.info "Datasource(s): $datasrc"
+        }
+
+/*
+        if(options.folders){
+            def folders = options.folders
+            def fs = options.fs
+            log.info "Folders(s): $fs"
+        }
+
         if(options.folders){
             log.info "Setting config.folders from options.folders (${options.folders})"
             config.folders = options.folders
         }
+*/
     }
 
 }
