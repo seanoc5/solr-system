@@ -277,13 +277,9 @@ class LocalFileCrawler extends BaseCrawler{
         Map<String, Collection<File>> filesToCrawl = [skip: [], track: [], index: [], analyze: [], extensions: []]
         // create a map of files grouped by category: skip, track, index, analyze
 
-        sourcefolder.eachFile {
-            log.debug "File: $it"
-        }
-
         sourcefolder.eachFile(FileType.FILES) { File file ->
             String fname = file.name
-//            log.info "Filename: $fname"
+            log.debug +"Filename: $fname"
             String ext = FilenameUtils.getExtension(fname)
 
 
