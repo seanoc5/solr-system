@@ -8,6 +8,12 @@ import org.apache.lucene.analysis.core.WhitespaceAnalyzer
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute
 
+/**
+ * WIP for class to help do analysis things:
+ * looking at terms, patterns, statistics...
+ *
+ * quite likely there are better existing libraries/solutions, but this is the developer thinking through options...
+ */
 class AnalysisHelper {
     static final Logger log = Logger.getLogger(this.class.name)
     /**
