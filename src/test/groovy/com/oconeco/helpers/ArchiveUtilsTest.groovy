@@ -74,9 +74,11 @@ class ArchiveUtilsTest extends Specification {
         aisbz2?.close()
 
         then:
-        tgzEntries.size()==4
+        tgzEntries.size()==40
         targzEntries.size()==123
         zipEntries.size()==2
         bz2Entries.size()==8
     }
+
+
 }

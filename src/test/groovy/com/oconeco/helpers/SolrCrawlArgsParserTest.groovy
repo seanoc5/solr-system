@@ -2,7 +2,7 @@ package com.oconeco.helpers
 
 import spock.lang.Specification
 
-class SolrCrawlConfigTest extends Specification {
+class SolrCrawlArgsParserTest extends Specification {
     def "GetOptions"() {
         given:
         URL cfgUrl = this.class.getClassLoader().getResource('configs/configLocate.groovy')
@@ -13,7 +13,7 @@ class SolrCrawlConfigTest extends Specification {
         '-n"Locate Documents"',
         '-w']
 
-        SolrCrawlConfig scc = new SolrCrawlConfig(this.class.name, args)
+        SolrCrawlArgsParser scc = new SolrCrawlArgsParser(this.class.name, args)
 
         List files = scc.options.fs
 
