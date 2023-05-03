@@ -1,5 +1,6 @@
 package com.oconeco.analysis
 
+import com.oconeco.models.BaseObject
 import com.oconeco.models.FileFS
 import com.oconeco.models.FolderFS
 import org.apache.commons.compress.archivers.ArchiveEntry
@@ -26,8 +27,8 @@ class FolderAnalyzer extends BaseAnalyzer {
     Logger log = Logger.getLogger(this.class.name);
     /** label of things we can ignore (use sparingly) */
     public static final String LBL_IGNORE = 'ignore'
-    Map<String, Pattern> DEFAULT_FOLDERNAME_PATTERNS = [
-            ignore       : ~/.*(__snapshots__|cache|git|github|packages?|pkgs?|plugins?|skins?|svn|target|vscode)/,
+    static final Map<String, Pattern> DEFAULT_FOLDERNAME_PATTERNS = [
+            ignore       : ~/.*(__snapshots__|cache|git|github|ignore.*|packages?|pkgs?|plugins?|skins?|svn|target|vscode)/,
             backups      : ~/.*(bkups?|old|timeshift)/,
             configuration: ~/.*(configs)/,
             documents    : ~/.*([Dd]ocuments|[Dd]esktop)/,
@@ -37,7 +38,8 @@ class FolderAnalyzer extends BaseAnalyzer {
             system       : ~/.*(class|sbt|sbt-\d.*|runtime)/,
     ]
 
-    Map<String, Pattern> DEFAULT_FILENAME_PATTERNS = [
+    static final Map<String, Pattern> DEFAULT_FILENAME_PATTERNS = [
+            ignore      : ~/([.~]*lock.*|_.*|.*\.te?mp$|.*\.class$|robots.txt)/,
             office      : ~'.*(accdb|docx?|ods|odp|odt|pptx?|rtf|txt|vsdx?|xslx?)',
             system      : ~/.*(bin|deb|gcc|lib|pkg|rpm)/,
             archive     : ~/.*(arc|gz|rar|zip|tar.gz|zip)/,
@@ -56,6 +58,9 @@ class FolderAnalyzer extends BaseAnalyzer {
 
     ArchiveStreamFactory archiveStreamFactory = new ArchiveStreamFactory();
 
+    FolderAnalyzer() {
+        log.info "Blank constructor, using defaults..."
+    }
 
     FolderAnalyzer(ConfigObject config) {
         this.config = config
@@ -71,7 +76,12 @@ class FolderAnalyzer extends BaseAnalyzer {
     }
 
 
-    def assignFolderType(FolderFS ffs) {
+    FolderAnalyzer(Map fnPatterns) {
+        folderNamePatterns = fnPatterns
+    }
+
+    List<String> analyze(BaseObject object) {
+        FolderFS ffs = (FolderFS)object
         List<String> labels = []
         folderNamePatterns.each { String label, Pattern pattern ->
             if (ffs.name ==~ pattern) {
@@ -94,7 +104,12 @@ class FolderAnalyzer extends BaseAnalyzer {
     }
 
 
-    def assignFileTypes(List<FileFS> files) {
+    /**
+     * iterate through files, and apply file type labels (from map of patterns...?)
+     * @param files
+     * @return list of types found, plus we updated the sourcec list (non-FP friendly...)
+     */
+    List<String> assignFileTypes(List<FileFS> files) {
         List<String> allLabels = []
         files.each { FileFS fileFS ->
             log.debug "\t\tAssign file type: $fileFS"
@@ -124,7 +139,13 @@ class FolderAnalyzer extends BaseAnalyzer {
     }
 
 
-    Object analyzeArchives(List<FileFS> filesFs) {
+    /**
+     * analyze an archive (zip, tarball) file
+     * todo -- more code/functionality
+     * @param filesFs
+     * @return
+     */
+    def analyzeArchives(List<FileFS> filesFs) {
 
         filesFs.each { FileFS ffs ->
             if (ffs.isArchive(ffs)) {
@@ -144,6 +165,7 @@ class FolderAnalyzer extends BaseAnalyzer {
                     log.info "Archive input: $archiveInputStream"
                     ArchiveEntry archiveEntry
                     while ((archiveEntry = archiveInputStream.getNextEntry()) != null) {
+                        // todo -- add more code/functionality
                         log.info "entry: $archiveEntry"
                     }
                 } catch (ArchiveException ae) {
@@ -156,4 +178,10 @@ class FolderAnalyzer extends BaseAnalyzer {
             }
         }
     }
+
+
+//    @Override
+//    List<String> analyze(BaseObject object) {
+//        return null
+//    }
 }
