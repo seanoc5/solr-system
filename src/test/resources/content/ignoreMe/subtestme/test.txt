@@ -1,0 +1,3 @@
+this file should be skipped by ignore pattern (parent folder called: 'ignoreMe' which should match default pattern:
+ /ignore.*/
+
