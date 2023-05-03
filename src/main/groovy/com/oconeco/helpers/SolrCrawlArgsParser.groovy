@@ -19,13 +19,11 @@ import org.apache.log4j.Logger
  * General helper class trying to standardize args specific to solr operations
  * probably can be deprecated or removed, but leaving for now
  */
-class SolrCrawlConfig {
+class SolrCrawlArgsParser {
     static final Logger log = Logger.getLogger(this.class.name)
     OptionAccessor options = null
     ConfigObject config = null
-
-
-    SolrCrawlConfig(String toolName, String[] args) {
+    SolrCrawlArgsParser(String toolName, String[] args) {
         CliBuilder cli = new CliBuilder()
 //        CliBuilder cli = new CliBuilder(usage: "${toolName}.groovy --config=configLocate.groovy", width: 160)
         cli.with {
@@ -54,13 +52,14 @@ class SolrCrawlConfig {
                 log.info "Config file: ${f.path}"
                 config = configSlurper.parse(f.toURI().toURL())
             } else {
-                URL cfgUrl = SolrCrawlConfig.class.getClassLoader().getResource('configs/configLocate.groovy')
-                log.info "Config url resolved to: $cfgUrl"
-//                String myAppName = 'MyFusionApp'
-//                Map cliArgs = [appName: myAppName]
-//                configSlurper.setBinding(cliArgs)
-                config = configSlurper.parse(cfgUrl)
-//                log.warn "Cannot seem to find file: ${cfg}"
+                URL cfgUrl = SolrCrawlArgsParser.class.getClassLoader().getResource('configs/configLocate.groovy')
+                f = new File(cfgUrl.toURI())
+                if(f.exists()) {
+                    log.info "Config url resolved to: $cfgUrl"
+                    config = configSlurper.parse(cfgUrl)
+                } else {
+                    log.warn "no config file found: '${f.absolutePath}'"
+                }
             }
 
         } else {
@@ -83,7 +82,20 @@ class SolrCrawlConfig {
         if(options.datasource){
             def datasrc = options.datasource
             def ds = options.ds
-            log.info "Datasource(s): $datasrc"
+            def dsLF = config.dataSources.localFolders
+            int cnt = ds.size()
+            Map dsMap = [:]
+            if(cnt % 2 == 0) {
+                for (i in 0..<cnt / 2) {
+                    // todo: quick hack to transform....verify logic & processing)
+                    String label = ds[i*2]
+                    String folder = ds[i*2+1]
+                    log.info "Label: $label -> $folder"
+                    dsMap.put(label, folder)
+                }
+
+            }
+            log.info "Datasource(s): $datasrc -- "
         }
 
 /*
