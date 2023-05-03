@@ -1,9 +1,8 @@
-package com.oconeco.crawler
+package misc
 
 import com.oconeco.analysis.FolderAnalyzer
 import com.oconeco.helpers.SolrCrawlArgParser
 import com.oconeco.models.FolderFS
-import com.oconeco.models.RecursingFolderFS
 import com.oconeco.persistence.SolrSaver
 import org.apache.log4j.Logger
 import org.apache.solr.common.SolrInputDocument
@@ -43,43 +42,56 @@ long start = System.currentTimeMillis()
 
 // ------------------ Folder stuff -------------------
 FolderAnalyzer analyzer = new FolderAnalyzer(config)
-Pattern ignoreFolders = config.folders.namePatterns.ignore ?: analyzer.DEFAULT_FOLDERNAME_PATTERNS.ignore
+Pattern ignoreFolders = config.namePatterns.folders.ignore ?: analyzer.DEFAULT_FOLDERNAME_PATTERNS.ignore
 log.info "Ignore FOLDERS: $ignoreFolders"
-Pattern ignoreFiles = config.files.namePatterns.ignore ?: analyzer.DEFAULT_FOLDERNAME_PATTERNS.ignore
+Pattern ignoreFiles = config.namePatterns.files.ignore ?: analyzer.DEFAULT_FOLDERNAME_PATTERNS.ignore
 log.info "Ignore files: $ignoreFiles"
-Map startFolders = dataSources.localFiles
+Map startFolders = config.dataSources.localFolders
 
 Long fileCount = 0
-startFolders.each { String crawlName, String sf ->
-    File startFolder = new File(sf)
+startFolders.each { String crawlName, String sourceFolder ->
+    File startFolder = new File(sourceFolder)
     log.info "Crawling parent folder: $startFolder"
 
-    File f = new File(sf)
-    RecursingFolderFS folderFS = new RecursingFolderFS(f, 1, ignoreFiles, ignoreFolders)
+    File f = new File(sourceFolder)
+    FolderFS startFolderFS = new FolderFS(f, 1, ignoreFiles, ignoreFolders, true)
 
     // ------------------ Solr Stuff -------------------
+    String solrUrl = options.solrUrl
+    if (solrUrl && solrUrl != 'false') {
+        log.info "Found solrUrl ($solrUrl) in command line, using that (and ignoring anything from the config file...)"
+    } else {
+        solrUrl = config.solrUrl
+        log.info "Found solrUrl ($solrUrl) in config file (nothing from command line)"
+    }
     SolrSaver solrSaver = new SolrSaver(solrUrl, crawlName)
 
     boolean wipeContent = options.wipeContent
+    String q = "${SolrSaver.FLD_DATA_SOURCE}:\"${crawlName}\""
+    long existingDocCount = solrSaver.getDocumentCount(q)
+    log.info "Starting crawl named:($crawlName) with sourceFolder:($sourceFolder) -- ($existingDocCount) existing docs"
     if (wipeContent) {
-        log.warn "Wiping previous crawl data (BEWARE!!!)..."
-        def foo = solrSaver.clearCollection()
+        log.warn "Wiping previous crawl data (BEWARE!!!), delete query: ($q) -- ($existingDocCount) existing docs"
+        def foo = solrSaver.deleteDocuments(q)
         log.info "Clear results: $foo"
     }
 
 
-    def sortedbyName = groupedFolders.sort { it.value.size() * -1 }
-    def sortedbyType = fsFoldersToCrawl.groupBy { it.assignedTypes[0] }.sort {
+    def allFolders = startFolderFS.getAllSubFolders() + startFolderFS
+    Map groupedFolders = allFolders.groupBy { it.name }
+
+    def sortedbyDuplicates = groupedFolders.sort { it.value.size() * -1 }
+    def sortedbyType = allFolders.groupBy { it.assignedTypes[0] }.sort {
         it.value.size() * -1
     }
-    log.info "Sorted by name: ${sortedbyName.collect { String key, List<FolderFS> fsFolders -> "\n\t\t$key: ${fsFolders.size()}" }}"
+    log.info "Sorted by duplicates: ${sortedbyDuplicates.collect { String key, List<FolderFS> fsFolders -> "\n\t\t$key: ${fsFolders.size()}" }}"
     log.info "Sorted by type: ${sortedbyType.collect { String key, List<FolderFS> fsFolders -> "\n\t\t$key: ${fsFolders.size()}" }}"
-    log.debug "done with folder: $sf"
+    log.debug "done with folder: $sourceFolder"
 
-    fsFoldersToCrawl.each { FolderFS fsFolder ->
+    allFolders.each { FolderFS fsFolder ->
         List<SolrInputDocument> sidList = fsFolder.toSolrInputDocumentList()
         def result = solrSaver.saveDocs(sidList)
-        log.info "Saved folder (${fsFolder}) with ${fsFolder.countTotal} items"
+        log.info "\t\tSaved folder (${fsFolder}) with ${fsFolder.countTotal} items"
     }
 
 }

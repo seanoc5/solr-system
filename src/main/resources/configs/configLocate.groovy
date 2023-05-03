@@ -4,18 +4,28 @@ solrUrl = "http://localhost:8983/solr/solr_system"
 
 // todo -- these name: path entries are not yet used, still reading path and name from cli args
 dataSources {
-    localFiles {
-        MyDesktop: '/home/sean/Desktop'
-        MyDocuments: '/home/sean/Documents'
-        MyPictures: '/home/sean/Pictures'
+    localFolders {
+        MyDesktop = '/home/sean/Desktop'
+        MyDocuments = '/home/sean/Documents'
+        Downloads = '/home/sean/Downloads'
+        MyPictures = '/home/sean/Pictures'
+
+        SeanConfig = '/home/sean/.config'
+        SeanLocal = '/home/sean/.local'
+        Work = '/home/sean/work'
+        Backups = '/home/sean/bkup'
+//        SeanHome = '/home/sean'
+        Etc = '/etc'
+        Opt = '/opt'
+        Var = '/var'
     }
 }
 
 // note: all of the labels below are optional/customizable. You probably want to leave the `ignore`, `index`, and `analyze` labels as is, they have special meaning
 
 // edit and customize these entries. The namePattern name is the assigned tag, the regex pattern (`~` is the pattern operator) are the matching regexes for the label/tag
-files.namePatterns = [
-        ignore      : ~/([.~]*lock.*|_.*|.*\.te?mp$|.*\.class$|robots.txt)/,
+namePatterns.files = [
+        ignore      : ~/(|[.~]*lock.*|_.*|.*\.te?mp$|.*\.class$|robots.txt)/,
         index       : ~/(bash.*|csv|groovy|ics|ipynb|java|lst|md|php|py|rdf|rss|scala|sh|tab|te?xt|tsv)/,
         analyze     : ~/(aspx\?|cfm|docx\?|html|od.|pptx\?|pdf|ps|pub|rss|xlsx|zhtml\?)/,
         office      : ~/.*(accdb|docx?|ods|odp|odt|pdf|pptx?|rtf|txt|vsdx?|xmind|xlsx?)/,
@@ -26,19 +36,20 @@ files.namePatterns = [
         data        : ~/.*(csv|jsonl?d?|lst|pbix|tab|tsv)/,
         media       : ~/.*(avi|jpe?g|ogg|mp3|mpe?g|png|wav)/,
         logs        : ~/.*(logs?\.?\d*)/,       // attempting to allow singular or plural (option s after log, and 0 or more digits)
-        archive     : ~/.*(arc|gz|parquet|rar|tar.gz|zip)/,
+        archive     : ~/.*(arc|cab|dmg|gz|jar|parquet|rar|zip|tar\.(bz2?|gz|Z)|war|zip)/,
+        compressed  : ~/.*\.(bz2?|gz|z|Z)/,
         web         : ~/.*(html?)/,
         system      : ~/.*(_SUCCESS|bat|bin|bkup|cache|class|cookies|deb|gcc|lib|\.old|pkg|rpm|#$)/,
 ]
 
 // folder names can be matches to assign tags for a given folder (name matching)
-folders.namePatterns = [
-        ignore : ~/(__snapshots__|\.bsp|\.cache|\.csv|\.gradle|\.git|\.github|\.idea|\.settings|\.svn|\.vscode|_global|ignore.*|runtime)/,
+namePatterns.folders = [
+        ignore : ~/(@angular|__snapshots__|\.bsp|\.?cache|\.csv|\.gradle|\.git|\.github|\.idea|\.settings|\.svn|\.vscode|_global|ignore.*|lib|node.modules|runtime)/,
         content: ~/(content)/,
-        office: ~/(?i).*(documents)/,
+        office : ~/(?i).*(documents)/,
         techDev: ~/.*(groovy|gradle|classes)/,
         system : ~/(_global)/,
         techDev: ~/(.gradle|compile|groovy|java|main|scala|src|target|test|resources|wrapper)/,
-        test: ~/(?i).*(test)/,
-        work: ~/(?i).*(lucidworks|oconeco|work)/,
+        test   : ~/(?i).*(test)/,
+        work   : ~/(?i).*(lucidworks|oconeco|work)/,
 ]

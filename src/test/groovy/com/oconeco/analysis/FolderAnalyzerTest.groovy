@@ -28,7 +28,7 @@ class FolderAnalyzerTest extends Specification {
         when:
         List<String> assignedLabels = folderFS.analyze(analyzer)
         Map groupedLabels = assignedLabels.groupBy { it }
-        List contentGroup = groupedLabels['contnet']
+        List contentGroup = groupedLabels['content']
 
         then:
         folderFS.assignedTypes != null

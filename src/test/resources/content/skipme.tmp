@@ -1,0 +1,2 @@
+this file should be skipped/ignored by filename matching pattern:
+~/.*te?mp/

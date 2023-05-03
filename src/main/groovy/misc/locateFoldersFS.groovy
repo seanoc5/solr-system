@@ -1,6 +1,7 @@
-package com.oconeco.crawler
+package misc
 
 import com.oconeco.analysis.FolderAnalyzer
+import com.oconeco.crawler.LocalFileCrawler
 import com.oconeco.helpers.SolrCrawlArgParser
 import com.oconeco.models.FolderFS
 import com.oconeco.persistence.SolrSaver
@@ -8,8 +9,9 @@ import org.apache.log4j.Logger
 import org.apache.solr.common.SolrInputDocument
 
 import java.util.regex.Pattern
-
 /**
+ * This is the first script, and likely outdated now. look at locateFoldersFSConstructor.groovy
+ *
  * Script to function much like slocate in linux.
  * Crawl all folders (with skip configs to skip things we don't care about).
  * When folders are complete:
@@ -27,6 +29,7 @@ String solrUrl = options.solrUrl
 
 File cfgFile = new File(options.config)
 if (!cfgFile.exists()) {
+    log.warn "Could not find config file with path: ${options.config}: ${cfgFile.absolutePath}"
     throw new IllegalArgumentException("Config file: $cfgFile does not exist, bailing...")
 } else {
     log.info "cfg file: ${cfgFile.absolutePath}"
@@ -44,18 +47,26 @@ SolrSaver solrSaver = new SolrSaver(solrUrl, crawlName)
 
 boolean wipeContent = options.wipeContent
 if (wipeContent) {
-    log.warn "Wiping previous crawl data (BEWARE!!!)..."
-    def foo = solrSaver.clearCollection()
+    String q = "${SolrSaver.FLD_DATA_SOURCE}:\"${crawlName}\""
+    log.warn "Wiping previous crawl data (BEWARE!!!), delete query: ($q)"
+    def foo = solrSaver.deleteDocuments(q)
     log.info "Clear results: $foo"
 }
 
 
 // ------------------ Folder stuff -------------------
 FolderAnalyzer analyzer = new FolderAnalyzer(config)
-Pattern ignoreFolders = config.folders.namePatterns.ignore ?: analyzer.DEFAULT_FOLDERNAME_PATTERNS.ignore
-Pattern ignoreFiles = config.files.namePatterns.ignore ?: analyzer.DEFAULT_FOLDERNAME_PATTERNS.ignore
-//Pattern ignoreFolders = analyzer.folderNamePatterns.ignore ?: analyzer.DEFAULT_FOLDERNAME_PATTERNS.ignore
-//Pattern ignoreFiles = analyzer.fileNamePatterns.ignore      //analyzer.DEFAULT_FOLDERNAME_PATTERNS.ignore
+Pattern ignoreFolders = config.namePatterns.folders.ignore
+if(!ignoreFolders){
+    ignoreFolders =  analyzer.DEFAULT_FOLDERNAME_PATTERNS.ignore
+    log.info "No config setting found for ignore folders, going with defaut: ${ignoreFolders}"
+}
+Pattern ignoreFiles = config.namePatterns.files.ignore ?: analyzer.DEFAULT_FOLDERNAME_PATTERNS.ignore
+if(!ignoreFiles){
+    ignoreFiles =  analyzer.DEFAULT_FILENAME_PATTERNS.ignore
+    log.info "No config setting found for ignore FILES, going with defaut: ${ignoreFiles}"
+}
+
 
 Long fileCount = 0
 startFolders.each { String sf ->
@@ -83,7 +94,7 @@ startFolders.each { String sf ->
     fsFoldersToCrawl.each { FolderFS fsFolder ->
         List<SolrInputDocument> sidList = fsFolder.toSolrInputDocumentList()
         def result = solrSaver.saveDocs(sidList)
-        log.info "Saved folder (${fsFolder}) with ${fsFolder.countTotal} items"
+        log.info "\t\tSaved folder (${fsFolder}) with ${fsFolder.countTotal} items"
     }
 
 }

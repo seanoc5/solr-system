@@ -1,3 +1,4 @@
+package misc
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com

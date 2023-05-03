@@ -1,9 +1,12 @@
 package com.oconeco.persistence
 
 import com.oconeco.crawler.LocalFileCrawler
+import com.oconeco.models.FolderFS
 import org.apache.commons.io.FilenameUtils
 import org.apache.log4j.Logger
-import org.apache.solr.client.solrj.impl.HttpSolrClient
+import org.apache.solr.client.solrj.SolrQuery
+import org.apache.solr.client.solrj.impl.Http2SolrClient
+import org.apache.solr.client.solrj.response.QueryResponse
 import org.apache.solr.client.solrj.response.UpdateResponse
 import org.apache.solr.common.SolrInputDocument
 import org.apache.tika.config.TikaConfig
@@ -16,7 +19,6 @@ import org.apache.tika.parser.AutoDetectParser
 import org.apache.tika.parser.ParseContext
 import org.apache.tika.parser.Parser
 import org.apache.tika.sax.BodyContentHandler
-
 /**
  * Looking at helper class to save solr_system (file crawl to start with content to solr
  */
@@ -39,7 +41,7 @@ class SolrSaver {
     public static final String FLD_NAME_T = 'name_t'
     public static final String FLD_CONTENT_BODY = 'content_txt_en'
     public static final String FLD_PARENT_PATH = 'parent_path_s'
-    public static final String FLD_LASTMODIFIED = 'lastModified'
+    public static final String FLD_LASTMODIFIED = 'lastModified_dt'
     public static final String FLD_FILENAME_SS = "filename_ss"
     public static final String FLD_DIRNAME_SS = "dirname_ss"
     public static final String FLD_HIDDENNAME_SS = "hiddenname_ss"
@@ -54,6 +56,7 @@ class SolrSaver {
     public static final String FLD_SIZE = "size_i"
     public static final String FLD_SAME_NAME_COUNT = "sameNameCount_i"
     public static final String FLD_NAME_SIZE_S = "nameSize_s"
+    public static final String FLD_INDEX_DATETIME = "indexedTime_dt"            // pdate dynamic field
 
     public static String FLD_IGNORED_FILES_COUNT = 'ignoredFilesCount_i'
     public static String FLD_IGNORED_FILES = 'ignoredFiles'
@@ -63,7 +66,7 @@ class SolrSaver {
     final Integer SOLR_BATCH_SIZE = 5000
     final Integer MIN_FILE_SIZE = 10
     Long MAX_CONTENT_SIZE = 1024 * 1000 * 10 // (10 MB of text?)
-    HttpSolrClient solrClient
+    Http2SolrClient solrClient
 
     Detector detector = null
     Parser parser = null
@@ -76,21 +79,35 @@ class SolrSaver {
      * todo -- revisit for better approach...
      * @param baseSolrUrl
      */
+    SolrSaver(String baseSolrUrl) {
+        log.info "Constructor baseSolrUrl:$baseSolrUrl"
+        buildSolrClient(baseSolrUrl)
+    }
+
     SolrSaver(String baseSolrUrl, String dataSourceName) {
+//        this(baseSolrUrl)
         log.info "Constructor baseSolrUrl:$baseSolrUrl, CrawlName:$dataSourceName, WITHOUT tika"
-        solrClient = new HttpSolrClient.Builder(baseSolrUrl).build()
         this.dataSourceName = dataSourceName
+        buildSolrClient(baseSolrUrl)
     }
 
     SolrSaver(String baseSolrUrl, String dataSourceName, TikaConfig tikaConfig) {
+//        this(baseSolrUrl, dataSourceName)
         log.info "Constructor baseSolrUrl:$baseSolrUrl, CrawlName:$dataSourceName, with TIKA config: $tikaConfig"
-        solrClient = new HttpSolrClient.Builder(baseSolrUrl).build()
+        this.dataSourceName = dataSourceName
+        buildSolrClient(baseSolrUrl)
         this.tikaConfig = tikaConfig
         detector = tikaConfig.getDetector()
         parser = new AutoDetectParser()
         handler = new BodyContentHandler()
-        this.dataSourceName = dataSourceName
     }
+
+    public void buildSolrClient(String baseSolrUrl) {
+        log.info "Build solr client with baseSolrUrl: $baseSolrUrl"
+//        solrClient = new HttpSolrClient.Builder(baseSolrUrl).build()
+        solrClient = new Http2SolrClient.Builder(baseSolrUrl).build()
+    }
+
 
 
     /**
@@ -106,17 +123,15 @@ class SolrSaver {
      *
      * todo -- add logic to handle "complex" clear paths -- sym links etc....
      */
-    UpdateResponse clearCollection(def pathToClear) {
-        log.warn "Clearing collection: ${this.solrClient.baseURL} -- pathToClear: $pathToClear"
-        UpdateResponse ursp = solrClient.deleteByQuery("type_s:($FILE $FOLDER)", 100)
+    UpdateResponse deleteDocuments(String deleteQuery, int commitWithinMS = 10) {
+        log.warn "Clearing collection: ${this.solrClient.baseURL} -- deleteQuery: $deleteQuery (commit within: $commitWithinMS)"
+        UpdateResponse ursp = solrClient.deleteByQuery(deleteQuery, commitWithinMS)
         int status = ursp.getStatus()
-        if(status == 0){
-            log.debug "\t\tSuccess clearing collection with path to clear: $pathToClear"
+        if (status == 0) {
+            log.info "\t\tSuccess clearing collection with query: $deleteQuery"
         } else {
-            log.warn "FAILED to clear path: $pathToClear -- solr problem/error?? $ursp"
+            log.warn "FAILED to delete docs with delete query: ($deleteQuery) -- solr problem/error?? $ursp"
         }
-//        def orsp = solrClient.optimize()
-//        log.info "Optimized as well (overkill?), response:$orsp"
         return ursp
     }
 
@@ -126,6 +141,8 @@ class SolrSaver {
      *
      */
     SolrInputDocument createSolrInputFolderDocument(File folder) {
+        FolderFS folderFS = new FolderFS(folder)
+        return folderFS.toSolrInputDocument()
     }
 
 
@@ -136,7 +153,7 @@ class SolrSaver {
      * @param folders
      * @return
      */
-    List<UpdateResponse> saveFolderList(Set<File> folders) {
+    List<UpdateResponse> saveFolderList(List<File> folders, String dataSourceLabel = 'unlabeled') {
         log.info "Save folders list (${folders.size()})..."
         List<UpdateResponse> updates = []
         List<SolrInputDocument> sidList = new ArrayList<>(SOLR_BATCH_SIZE)
@@ -144,6 +161,7 @@ class SolrSaver {
         folders.each { File folder ->
             i++
             SolrInputDocument sid = createSolrInputFolderDocument(folder)
+            sid.setField(SolrSaver.FLD_DATA_SOURCE, dataSourceLabel)
 
             sidList << sid
             if (sidList.size() >= SOLR_BATCH_SIZE) {
@@ -155,22 +173,26 @@ class SolrSaver {
             }
         }
         if (sidList.size() > 0) {
-            log.info "\t\t$i) Adding final folder list batch (size: ${sidList.size()})..."
+            log.info "\t\t$i) ------ FINAL folder list batch added (size: ${sidList.size()}) ------"
             UpdateResponse uresp = solrClient.add(sidList, 1000)
+            log.info "\t\t$i) update response: $uresp"
             updates << uresp
         }
         return updates
     }
 
 
-    List<SolrInputDocument> buildFilesToCrawlInputList(Map<File, Map> filesToCrawl) {
+    List<SolrInputDocument> buildFilesToCrawlInputList(Map<File, Map> filesToCrawl, String dsLabel = '') {
         List<SolrInputDocument> inputDocuments = []
-        if(filesToCrawl?.size()>0) {
+        if (filesToCrawl?.size() > 0) {
             filesToCrawl.each { File file, Map details ->
                 String status = details?.status
                 log.debug "File: $file -- Status: $status -- details: $details"
                 SolrInputDocument sid = buildBasicTrackSolrFields(file)
-                if(tikaConfig) {
+                if(dsLabel){
+                    sid.setField(SolrSaver.FLD_DATA_SOURCE, dsLabel)
+                }
+                if (tikaConfig) {
                     if (details.status == LocalFileCrawler.STATUS_INDEX_CONTENT) {
                         log.debug "test 2..."
                         addSolrIndexFields(file, sid)
@@ -182,7 +204,7 @@ class SolrSaver {
                     } else {
                         log.debug "falling through to default 'track'"
                     }
-                } else{
+                } else {
                     log.debug "No tika config, so skipping indexing the content"
                 }
                 inputDocuments << sid
@@ -202,7 +224,7 @@ class SolrSaver {
      * @param filesToTrack
      * @return
      */
-    static SolrInputDocument buildBasicTrackSolrFields(File file) {
+    static SolrInputDocument buildBasicTrackSolrFields(File file, String dsLabel = '') {
         SolrInputDocument sid = new SolrInputDocument()
         String id = "${file.canonicalPath}--${file.lastModified()}"
         sid.setField(FLD_ID, id)
@@ -213,6 +235,9 @@ class SolrSaver {
         sid.setField(FLD_PARENT_PATH, file.parentFile.canonicalPath)
         sid.setField(FLD_NAME_S, file.name)
         sid.setField(FLD_NAME_T, file.name)
+        if(dsLabel){
+            sid.setField(FLD_DATA_SOURCE, dsLabel)
+        }
 
         if (file.isDirectory()) {
 //            log.warn "Should not be a directory: $file"
@@ -273,7 +298,7 @@ class SolrSaver {
                     } else {
                         log.info "\t\t${file.absolutePath}: no content...?"
                     }
-                } catch (TikaException te){
+                } catch (TikaException te) {
                     log.warn "Parsing error ($file): $te"
                 }
             } else {
@@ -318,10 +343,43 @@ class SolrSaver {
     }
 
     def saveDocs(ArrayList<SolrInputDocument> solrInputDocuments) {
-        solrInputDocuments.each {SolrInputDocument sid ->
+        solrInputDocuments.each { SolrInputDocument sid ->
             sid.setField(FLD_DATA_SOURCE, this.dataSourceName)
         }
         UpdateResponse resp = solrClient.add(solrInputDocuments, 1000)
         return resp
+    }
+
+    def long getDocumentCount(String queryToCount = '*:*') {
+        SolrQuery sq = new SolrQuery(queryToCount)
+        sq.setFields('')
+        sq.setRows(0)
+        QueryResponse resp = solrClient.query(sq)
+        long docCount= resp.getResults().numFound
+        return docCount
+    }
+
+    QueryResponse query(String query = '*:*') {
+        SolrQuery sq = new SolrQuery(query)
+//        sq.setFields('')
+//        sq.setRows(0)
+        QueryResponse resp = solrClient.query(sq)
+        return resp
+    }
+
+
+    @Override
+    public String toString() {
+        return "SolrSaver{" +
+                "SOLR_BATCH_SIZE=" + SOLR_BATCH_SIZE +
+                ", MIN_FILE_SIZE=" + MIN_FILE_SIZE +
+                ", MAX_CONTENT_SIZE=" + MAX_CONTENT_SIZE +
+                ", solrClient=" + solrClient +
+                ", detector=" + detector +
+                ", parser=" + parser +
+                ", handler=" + handler +
+                ", tikaConfig=" + tikaConfig +
+                ", dataSourceName='" + dataSourceName + '\'' +
+                '}';
     }
 }

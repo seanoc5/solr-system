@@ -1,5 +1,6 @@
-package com.oconeco.crawler
+package misc
 
+import com.oconeco.crawler.LocalFileCrawler
 import com.oconeco.persistence.SolrSaver
 import groovy.cli.picocli.CliBuilder
 import groovy.cli.picocli.OptionAccessor
@@ -32,8 +33,9 @@ Date start = new Date()
 SolrSaver solrSaver = new SolrSaver(solrUrl, 'TetstCrawl')
 boolean clear = false
 if (clear){
-    log.warn "Clearing collection (clear==true)..."
-    def foo = solrSaver.clearCollection()
+    String q = "${SolrSaver.FLD_DATA_SOURCE}:\"${crawlName}\""
+    log.warn "Wiping previous crawl data (BEWARE!!!), delete query: ($q)"
+    def foo = solrSaver.deleteDocuments(q)
     log.info "Clear results: $foo"
 }
 Long fileCount = 0
@@ -50,7 +52,6 @@ startFolders.each { String sf ->
     log.debug "Starting Folder ($sf) Update responses: $uresplist"
 
     log.info "Folders size: ${foldersToCrawl.size()}"
-
 
     foldersToCrawl.each { File crawlableFolder ->
         log.info "$fileCount) folder: ${crawlableFolder.absolutePath}"

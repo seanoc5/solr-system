@@ -10,7 +10,7 @@ dataSources {
     }
 }
 
-files.namePatterns = [
+namePatterns.files = [
         ignore      : ~/([.~]*lock.*|_.*|.*\.te?mp$|.*\.class$|robots.txt)/,
         index       : ~/(bash.*|csv|groovy|ics|ipynb|java|lst|md|php|py|rdf|rss|scala|sh|tab|te?xt|tsv)/,
         analyze     : ~/(aspx\?|cfm|docx\?|html|od.|pptx\?|pdf|ps|pub|rss|xlsx|zhtml\?)/,
@@ -28,7 +28,7 @@ files.namePatterns = [
         system      : ~/.*(_SUCCESS|bat|bin|bkup|cache|class|cookies|deb|gcc|lib|\.old|pkg|rpm|#$)/,
 ]
 
-folders.namePatterns = [
+namePatterns.folders = [
         ignore : ~/(__snapshots__|\.bsp|\.cache|\.csv|\.gradle|\.git|\.github|\.idea|\.settings|\.svn|\.vscode|_global|ignore.*|runtime)/,
         content: ~/(content)/,
         office: ~/(?i).*(documents)/,

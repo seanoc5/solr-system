@@ -1,3 +1,5 @@
+package misc
+
 import groovy.io.FileType
 import org.apache.log4j.Logger
 import org.apache.solr.client.solrj.SolrClient
@@ -48,7 +50,7 @@ srcDir.eachFileRecurse(FileType.FILES) { File srcfile ->
 
     sid.setField('fileSize_l', srcfile.size())
     Date lmdate = new Date(srcfile.lastModified())
-    sid.setField('lastModified_tdt', lmdate)
+    sid.setField('lastModified_dt', lmdate)
 
     try {
         Metadata metadata = new Metadata();

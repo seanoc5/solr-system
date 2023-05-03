@@ -25,6 +25,11 @@ abstract class BaseObject {
     /** size of me -- (ie count of files and subdirs in a folder */
     def size
 
+    String datasourceLabel
+
+    /** track updated/lastmodified date */
+    Date lastModifiedDate
+
     /** link to parent (if any) */
     def parent
     /** links to children (if any) */
@@ -58,9 +63,17 @@ abstract class BaseObject {
         sid.setField(SolrSaver.FLD_SIZE, size)
         sid.setField(SolrSaver.FLD_DEPTH, depth)
         sid.setField(SolrSaver.FLD_ASSIGNED_TYPES, assignedTypes)
-        if(taggedTypes) sid.setField(SolrSaver.FLD_TAG_SS, taggedTypes)
+        // todo -- consider switching to a batch time, rather than creating a new timestamp for each doc
+        sid.setField(SolrSaver.FLD_INDEX_DATETIME, new Date())
+        sid.setField(SolrSaver.FLD_LASTMODIFIED, lastModifiedDate)
 
-//        sid.addField(SolrSaver.FLD_, )
+        if(taggedTypes){
+            sid.setField(SolrSaver.FLD_TAG_SS, taggedTypes)
+        } else {
+//            log.debug "no tagged types?? $sid"
+        }
+
+//        sid.addField(SolrSaver.FLD_DATA_SOURCE, )
 //        sid.addField(SolrSaver.FLD_, )
         return sid
     }

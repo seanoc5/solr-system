@@ -28,8 +28,8 @@ class FolderAnalyzer extends BaseAnalyzer {
     /** label of things we can ignore (use sparingly) */
     public static final String LBL_IGNORE = 'ignore'
     static final Map<String, Pattern> DEFAULT_FOLDERNAME_PATTERNS = [
-            ignore       : ~/.*(__snapshots__|cache|git|github|ignore.*|packages?|pkgs?|plugins?|skins?|svn|target|vscode)/,
-            backups      : ~/.*(bkups?|old|timeshift)/,
+            ignore       : ~/.*(\b*snapshots?\b*|\b*cache\b*|git|github|ignore.*|packages?|pkgs?|plugins?|skins?|svn|target|vscode)/,
+            backups      : ~/.*(backups?|bkups?|old|timeshift)/,
             configuration: ~/.*(configs)/,
             documents    : ~/.*([Dd]ocuments|[Dd]esktop)/,
             downloads    : ~/.*([Dd]ownloads)/,
@@ -40,13 +40,13 @@ class FolderAnalyzer extends BaseAnalyzer {
 
     static final Map<String, Pattern> DEFAULT_FILENAME_PATTERNS = [
             ignore      : ~/([.~]*lock.*|_.*|.*\.te?mp$|.*\.class$|robots.txt)/,
-            office      : ~'.*(accdb|docx?|ods|odp|odt|pptx?|rtf|txt|vsdx?|xslx?)',
-            system      : ~/.*(bin|deb|gcc|lib|pkg|rpm)/,
-            archive     : ~/.*(arc|gz|rar|zip|tar.gz|zip)/,
+            office      : ~/.*\.(accdb|docx?|ods|odp|odt|pptx?|rtf|vsdx?|xlsx?)/,
+            system      : ~/.*(\.(bin|deb|lib|pkg|rpm)|(gcc.*))/,
+            archive     : ~/.*\.(arc|gz|rar|zip|tar.gz|zip)/,
             web         : ~/.*(html?)/,
             instructions: ~'(?i).*(adoc|readme.*|md)',
             techDev     : ~/.*(c|css|go|groovy|gradle|jar|java|javascript|js|php|schema|sh)/,
-            config      : ~/.*(config.*|pem|properties|xml|yaml)/,
+            config      : ~/.*(cfg|config.*|pem|properties|xml|yaml)/,
             data        : ~/.*(csv|jsonl?d?|lst|tab)/,
             media       : ~/.*(avi|jpe?g|ogg|mp3|mpe?g|wav)/,
     ]
@@ -64,13 +64,13 @@ class FolderAnalyzer extends BaseAnalyzer {
 
     FolderAnalyzer(ConfigObject config) {
         this.config = config
-        if (config.folders.namePatterns) {
-            folderNamePatterns = config.folders.namePatterns
-            log.info "Loading Folder analzer of foldernames from 'config.files.namePatterns': ${folderNamePatterns.collect { '\n\t\t' + it }}"
+        if (config.namePatterns?.folders) {
+            folderNamePatterns = config.namePatterns.folders
+            log.info "Loading Folder analzer of foldernames from 'config.namePatterns.files': ${folderNamePatterns.collect { '\n\t\t' + it }}"
         }
-        if (config.files.namePatterns) {
-            fileNamePatterns = config.files.namePatterns
-            log.info "Loading Folder analzer of filenames from 'config.files.namePatterns': ${fileNamePatterns.collect { '\n\t\t' + it }}"
+        if (config.namePatterns?.files) {
+            fileNamePatterns = config.namePatterns.files
+            log.info "Loading Folder analzer of filenames from 'config.namePatterns.files': ${fileNamePatterns.collect { '\n\t\t' + it }}"
         }
 
     }

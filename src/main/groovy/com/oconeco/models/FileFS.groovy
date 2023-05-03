@@ -3,6 +3,7 @@ package com.oconeco.models
 import com.oconeco.analysis.BaseAnalyzer
 import com.oconeco.analysis.FolderAnalyzer
 import com.oconeco.persistence.SolrSaver
+import groovy.io.FileType
 import org.apache.commons.io.FilenameUtils
 import org.apache.log4j.Logger
 import org.apache.solr.common.SolrInputDocument
@@ -21,6 +22,7 @@ class FileFS extends BaseObject {
     Logger log = Logger.getLogger(this.class.name)
     public static final String TYPE = 'File'
     String extension
+    String mimeType
 //    List<String> permissions
 
 
@@ -31,6 +33,7 @@ class FileFS extends BaseObject {
         name = f.name
         size = f.size()
         this.depth = depth
+        lastModifiedDate = new Date(f.lastModified())
         type = TYPE
         // todo -- more here -- also check FolderFS object, and analyze() method,
         extension = FilenameUtils.getExtension(f.name)
@@ -52,14 +55,18 @@ class FileFS extends BaseObject {
         return s
     }
 
-    SolrInputDocument toSolrInputDocument() {
+    SolrInputDocument toSolrInputDocument(String crawlName=null) {
         File f = me
         SolrInputDocument sid = super.toSolrInputDocument()
 //        sid.addField(SolrSaver.FLD_SIZE, size)
+        if(crawlName){
+            sid.setField(SolrSaver.FLD_DATA_SOURCE, crawlName)
+        }
+
         if (extension) {
             sid.addField(SolrSaver.FLD_EXTENSION_SS, extension)
-            sid.addField(SolrSaver.FLD_NAME_SIZE_S, "${f.name}:${f.size()}")
         }
+        sid.addField(SolrSaver.FLD_NAME_SIZE_S, "${f.name}:${f.size()}")
 //        sid.addField(SolrSaver.FLD_DEPTH, depth)
         return sid
     }
@@ -83,4 +90,27 @@ class FileFS extends BaseObject {
         return isArchive
 
     }
+
+    public static List<FileFS> getFileFSList(File folder, boolean recurse = false){
+        List<FileFS> fileFSList = []
+        if(folder && folder.isDirectory()){
+            if(recurse) {
+                int parentPathCount = folder.path.split(File.separator)
+                folder.eachFileRecurse(FileType.FILES){
+                    int childPathCount = it.path.split(File.separator)
+                    int depth = childPathCount = parentPathCount
+                    FileFS childFS= new FileFS(it, depth)
+                    fileFSList << childFS
+                }
+            } else {
+                folder.eachFile(FileType.FILES){
+                    int childPathCount = it.path.split(File.separator)
+                    FileFS childFS= new FileFS(it)
+                    fileFSList << childFS
+                }
+            }
+        }
+        return fileFSList
+    }
+
 }
