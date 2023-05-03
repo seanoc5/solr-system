@@ -1,11 +1,12 @@
 package misc
 
 import com.oconeco.crawler.LocalFileCrawler
-import com.oconeco.helpers.SolrCrawlConfig
+import com.oconeco.helpers.SolrCrawlArgsParser
 import com.oconeco.persistence.SolrSaver
 import org.apache.log4j.Logger
 import org.apache.solr.client.solrj.response.UpdateResponse
 import org.apache.solr.common.SolrInputDocument
+
 /**
  * Script to function much like slocate in linux.
  * Crawl all folders (with skip configs to skip things we don't care about).
@@ -18,7 +19,7 @@ Logger log = Logger.getLogger(this.class.name);
 log.info "Start ${this.class.name}, with args: $args"
 
 
-SolrCrawlConfig scc = new SolrCrawlConfig(this.class.simpleName, args)
+SolrCrawlArgsParser scc = new SolrCrawlArgsParser(this.class.simpleName, args)
 ConfigObject config = scc.config
 
 
