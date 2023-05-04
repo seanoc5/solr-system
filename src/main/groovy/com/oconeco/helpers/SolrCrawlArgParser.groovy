@@ -1,8 +1,11 @@
 package com.oconeco.helpers
 
 
-import groovy.cli.picocli.CliBuilder
-import groovy.cli.picocli.OptionAccessor
+//import groovy.cli.picocli.CliBuilder
+//import groovy.cli.picocli.OptionAccessor
+import groovy.cli.commons.CliBuilder
+import groovy.cli.commons.OptionAccessor
+
 import org.apache.log4j.Logger
 
 /**
@@ -19,7 +22,7 @@ import org.apache.log4j.Logger
 class SolrCrawlArgParser {
     static final Logger log = Logger.getLogger(this.class.name)
 
-    public ConfigObject parse(String toolName, String[] args) {
+    public static ConfigObject parse(String toolName, String[] args) {
         CliBuilder cli = new CliBuilder(usage: "${toolName}.groovy --config=configLocate.groovy", width: 160)
         cli.with {
             h longOpt: 'help', 'Show usage information'
@@ -40,39 +43,58 @@ class SolrCrawlArgParser {
 
         String configLocation = options.config
         File cfgFile = new File(configLocation)
-        def resourcesRoot = getClass().getResource('/')
+
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        ConfigObject config = null
+
+        def resourcesRoot = cl.getResource('.')
         log.info "Starting with resources root: $resourcesRoot"
-        if (!cfgFile.exists()) {
-            URL cfgUrl = getClass().getResource(configLocation)
-            log.warn "could not find config file: ${cfgFile.absolutePath}, trying resource path: $cfgUrl"
+        if (cfgFile.exists()) {
+            log.info "cfg file: ${cfgFile.absolutePath}"
+        } else {
+            log.info "could not find config file: ${cfgFile.absolutePath}, trying resource path: $resourcesRoot"
+            URL cfgUrl = cl.getResource(configLocation)
             if (cfgUrl) {
                 cfgFile = new File(cfgUrl.toURI())
                 if (cfgFile.exists()) {
                     log.info "Found config file (${configLocation}) in resources: ${cfgFile.absolutePath}"
+                    config = new ConfigSlurper().parse(cfgFile.toURI().toURL())
                 } else {
                     throw new IllegalArgumentException("Config file: $cfgFile does not exist, bailing...")
                 }
             } else {
                 log.warn "No config url found?? "
+                throw new IllegalArgumentException("No config url found in args, exiting!!!")
             }
-        } else {
-            log.info "cfg file: ${cfgFile.absolutePath}"
         }
-        ConfigObject config = new ConfigSlurper().parse(cfgFile.toURI().toURL())
 
-        def solrUrlFromCfg = config.solrUrl
-        if(options.solrUrl) {
-            log.info "Solr url from cli: '${options.solrUrl}' -- replace config file url ($solrUrlFromCfg) with cli arg"
+
+        if (options.solrUrl) {
+            log.info "Using Solr url from Command line (overriding config file): ${options.solrUrl}"
             config.solrUrl = options.solrUrl
+        } else if(config.solrUrl){
+            log.info "Using Solr url from CONFIG file): ${config.solrUrl}"
         } else {
-            log.info "No solr url given in command line args, assuming this is set in the config file..."
+            log.info "No solr url given in command line args NOR config file, this should not be possible, exiting..."
+            System.exit(-2)
         }
 
-        def localhost = InetAddress.getLocalHost();
-        log.info( "InetAddress: " + localhost );
-        log.info( "\tHost Name: " + localhost.getHostName() );
-        def hostNameCfg = config.hostName
+        def localFolders = config.dataSources.localFolders
+        if(options.folders){
+            List<String> ds = options.folderss
+            int cnt = ds.size()
+            Map dsMap = ds.collectEntries{it.split(':')}
+            log.info "Replace config folders ($localFolders) with folders from command line args: ($dsMap) "
+            config.dataSources.localFolders = dsMap
+        }
 
+        def wipe = options.wipeContent
+        if(wipe){
+            log.warn "Found flag `wipeContent` which will send deletes for each datasource"
+            config.wipeContent = true
+        } else if(config.wipeContent){
+            log.warn "Found config file setting `wipeContent` with value (${config.wipeContent}) which might send deletes for each datasource"
+        }
 
         return config
     }
