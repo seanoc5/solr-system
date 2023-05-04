@@ -1,12 +1,11 @@
 package misc
 
 import com.oconeco.crawler.LocalFileCrawler
-import com.oconeco.helpers.SolrCrawlArgsParser
+import com.oconeco.helpers.SolrCrawlArgParser
 import com.oconeco.persistence.SolrSaver
 import org.apache.log4j.Logger
 import org.apache.solr.client.solrj.response.UpdateResponse
 import org.apache.solr.common.SolrInputDocument
-
 /**
  * Script to function much like slocate in linux.
  * Crawl all folders (with skip configs to skip things we don't care about).
@@ -19,20 +18,19 @@ Logger log = Logger.getLogger(this.class.name);
 log.info "Start ${this.class.name}, with args: $args"
 
 
-SolrCrawlArgsParser scc = new SolrCrawlArgsParser(this.class.simpleName, args)
-ConfigObject config = scc.config
+ConfigObject config = SolrCrawlArgParser.parse(this.class.simpleName, args)
 
 
 Map<String,String> startFolders = config.dataSources.localFolders
 String solrUrl = config.solrUrl         //options.solrUrl
 log.info "Start folders: $startFolders -- solr url: $solrUrl"
-
+String source = config.sourceName ?: 'undefined'
 
 // todo - replace 'Documents Locate' with param
 SolrSaver solrSaver = new SolrSaver(solrUrl, 'Documents Locate')
 log.info "Solr Saver created: $solrSaver"
 
-boolean wipeContent = scc.options.wipeContent
+boolean wipeContent = config.wipeContent
 
 def fileNamePatterns = config.namePatterns.files
 def folderNamePatterns = config.namePatterns.folders
@@ -46,7 +44,7 @@ startFolders.each { String dsLabel, String sf ->
     log.info "Crawling parent folder: $dsLabel :: $sf"
 
     Date start = new Date()
-    solrSaver.setDataSourceName(dsLabel)
+//    solrSaver.setDataSourceName(dsLabel)
     if (wipeContent) {
         String query = "${SolrSaver.FLD_DATA_SOURCE}:\"${dsLabel}\""
         long existingCount = solrSaver.getDocumentCount(query)
@@ -70,16 +68,14 @@ startFolders.each { String dsLabel, String sf ->
     log.info "Folders to crawl(${crawlFolders.size()})"
     log.debug "\t\tFolders to crawl: ${crawlFolders}"
 
-
     def uresplist = solrSaver.saveFolderList(crawlFolders, dsLabel)
     log.debug "Starting Folder ($sf) Update responses: $uresplist"
 
     log.info "Crawl Folders size: ${crawlFolders.size()}"
 
-
     crawlFolders.each { File crawlableFolder ->
         Map<File, Map> filesToCrawlMap = LocalFileCrawler.getFilesToCrawlList(crawlableFolder, LocalFileCrawler.FILE_REGEX_TO_SKIP, LocalFileCrawler.FILE_EXTENSIONS_TO_INDEX, LocalFileCrawler.FILE_EXTENSIONS_TO_ANALYZE)
-        log.info "\t\t$fileCount) folder: ${crawlableFolder.absolutePath} -- files to crawl count: ${filesToCrawlMap.size()}"
+        log.info "\t$fileCount) folder: ${crawlableFolder.absolutePath} -- files to crawl count: ${filesToCrawlMap.size()}"
         fileCount += filesToCrawlMap.size()
         List<SolrInputDocument> sidList = solrSaver.buildFilesToCrawlInputList(filesToCrawlMap, dsLabel)
         if (sidList) {
