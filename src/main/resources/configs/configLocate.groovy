@@ -1,6 +1,8 @@
 package configs
 
-solrUrl = "http://localhost:8983/solr/solr_system"
+solrUrl = "http://oldi:8983/solr/solr_system"
+sourceName = Inet4Address.localHost.getHostName()
+wipeContent = false
 
 // todo -- these name: path entries are not yet used, still reading path and name from cli args
 dataSources {
@@ -18,6 +20,9 @@ dataSources {
         Etc = '/etc'
         Opt = '/opt'
         Var = '/var'
+    }
+    externalDrives {
+        wd4tb = '/media/sean/sean-data'
     }
 }
 
