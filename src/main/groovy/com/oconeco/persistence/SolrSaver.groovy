@@ -19,6 +19,7 @@ import org.apache.tika.parser.AutoDetectParser
 import org.apache.tika.parser.ParseContext
 import org.apache.tika.parser.Parser
 import org.apache.tika.sax.BodyContentHandler
+
 /**
  * Looking at helper class to save solr_system (file crawl to start with content to solr
  */
@@ -56,6 +57,7 @@ class SolrSaver {
     public static final String FLD_SIZE = "size_i"
     public static final String FLD_SAME_NAME_COUNT = "sameNameCount_i"
     public static final String FLD_NAME_SIZE_S = "nameSize_s"
+    public static final String FLD_HOSTNAME = "hostname_s"
     public static final String FLD_INDEX_DATETIME = "indexedTime_dt"            // pdate dynamic field
 
     public static String FLD_IGNORED_FILES_COUNT = 'ignoredFilesCount_i'
@@ -72,7 +74,8 @@ class SolrSaver {
     Parser parser = null
     BodyContentHandler handler = null
     TikaConfig tikaConfig
-    String dataSourceName = 'undefined'
+//    String dataSourceName = 'undefined'
+    String hostName = 'unknown host'
 
     /**
      * Create helper with a (non-thread safe???) solrClient that is configured for the solr server AND collection
@@ -84,17 +87,17 @@ class SolrSaver {
         buildSolrClient(baseSolrUrl)
     }
 
-    SolrSaver(String baseSolrUrl, String dataSourceName) {
+    SolrSaver(String baseSolrUrl, String hostName) {
 //        this(baseSolrUrl)
-        log.info "Constructor baseSolrUrl:$baseSolrUrl, CrawlName:$dataSourceName, WITHOUT tika"
-        this.dataSourceName = dataSourceName
+        log.info "Constructor baseSolrUrl:$baseSolrUrl, Homst/machine name:$hostName, WITHOUT tika"
+        this.hostName = hostName
         buildSolrClient(baseSolrUrl)
     }
 
-    SolrSaver(String baseSolrUrl, String dataSourceName, TikaConfig tikaConfig) {
+    SolrSaver(String baseSolrUrl, String hostName, TikaConfig tikaConfig) {
 //        this(baseSolrUrl, dataSourceName)
-        log.info "Constructor baseSolrUrl:$baseSolrUrl, CrawlName:$dataSourceName, with TIKA config: $tikaConfig"
-        this.dataSourceName = dataSourceName
+        log.info "Constructor baseSolrUrl:$baseSolrUrl, CrawlName:$hostName, with TIKA config: $tikaConfig"
+        this.hostName = hostName
         buildSolrClient(baseSolrUrl)
         this.tikaConfig = tikaConfig
         detector = tikaConfig.getDetector()
@@ -107,7 +110,6 @@ class SolrSaver {
 //        solrClient = new HttpSolrClient.Builder(baseSolrUrl).build()
         solrClient = new Http2SolrClient.Builder(baseSolrUrl).build()
     }
-
 
 
     /**
@@ -150,11 +152,13 @@ class SolrSaver {
      * Take a list of file folders and save them to solr
      * todo -- revisit for better approach...
      * todo -- catch errors, general improvement
-     * @param folders
-     * @return
+     * @param folders  list of file folders to turn into solr input docs
+     * @param dataSourceLabel name of group of files processed by this larger process
+     * @param source name of machine, email account, browser account.... processed by this larger process
+     * @return list of UpdateResponse objects from batched calls to solr
      */
-    List<UpdateResponse> saveFolderList(List<File> folders, String dataSourceLabel = 'unlabeled') {
-        log.info "Save folders list (${folders.size()})..."
+    List<UpdateResponse> saveFolderList(List<File> folders, String dataSourceLabel = 'unlabeled', String source='') {
+        log.info "$dataSourceLabel) Save folders list (${folders.size()})..."
         List<UpdateResponse> updates = []
         List<SolrInputDocument> sidList = new ArrayList<>(SOLR_BATCH_SIZE)
         int i = 0
@@ -172,6 +176,7 @@ class SolrSaver {
                 sidList = new ArrayList<SolrInputDocument>(SOLR_BATCH_SIZE)
             }
         }
+
         if (sidList.size() > 0) {
             log.info "\t\t$i) ------ FINAL folder list batch added (size: ${sidList.size()}) ------"
             UpdateResponse uresp = solrClient.add(sidList, 1000)
@@ -182,19 +187,17 @@ class SolrSaver {
     }
 
 
-    List<SolrInputDocument> buildFilesToCrawlInputList(Map<File, Map> filesToCrawl, String dsLabel = '') {
+    List<SolrInputDocument> buildFilesToCrawlInputList(Map<File, Map> filesToCrawl, String dsLabel = 'n.a.', String source = 'n.a.') {
         List<SolrInputDocument> inputDocuments = []
         if (filesToCrawl?.size() > 0) {
             filesToCrawl.each { File file, Map details ->
                 String status = details?.status
                 log.debug "File: $file -- Status: $status -- details: $details"
                 SolrInputDocument sid = buildBasicTrackSolrFields(file)
-                if(dsLabel){
-                    sid.setField(SolrSaver.FLD_DATA_SOURCE, dsLabel)
-                }
+                sid.setField(SolrSaver.FLD_DATA_SOURCE, dsLabel)
                 if (tikaConfig) {
                     if (details.status == LocalFileCrawler.STATUS_INDEX_CONTENT) {
-                        log.debug "test 2..."
+                        log.debug "content tagged as worthy of indexing, send to proc to extra and add content: $file"
                         addSolrIndexFields(file, sid)
 
                     } else if (details.status == LocalFileCrawler.STATUS_ANALYZE) {
@@ -213,7 +216,7 @@ class SolrSaver {
                 log.debug "no docs??"
             }
         } else {
-            log.warn "\t\tno files to crawl provided?? $filesToCrawl"
+            log.debug "\t\tno files to crawl provided?? $filesToCrawl"
         }
         return inputDocuments
     }
@@ -235,7 +238,7 @@ class SolrSaver {
         sid.setField(FLD_PARENT_PATH, file.parentFile.canonicalPath)
         sid.setField(FLD_NAME_S, file.name)
         sid.setField(FLD_NAME_T, file.name)
-        if(dsLabel){
+        if (dsLabel) {
             sid.setField(FLD_DATA_SOURCE, dsLabel)
         }
 
@@ -247,11 +250,14 @@ class SolrSaver {
             sid.setField(FLD_FILENAME_SS, file.name)
         }
         String ext = FilenameUtils.getExtension(file.name)
-        sid.setField(FLD_EXTENSION_SS, ext)
+        sid.setField(FLD_EXTENSION_SS, ext?.toLowerCase())
         sid.setField(FLD_SIZE, file.size())
 
         Date lmDate = new Date(file.lastModified())
         sid.setField(FLD_LASTMODIFIED, lmDate)
+
+//        sid.addField(FLD_DATA_SOURCE, this.dataSourceName)
+
         return sid
     }
 
@@ -267,9 +273,7 @@ class SolrSaver {
 
                 log.debug "\t\t\t add solr INDEX fields for file: ${file.absolutePath}"
                 sid.addField(FLD_TAG_SS, 'index')
-//        sid.setField('type_s', FILE)
-                sid.addField(FLD_DATA_SOURCE, this.dataSourceName)
-                // note: this is a Lucidworks Fusion default "system" field, using it here for my convenience
+                // sid.setField('type_s', FILE)
 
                 BodyContentHandler handler = new BodyContentHandler(-1)
                 AutoDetectParser parser = new AutoDetectParser()
@@ -342,20 +346,33 @@ class SolrSaver {
         solrClient.commit()
     }
 
+
+    /**
+     * wrapper to send collection of solrInputDocs to solr for processing
+     * @param solrInputDocuments
+     * @return UpdateResponse
+     */
     def saveDocs(ArrayList<SolrInputDocument> solrInputDocuments) {
-        solrInputDocuments.each { SolrInputDocument sid ->
+        /*solrInputDocuments.each { SolrInputDocument sid ->
             sid.setField(FLD_DATA_SOURCE, this.dataSourceName)
-        }
+        }*/
+        log.info "Adding solrInputDocuments, size: ${solrInputDocuments.size()}"
         UpdateResponse resp = solrClient.add(solrInputDocuments, 1000)
         return resp
     }
 
+
+    /**
+     * convenience method to get a count of documents in index
+     * @param queryToCount (defaults to all docs)
+     * @return
+     */
     def long getDocumentCount(String queryToCount = '*:*') {
         SolrQuery sq = new SolrQuery(queryToCount)
         sq.setFields('')
         sq.setRows(0)
         QueryResponse resp = solrClient.query(sq)
-        long docCount= resp.getResults().numFound
+        long docCount = resp.getResults().numFound
         return docCount
     }
 
@@ -379,7 +396,6 @@ class SolrSaver {
                 ", parser=" + parser +
                 ", handler=" + handler +
                 ", tikaConfig=" + tikaConfig +
-                ", dataSourceName='" + dataSourceName + '\'' +
                 '}';
     }
 }
