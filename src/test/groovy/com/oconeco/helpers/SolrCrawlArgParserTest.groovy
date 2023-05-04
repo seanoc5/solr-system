@@ -13,7 +13,7 @@ class SolrCrawlArgParserTest extends Specification {
         '-n"Locate Documents"',
         '-w']
 
-        SolrCrawlArgsParser scc = new SolrCrawlArgsParser(this.class.name, args)
+        SolrCrawlArgParser scc = new SolrCrawlArgParser(this.class.name, args)
 
         then:
         scc.options != null
