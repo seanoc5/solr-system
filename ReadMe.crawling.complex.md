@@ -1,4 +1,4 @@
-# Notes on crawling process/logic
+# Notes on crawling process/logic -- complex version
 
 ## File and Folder wrapper objects 
 
