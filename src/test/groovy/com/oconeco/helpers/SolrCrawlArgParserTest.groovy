@@ -10,14 +10,14 @@ class SolrCrawlArgParserTest extends Specification {
         when:
         String[] args = ['--config=./resources/configs/configLocate.groovy',
         '-f/home/sean/Documents,/home/sean/Desktop',
-        '-n"Locate Documents"',
+        '-n"SpockTest"',
         '-w']
 
-        SolrCrawlArgParser scc = new SolrCrawlArgParser(this.class.name, args)
+        def config = SolrCrawlArgParser.parse(this.class.name, args)
 
         then:
-        scc.options != null
-        scc.config !=null
+        config != null
+        config.name == 'SpockTest'
 
     }
 

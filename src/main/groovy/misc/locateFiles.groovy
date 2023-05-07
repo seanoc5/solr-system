@@ -27,7 +27,7 @@ log.info "Start folders: $startFolders -- solr url: $solrUrl"
 String source = config.sourceName ?: 'undefined'
 
 // todo - replace 'Documents Locate' with param
-SolrSaver solrSaver = new SolrSaver(solrUrl, 'Documents Locate')
+SolrSaver solrSaver = new SolrSaver(solrUrl, source)
 log.info "Solr Saver created: $solrSaver"
 
 boolean wipeContent = config.wipeContent

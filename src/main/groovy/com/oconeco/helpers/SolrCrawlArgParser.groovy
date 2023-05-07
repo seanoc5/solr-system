@@ -1,12 +1,13 @@
 package com.oconeco.helpers
 
-
-//import groovy.cli.picocli.CliBuilder
-//import groovy.cli.picocli.OptionAccessor
 import groovy.cli.commons.CliBuilder
-import groovy.cli.commons.OptionAccessor
-
 import org.apache.log4j.Logger
+
+
+//import groovy.cli.picocli.OptionAccessor
+//import groovy.cli.picocli.CliBuilder
+//import groovy.cli.commons.CliBuilder
+import groovy.cli.commons.OptionAccessor
 
 /**
  * @author :    sean
@@ -63,7 +64,7 @@ class SolrCrawlArgParser {
                     throw new IllegalArgumentException("Config file: $cfgFile does not exist, bailing...")
                 }
             } else {
-                log.warn "No config url found?? "
+                log.warn "No config url found?? configLocation:$configLocation "
                 throw new IllegalArgumentException("No config url found in args, exiting!!!")
             }
         }

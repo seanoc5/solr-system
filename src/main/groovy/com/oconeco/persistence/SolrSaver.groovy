@@ -109,6 +109,7 @@ class SolrSaver {
         log.info "Build solr client with baseSolrUrl: $baseSolrUrl"
 //        solrClient = new HttpSolrClient.Builder(baseSolrUrl).build()
         solrClient = new Http2SolrClient.Builder(baseSolrUrl).build()
+        log.info("Built Solr Client: $solrClient")
     }
 
 

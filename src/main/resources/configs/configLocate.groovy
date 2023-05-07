@@ -1,6 +1,6 @@
 package configs
 
-solrUrl = "http://oldi:8983/solr/solr_system"
+solrUrl = "http://oldie:8983/solr/solr_system"
 sourceName = Inet4Address.localHost.getHostName()
 wipeContent = false
 

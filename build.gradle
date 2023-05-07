@@ -2,18 +2,18 @@ plugins {
     id 'groovy'
     id 'java'
     id 'idea'
-    id 'application'
+//    id 'application'
 }
 
 group 'com.oconeco.solrsystem'
-version '0.3.1'
+version '0.3.2'
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation fileTree('/home/sean/.sdkman/candidates/groovy/4.0.11/lib') {
+    implementation fileTree('C:/work/groovy-4.0.11/lib') {
         include '*.jar'
         include '*/*.jar'
     }
@@ -45,14 +45,6 @@ dependencies {
     // https://stackoverflow.com/questions/48843481/jaxp-parse-error-on-valid-xml/48843482#48843482
 //    implementation "xerces:xercesImpl:2.11.0"
 
-//    implementation(platform("org.apache.tika:tika-bom:2.3.0"))
-    // version not required since bom (platform in Gradle terms)
-//    implementation("org.apache.tika:tika-parsers-standard-package")
-
-//    implementation "org.apache.tika:tika-core:1.28.1"
-//    implementation ('org.apache.tika:tika-parsers:1.28.1'){
-//        exclude group: "xml-apis", module: "xml-apis"
-//    }
 
     implementation "org.apache.tika:tika-core:2.7.0"
     implementation("org.apache.tika:tika-parsers-standard-package:2.7.0"){
@@ -65,11 +57,10 @@ dependencies {
     implementation "org.slf4j:slf4j-log4j12:2.0.5"
 
     // https://mvnrepository.com/artifact/org.apache.poi/ooxml-schemas
-//    implementation group: 'org.apache.poi', name: 'ooxml-schemas', version: '1.4'
+    implementation group: 'org.apache.poi', name: 'ooxml-schemas', version: '1.4'
 
     // https://mvnrepository.com/artifact/org.apache.poi/poi-ooxml
-//    implementation group: 'org.apache.poi', name: 'poi-ooxml', version: '5.2.2'
-
+    implementation group: 'org.apache.poi', name: 'poi-ooxml', version: '5.2.2'
 
 }
 
