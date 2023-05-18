@@ -14,5 +14,10 @@ Apply more broadly scoped pattern matching to determin if a given file should be
 - simple location/size/time only
 - content extracted and indexed
 - more fully analyzed
-- 
+
+
+
+## Classes and Inheritence
+### BaseCrawler
+* provide struct
 
