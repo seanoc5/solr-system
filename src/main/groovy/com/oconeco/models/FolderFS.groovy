@@ -76,6 +76,7 @@ class FolderFS extends BaseObject {
      * @param ignoreFilesPattern
      * @param ignoreSubdirectories
      * @deprecated I don't think the constructor approach is right, deprecating in favor of more explicit (and less surprising) method based approach (the original approach)
+     * perhaps we should move to the crawler and visitor pattern?
      */
     FolderFS(File srcFolder, int depth = 1, Pattern ignoreFilesPattern = null, Pattern ignoreSubdirectories = null, boolean recurse = false, FolderFS parentFolderFS = null) {
         log.debug '\t' * depth + "$depth) ${srcFolder.absolutePath}) FolderFS constructor"
