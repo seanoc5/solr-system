@@ -6,17 +6,16 @@ plugins {
 }
 
 group 'com.oconeco.solrsystem'
-version '0.3.2'
+version '0.3.3'
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation fileTree('C:/work/groovy-4.0.11/lib') {
-        include '*.jar'
-        include '*/*.jar'
-    }
+    // https://mvnrepository.com/artifact/org.apache.groovy/groovy-all
+    testImplementation group: 'org.apache.groovy', name: 'groovy-all', version: '4.0.11', ext: 'pom'
+
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
 
