@@ -1,13 +1,14 @@
 package com.oconeco.helpers
 
-import groovy.cli.commons.CliBuilder
+import groovy.cli.internal.OptionAccessor
 import org.apache.log4j.Logger
 
+//import groovy.cli.commons.CliBuilder
 
 //import groovy.cli.picocli.OptionAccessor
 //import groovy.cli.picocli.CliBuilder
 //import groovy.cli.commons.CliBuilder
-import groovy.cli.commons.OptionAccessor
+//import groovy.cli.commons.OptionAccessor
 
 /**
  * @author :    sean
@@ -49,16 +50,16 @@ class SolrCrawlArgParser {
         ConfigObject config = null
 
         def resourcesRoot = cl.getResource('.')
-        log.info "Starting with resources root: $resourcesRoot"
+        log.info "\t\tStarting with resources root: $resourcesRoot"
         if (cfgFile.exists()) {
-            log.info "cfg file: ${cfgFile.absolutePath}"
+            log.info "\t\tcfg file: ${cfgFile.absolutePath}"
         } else {
-            log.info "could not find config file: ${cfgFile.absolutePath}, trying resource path: $resourcesRoot"
+            log.info "\t\tcould not find config file: ${cfgFile.absolutePath}, trying resource path: $resourcesRoot"
             URL cfgUrl = cl.getResource(configLocation)
             if (cfgUrl) {
                 cfgFile = new File(cfgUrl.toURI())
                 if (cfgFile.exists()) {
-                    log.info "Found config file (${configLocation}) in resources: ${cfgFile.absolutePath}"
+                    log.info "\t\tFound config file (${configLocation}) in resources: ${cfgFile.absolutePath}"
                     config = new ConfigSlurper().parse(cfgFile.toURI().toURL())
                 } else {
                     throw new IllegalArgumentException("Config file: $cfgFile does not exist, bailing...")
@@ -71,21 +72,22 @@ class SolrCrawlArgParser {
 
 
         if (options.solrUrl) {
-            log.info "Using Solr url from Command line (overriding config file): ${options.solrUrl}"
+            log.info "\t\tUsing Solr url from Command line (overriding config file): ${options.solrUrl}"
             config.solrUrl = options.solrUrl
         } else if(config.solrUrl){
-            log.info "Using Solr url from CONFIG file): ${config.solrUrl}"
+            log.info "\t\tUsing Solr url from CONFIG file): ${config.solrUrl}"
         } else {
-            log.info "No solr url given in command line args NOR config file, this should not be possible, exiting..."
+            log.info "\t\tNo solr url given in command line args NOR config file, this should not be possible, exiting..."
             System.exit(-2)
         }
 
         def localFolders = config.dataSources.localFolders
-        if(options.folders){
+        def folders = options.folderss
+        if(options.folderss){
             List<String> ds = options.folderss
             int cnt = ds.size()
             Map dsMap = ds.collectEntries{it.split(':')}
-            log.info "Replace config folders ($localFolders) with folders from command line args: ($dsMap) "
+            log.info "\t\tReplace config folders ($localFolders) with folders from command line args: ($dsMap) "
             config.dataSources.localFolders = dsMap
         }
 
