@@ -88,20 +88,6 @@ class FolderFS extends BaseObject {
             lastModifiedDate = new Date(srcFolder.lastModified())
             this.depth = depth
             log.debug "\t\tFiltering folder with ignore pattern: $ignoreFilesPattern "
-            srcFolder.eachFile { File f ->
-                if (f.isFile()) {
-                    FileFS ffs = new FileFS(f, depth)
-                    if (f.name ==~ ignoreFilesPattern) {
-                        ignoredFiles << ffs
-                    } else {
-                        filesFS << ffs
-                        diskSpace += f.size()
-                    }
-//                    log.debug "\t\tProcessed file: $ffs"
-                } else if (f.isDirectory()) {
-                    processDirectory(f, depth, ignoreSubdirectories, ignoreFilesPattern, srcFolder, recurse, parentFolderFS)
-                }
-            }
 
             countFiles = filesFS.size()
             countSubdirs = subDirectories.size()
@@ -204,7 +190,7 @@ class FolderFS extends BaseObject {
 //        def updateTime =
 
         if (crawlName) {
-            sidFolder.setField(SolrSaver.FLD_DATA_SOURCE, crawlName)
+            sidFolder.setField(SolrSaver.FLD_CRAWL_NAME, crawlName)
         }
 
         if (ignoredFiles) {
