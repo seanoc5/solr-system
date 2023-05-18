@@ -1,10 +1,12 @@
 package com.oconeco.helpers
 
-import groovy.cli.internal.OptionAccessor
+// persistent issues with groovy moving/repacking CliBuilder. Hopefully this lasts for a while -- SoC 20230517
+
+import groovy.cli.picocli.CliBuilder
+import groovy.cli.picocli.OptionAccessor
 import org.apache.log4j.Logger
 
 //import groovy.cli.commons.CliBuilder
-
 //import groovy.cli.picocli.OptionAccessor
 //import groovy.cli.picocli.CliBuilder
 //import groovy.cli.commons.CliBuilder
