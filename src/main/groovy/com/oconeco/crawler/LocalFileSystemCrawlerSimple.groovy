@@ -1,13 +1,24 @@
 package com.oconeco.crawler
 
+import com.oconeco.helpers.Constants
 import groovy.io.FileType
+import groovy.io.FileVisitResult
 import org.apache.log4j.Logger
+
+import java.nio.file.Files
+import java.nio.file.LinkOption
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.attribute.FileOwnerAttributeView
+import java.nio.file.attribute.UserPrincipal
+import java.util.regex.Matcher
+import java.util.regex.Pattern
+
 //import com.oconeco.persistence.JSONSerialize
 //import com.oconeco.processing.ContentProcessorTextOpenNLP
 //import com.oconeco.extraction.TikaHelper
 
-import java.util.regex.Matcher
-import java.util.regex.Pattern
 /**
  * @deprecated early test for processing files, see @locateFoldersFSConstructor
  */
@@ -18,16 +29,14 @@ import java.util.regex.Pattern
  * Created by sean on 11/4/15.
  */
 class LocalFileSystemCrawlerSimple {
-    static Pattern FILE_REGEX_TO_SKIP = Pattern.compile('(\\~\\$.*|_.*|.*\\.te?mp$|.*\\.class$|robots.txt|.*\\.odb$|.*json|.*\\.pos)')
+    static Pattern FILE_REGEX_TO_SKIP_DEFAULT = Pattern.compile('(\\~\\$.*|_.*|.*\\.te?mp$|.*\\.class$|robots.txt|.*\\.odb$|.*json|.*\\.pos)')
     // ignore temp and class files as well as typical output/data files (json, pos)
-    static Pattern FILE_EXTENSIONS_TO_EXTRACT = Pattern.compile("(aspx\\?|cfm|csv|docx\\?|groovy|html|htm|zhtml|ics|java|od.|pptx\\?|pdf|php|ps|pub|rdf|rss|xlsx\\?)")
+    static Pattern FILE_EXTENSIONS_TO_EXTRACT_DEFAULT = Pattern.compile("(aspx\\?|cfm|csv|docx\\?|groovy|html|htm|zhtml|ics|java|od.|pptx\\?|pdf|php|ps|pub|rdf|rss|xlsx\\?)")
     // skip txt files for extraction, but do process/analyze them
-    static Pattern FOLDER_REGEX_TO_SKIP = Pattern.compile('^(\\.git|\\.svn|sub|dev|cpu[0-9]*|\\.trash|te?mp|trash|[cC]ache|~.*|#.*)$')
-    // todo -- should probably be per-job param, not global var
+    static Pattern FOLDER_REGEX_TO_SKIP_DEFAULT = Pattern.compile('^(\\.git|\\.svn|sub|dev|cpu[0-9]*|\\.trash|te?mp|trash|[cC]ache|~.*|#.*)$')
 
     static Logger log = Logger.getLogger(this.class.name);
     protected boolean forceUpdate = false
-    public static long ARBITRARY_PRETTY_PRINT_SIZE = 500000
 
 
     public static void main(String[] args) {
@@ -51,7 +60,7 @@ class LocalFileSystemCrawlerSimple {
 
         List<File> dirtyFolders = crawler.getFoldersToCrawl(startFolder, knownFolders)
         dirtyFolders.each { File folder ->
-            List<File> files = crawler.getFilesToCrawlInFolder(folder, FILE_REGEX_TO_SKIP, analysisExtensions)
+            List<File> files = crawler.getFilesToCrawlInFolder(folder, FILE_REGEX_TO_SKIP_DEFAULT, analysisExtensions)
             files.each { File f ->
                 crawler.log.info "Process file: $f -- ${f.class.name}"
             }
@@ -65,13 +74,107 @@ class LocalFileSystemCrawlerSimple {
         log.error "Constructor: forceUpdate:$forceUpdate"
     }
 
-/**
- * basic and naive determination of file is text only (override this with better logic)
- * @param file
- * @return
- */
+    /**
+     * Crawl the start path, and ignore certain path patterns
+     * likely there will be a second pass to evealuate
+     * @param startPath
+     * @param ignorePattern
+     * @return
+     */
+    static Map processStartFolder(def label, def startPath, Map folderPatternsMap) {
+        log.info "\t\tProcess start folder label:'$label' -- startpath:$startPath, with namePatternsMap keys: ${folderPatternsMap.keySet()}}"
+        Path nioPath = null
+        if (startPath instanceof Path) {
+            log.info "\t\tgiven a nio path: $nioPath -- using that!"
+            nioPath = startPath
+        } else {
+            log.debug "\t\tconverting path ($startPath) from def type (${startPath.class.name} to Path (nio)"
+            nioPath = Paths.get(startPath)
+        }
+
+        def ignore = folderPatternsMap[Constants.LBL_IGNORE]
+        Pattern ignorePattern = null
+        if (ignore instanceof Pattern) {
+            log.debug "\t\tFound 'ignore' pattern from map: \"$ignore\" -- use it as is"
+            ignorePattern = ignore
+        } else {
+            log.info "\t\tignore value in map was not a pattern, try to cast it ($ignore) now..."
+            ignorePattern = new Pattern(ignore)
+        }
+
+        Map crawlFolders = crawlStartFolder(nioPath, ignorePattern)
+        crawlFolders.each { String status, List things ->
+            log.debug "\t\t$status) folder names count ${things.size()}"
+        }
+
+        return crawlFolders
+    }
+
+
+    /**
+     * Crawl the start path, and ignore certain path patterns
+     * likely there will be a second pass to evealuate
+     * @param startPath
+     * @param ignorePattern
+     * @return
+     */
+    static Map crawlStartFolder(Path startPath, Pattern ignorePattern) {
+        long start = System.currentTimeMillis()
+
+        List/*<Path>*/ foldersToCrawl = []
+        List/*<Path>*/ ignoredFolders = []
+//        Pattern ignorePattern = namePatterns.get(FolderAnalyzer.LBL_IGNORE)
+        Map options = [type     : FileType.DIRECTORIES,
+                       preDir   : {
+                           if (it ==~ ignorePattern) {
+                               ignoredFolders << it
+                               log.info "\t\t\tINGOREing folder: $it -- matches ignorePattern: $ignorePattern"
+                               return FileVisitResult.SKIP_SUBTREE
+                           } else if (!Files.isExecutable(it)) {
+                               log.warn "No permissions to enter/execute dir: $it, skipping!"
+                               ignoredFolders << it
+                               return FileVisitResult.SKIP_SUBTREE
+                           } else if (!Files.isReadable(it)) {
+                               log.warn "Path not readable: $it, skipping!"
+                               ignoredFolders << it
+                               return FileVisitResult.SKIP_SUBTREE
+                           } else {
+                               foldersToCrawl << buildMetaMapFolder(it)
+                               log.debug "\t\tADDING Crawl folder: $it"
+                           }
+                       },
+/*
+                       postDir  : {
+                           println("Post dir: $it")
+                           totalSize = 0
+                       },
+*/
+                       preRoot  : true,
+                       postRoot : true,
+                       visitRoot: true,
+        ]
+
+        log.debug "\t\tStarting crawl of folder: ($startPath)  ..."
+        startPath.traverse(options) { def folder ->
+            log.debug "\t\ttraverse folder $folder"
+        }
+
+        long end = System.currentTimeMillis()
+        long elapsed = end - start
+        log.info "\t\tElapsed time: ${elapsed}ms (${elapsed / 1000} sec)"
+
+        Map resuts = [foldersToCrawl: foldersToCrawl, ignoredFolders: ignoredFolders]
+        return resuts
+    }
+
+
+    /**
+     * basic and naive determination of file is text only (override this with better logic)
+     * @param file
+     * @return
+     */
     static boolean isTextFile(File file) {
-        if(file) {
+        if (file) {
             if (file.name.endsWith('.txt')) {
                 return true
             } else if (file.name.toLowerCase().startsWith('readme')) {
@@ -217,7 +320,7 @@ class LocalFileSystemCrawlerSimple {
             File f = (File) folder
             if (f.isDirectory()) {
                 name = f.name
-                Matcher matcher = (name =~ FOLDER_REGEX_TO_SKIP)
+                Matcher matcher = (name =~ FOLDER_REGEX_TO_SKIP_DEFAULT)
                 if (matcher.matches()) {
                     log.info "\t\tskip folder ($name) based on regex group: ${matcher[0]} -- $f"
                     should = false
@@ -395,7 +498,7 @@ class LocalFileSystemCrawlerSimple {
      * @return
      */
     static boolean shouldExtractFile(File file) {
-        if (file.name ==~ FILE_EXTENSIONS_TO_EXTRACT) {
+        if (file.name ==~ FILE_EXTENSIONS_TO_EXTRACT_DEFAULT) {
             log.debug "\t\t File name (${file.name}) matches regex to extract, so extract it"
             return true
         } else {
@@ -404,4 +507,61 @@ class LocalFileSystemCrawlerSimple {
         return false
     }
 
+
+    static Map buildMetaMapFolder(def dirObject, LinkOption linkOption = LinkOption.NOFOLLOW_LINKS) {
+        Map metadata = [:]
+        Path path = null
+        if (dirObject instanceof Path) {
+            log.debug "pathObject $dirObject is already instance of Path, no conversion needed..."
+            path = dirObject
+        } else {
+            log.info "pathObject $dirObject is instance of '${dirObject.class.name}', trying to convert..."
+            path = Paths.get(dirObject)
+        }
+
+        if (Files.exists(path, linkOption)) {
+            metadata.name = path.getFileName()?.toString()
+            metadata.path = path
+            def fs = path.fileSystem
+            if (fs.toString().containsIgnoreCase('linux')) {
+                metadata.filesystem = 'Linux'
+                metadata.root = path.root
+            } else if (fs.toString().containsIgnoreCase('windows')) {
+                metadata.filesystem = 'Windows'
+            } else {
+                log.warn "unrecognized filesystem: ${path.fileSystem}"
+                metadata.filesystem = path.fileSystem.toString()
+            }
+
+            BasicFileAttributes attr = Files.readAttributes(path, BasicFileAttributes.class);
+
+            metadata.ctime = attr.creationTime()
+            metadata.accessTime = attr.lastAccessTime()
+            metadata.modifiedTime = attr.lastModifiedTime()
+            Constants.DEFAULT_FOLDER_SIZE = 4096
+            if(attr.size() > Constants.DEFAULT_FOLDER_SIZE) {
+                metadata.size = attr.size()
+            }
+
+            FileOwnerAttributeView file = Files.getFileAttributeView(path, FileOwnerAttributeView.class);
+            try {             // Exception Handling to avoid any errors
+                UserPrincipal user = file.getOwner();                           // Taking owner name from the file
+            } catch (Exception e) {
+                log.warn(e);
+            }
+
+            try {             // Exception Handling to avoid any errors
+                UserPrincipal user = file.getOwner();                           // Taking owner name from the file
+                metadata.owner = user.name
+            } catch (Exception e) {
+                log.warn(e);
+            }
+
+        } else {
+            if (Files.exists(path)) {
+                log.warn "Encountered a link, and we were told to skip those, so skipping metadata for: $dirObject"
+            }
+        }
+        return metadata
+    }
 }

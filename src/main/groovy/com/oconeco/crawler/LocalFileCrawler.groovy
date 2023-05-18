@@ -1,7 +1,7 @@
 package com.oconeco.crawler
 
 
-import com.oconeco.analysis.FolderAnalyzer
+import com.oconeco.helpers.Constants
 import com.oconeco.models.FolderFS
 import groovy.io.FileType
 import org.apache.commons.io.FilenameUtils
@@ -9,84 +9,11 @@ import org.apache.log4j.Logger
 
 import java.util.regex.Pattern
 
-class LocalFileCrawler extends BaseCrawler{
+class LocalFileCrawler {
     private static Logger log = Logger.getLogger(this.class.name);
 
-    static List<String> folderNamesToSkip = [
-            '__snapshots__',
-            '.csv',
-            '.cache',
-            '.gradle',
-            '.git',
-            '.github',
-            '.idea',
-            '.m2',
-            '.settings',
-            '.svn',
-            '.vscode',
-            'assets',
-            'bin',
-            'build',
-            'cache',
-            'classes',
-            'css',
-            'fonts',
-            'gradle',
-            'hibernate',
-            'images',
-            'img',
-            'layouts',
-            'lib',
-            'libs',
-            'logo',
-            'logs',
-            'material-ui',
-            'META-INF',
-            'modules',
-            'old',
-            'out',
-            'package',
-            'packages',
-            'persistence',
-            'pkg',
-            'plugins',
-            'proc',
-            'skin',
-            'skins',
-            'spring',
-            'styles',
-            'svg',
-            'target',
-            'taglib',
-            'temp',
-            'templates',
-            'misc.testCrawl',
-            'test',
-            'tests',
-            'themes',
-            'tmp',
-            'vendor',
-            'web-app',
-            'webapp',
-            'wrapper',
-
-            'node_modules',
-            '$global',
-            'streams',
-            '.svn',
-            'prop-base',
-            'httpcache',
-            'professional-services',
-            'react',
-//            '',
-    ]
-
     // don't process these files, don't add them to the index, assume you will never even want to find if a file exists or not.
-    static Pattern FILE_REGEX_TO_SKIP = ~/([.~]*lock.*|_.*|.*\.te?mp$|.*\.class$|robots.txt|.*\.odb$|.*\.pos)/
-
-    // NOTE: this is the default operation: track not skip or index, no need to specify these, this is the catch-all
-    // track the file metdata and that it exissts, but don't extract, index, or analyze
-    // static Pattern FILE_REGEX_TO_TRACK = Pattern.compile('(.*json|.*csv|.*xml)')
+    static Pattern FILE_REGEX_TO_SKIP_DEFAULT = ~/([.~]*lock.*|_.*|.*\.te?mp$|.*\.class$|robots.txt|.*\.odb$|.*\.pos)/
 
     // INDEXING file is meant to run an extraction process (i.e. tika) and then send that info to solr for indexing/persistence/searchability (analysis below goes one step further)
     static Pattern FILE_EXTENSIONS_TO_INDEX = ~/(bash.*|csv|groovy|ics|ipynb|java|lst|md|php|py|rdf|rss|scala|sh|tab|te?xt|tsv)/
@@ -94,19 +21,14 @@ class LocalFileCrawler extends BaseCrawler{
     // ANALYSIS is meant to go beyond indexing, and actually do more qualitative analysis (NLP, content sectioning, tagging,...)
     static Pattern FILE_EXTENSIONS_TO_ANALYZE = ~"(aspx\\?|cfm|docx\\?|html|od.|pptx\\?|pdf|ps|pub|rss|xlsx|zhtml\\?)"
 
-    LocalFileCrawler(String name, String location, Object source) {
-        super(name, location, source)
+    LocalFileCrawler(String name, String location, int statusDepth) {
+        super(name, location, statusDepth)
     }
 
-    @Override
     def startCrawl(def startFolder, Map namePatterns) {
         log.info "Start crawl (startfolder: $startFolder) with name patterns map: $namePatterns"
         throw new AbstractMethodError("Incomplete code problem, someone complete this function: startCrawl(Map namePatterns)")
         return null
-    }
-
-    def gatherFoldersToCrawl(File sourceFolder, FolderAnalyzer folderAnalyzer){
-
     }
 
     /**
@@ -118,15 +40,15 @@ class LocalFileCrawler extends BaseCrawler{
      * @deprecated look to getFoldersToCrawlMap for more recent approach...
      */
     public static List<File> getFoldersToCrawl(File sourceFolder, Map folderNamePatterns = null, int level = 1, int statusDepth = 3) {
-        log.debug "\t\tCrawl source folder: ${sourceFolder.absolutePath} -- skip folders: $folderNamesToSkip -- level: $level"
+        log.debug "\t\tCrawl source folder: ${sourceFolder.absolutePath} -- level: $level"
         if (level <= statusDepth) {
             log.info "\t\tLvl:$level) Crawl source folder: ${sourceFolder.absolutePath}"
         }
-        Pattern ignoreFolderNames = folderNamePatterns[FolderAnalyzer.LBL_IGNORE]
+        Pattern ignoreFolderNames = folderNamePatterns[Constants.LBL_IGNORE]
         if (ignoreFolderNames) {
             log.debug "Got folder names to ignore: ${ignoreFolderNames}"
         } else {
-            log.info "No folder names to ignore, nothing matching (${FolderAnalyzer.LBL_IGNORE}) in folderNamePatterns:(${folderNamePatterns})"
+            log.info "No folder names to ignore, nothing matching (${Constants.LBL_IGNORE}) in folderNamePatterns:(${folderNamePatterns})"
         }
 
         List<File> foldersToCrawl = [sourceFolder]
@@ -157,15 +79,15 @@ class LocalFileCrawler extends BaseCrawler{
      * todo -- remove list-only version above?
      */
     public static Map<String, List<File>> getFoldersToCrawlMap(File sourceFolder, Map folderNamePatterns = null, int level = 1, int statusDepth = 3) {
-        log.debug "\t\tCrawl source folder: ${sourceFolder.absolutePath} -- skip folders: $folderNamesToSkip -- level: $level"
+        log.debug "\t\tCrawl source folder: ${sourceFolder.absolutePath} -- level: $level"
         if (level <= statusDepth) {
             log.info "\t\tLvl:$level) Crawl source folder: ${sourceFolder.absolutePath}"
         }
-        Pattern ignoreFolderNames = folderNamePatterns[FolderAnalyzer.LBL_IGNORE]
+        Pattern ignoreFolderNames = folderNamePatterns[Constants.LBL_IGNORE]
         if (ignoreFolderNames) {
             log.debug "Got folder names to ignore: ${ignoreFolderNames}"
         } else {
-            log.info "No folder names to ignore, nothing matching (${FolderAnalyzer.LBL_IGNORE}) in folderNamePatterns:(${folderNamePatterns})"
+            log.info "No folder names to ignore, nothing matching (${Constants.LBL_IGNORE}) in folderNamePatterns:(${folderNamePatterns})"
         }
 
 //        List<File> foldersToCrawl = [sourceFolder]
@@ -259,7 +181,7 @@ class LocalFileCrawler extends BaseCrawler{
      * get map of files in a given folder with grouping on (with defaults)
      */
 //    public static Map<String, List> getFilesToCrawl(File sourcefolder) {
-//        getFilesToCrawl(sourcefolder, FILE_REGEX_TO_SKIP, FILE_EXTENSIONS_TO_ANALYZE, FILE_EXTENSIONS_TO_INDEX)
+//        getFilesToCrawl(sourcefolder, FILE_REGEX_TO_SKIP_DEFAULT, FILE_EXTENSIONS_TO_ANALYZE, FILE_EXTENSIONS_TO_INDEX)
 //    }
 
 
@@ -273,7 +195,7 @@ class LocalFileCrawler extends BaseCrawler{
      * @param filesToExclude
      * @return
      */
-    public static Map<String, List> getFilesToCrawl(File sourcefolder, Pattern filesToExclude = FILE_REGEX_TO_SKIP, Pattern extensionToIndex = FILE_EXTENSIONS_TO_INDEX, Pattern extensionToAnalyze = FILE_EXTENSIONS_TO_ANALYZE) {
+    public static Map<String, List> getFilesToCrawl(File sourcefolder, Pattern filesToExclude = FILE_REGEX_TO_SKIP_DEFAULT, Pattern extensionToIndex = FILE_EXTENSIONS_TO_INDEX, Pattern extensionToAnalyze = FILE_EXTENSIONS_TO_ANALYZE) {
         Map<String, Collection<File>> filesToCrawl = [skip: [], track: [], index: [], analyze: [], extensions: []]
         // create a map of files grouped by category: skip, track, index, analyze
 
@@ -330,7 +252,7 @@ class LocalFileCrawler extends BaseCrawler{
      * @param extensionToAnalyze
      * @return
      */
-    public static Map<File, Map> getFilesToCrawlList(File sourcefolder, Pattern filesToSkip = FILE_REGEX_TO_SKIP, Pattern extensionToIndex = FILE_EXTENSIONS_TO_INDEX, Pattern extensionToAnalyze = FILE_EXTENSIONS_TO_ANALYZE) {
+    public static Map<File, Map> getFilesToCrawlList(File sourcefolder, Pattern filesToSkip = FILE_REGEX_TO_SKIP_DEFAULT, Pattern extensionToIndex = FILE_EXTENSIONS_TO_INDEX, Pattern extensionToAnalyze = FILE_EXTENSIONS_TO_ANALYZE) {
         log.debug "Get files to crawl from folder: ($sourcefolder)"
         Map<File, Map> filesToCrawl = [:]
 
