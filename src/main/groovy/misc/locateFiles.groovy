@@ -17,9 +17,7 @@ import org.apache.solr.common.SolrInputDocument
 Logger log = Logger.getLogger(this.class.name);
 log.info "Start ${this.class.name}, with args: $args"
 
-
 ConfigObject config = SolrCrawlArgParser.parse(this.class.simpleName, args)
-
 
 Map<String,String> startFolders = config.dataSources.localFolders
 String solrUrl = config.solrUrl         //options.solrUrl
@@ -43,19 +41,8 @@ startFolders.each { String dsLabel, String sf ->
     File startFolder = new File(sf)
     log.info "Crawling parent folder: $dsLabel :: $sf"
 
-    Date start = new Date()
-//    solrSaver.setDataSourceName(dsLabel)
     if (wipeContent) {
-        String query = "${SolrSaver.FLD_DATA_SOURCE}:\"${dsLabel}\""
-        long existingCount = solrSaver.getDocumentCount(query)
-        log.info "Found existing count: $existingCount"
-        if(existingCount> 0) {
-            log.warn "Wiping previous crawl data (BEWARE!!!), label:'$dsLabel'!!!! - "
-            def foo = solrSaver.deleteDocuments(query)
-            log.info "Clear results: $foo"
-        } else {
-            log.info "\t\tskipping delete command for data source '$dsLabel', since we found $existingCount (0, right?) existing docs in current data source -- delete query would have been: $query"
-        }
+        def response = wipeSavedContent(source, dsLabel, solrSaver)
     } else {
         log.debug "Not wiping content/collection, "
     }
@@ -74,7 +61,7 @@ startFolders.each { String dsLabel, String sf ->
     log.info "Crawl Folders size: ${crawlFolders.size()}"
 
     crawlFolders.each { File crawlableFolder ->
-        Map<File, Map> filesToCrawlMap = LocalFileCrawler.getFilesToCrawlList(crawlableFolder, LocalFileCrawler.FILE_REGEX_TO_SKIP, LocalFileCrawler.FILE_EXTENSIONS_TO_INDEX, LocalFileCrawler.FILE_EXTENSIONS_TO_ANALYZE)
+        Map<File, Map> filesToCrawlMap = LocalFileCrawler.getFilesToCrawlList(crawlableFolder, LocalFileCrawler.FILE_REGEX_TO_SKIP_DEFAULT, LocalFileCrawler.FILE_EXTENSIONS_TO_INDEX, LocalFileCrawler.FILE_EXTENSIONS_TO_ANALYZE)
         log.info "\t$fileCount) folder: ${crawlableFolder.absolutePath} -- files to crawl count: ${filesToCrawlMap.size()}"
         fileCount += filesToCrawlMap.size()
         List<SolrInputDocument> sidList = solrSaver.buildFilesToCrawlInputList(filesToCrawlMap, dsLabel)
@@ -95,6 +82,21 @@ startFolders.each { String dsLabel, String sf ->
     log.debug "\t\t next folder..."
 
 }
+
+public void wipeSavedContent(String source, String dsLabel, SolrSaver solrSaver) {
+    String query = "${SolrSaver.FLD_CRAWL_NAME}:\"${dsLabel}\""
+    String sourceFilter = ""
+    long existingCount = solrSaver.getDocumentCount(query)
+    log.info "Found existing count: $existingCount"
+    if (existingCount > 0) {
+        log.warn "Wiping previous crawl data (BEWARE!!!), label:'$dsLabel'!!!! - "
+        def foo = solrSaver.deleteDocuments(query)
+        log.info "Clear results: $foo"
+    } else {
+        log.info "\t\tskipping delete command for data source '$dsLabel', since we found $existingCount (0, right?) existing docs in current data source -- delete query would have been: $query"
+    }
+}
+
 Date endTimeAll = new Date()
 use(groovy.time.TimeCategory) {
     def duration = endTimeAll - startTimeAll
