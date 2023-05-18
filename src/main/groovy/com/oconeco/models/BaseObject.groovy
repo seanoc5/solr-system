@@ -73,7 +73,7 @@ abstract class BaseObject {
 //            log.debug "no tagged types?? $sid"
         }
 
-//        sid.addField(SolrSaver.FLD_DATA_SOURCE, )
+//        sid.addField(SolrSaver.FLD_CRAWL_NAME, )
 //        sid.addField(SolrSaver.FLD_, )
         return sid
     }
