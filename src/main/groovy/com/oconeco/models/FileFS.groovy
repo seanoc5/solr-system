@@ -1,7 +1,7 @@
 package com.oconeco.models
 
 import com.oconeco.analysis.BaseAnalyzer
-import com.oconeco.analysis.FolderAnalyzer
+import com.oconeco.helpers.Constants
 import com.oconeco.persistence.SolrSaver
 import groovy.io.FileType
 import org.apache.commons.io.FilenameUtils
@@ -60,7 +60,7 @@ class FileFS extends BaseObject {
         SolrInputDocument sid = super.toSolrInputDocument()
 //        sid.addField(SolrSaver.FLD_SIZE, size)
         if(crawlName){
-            sid.setField(SolrSaver.FLD_DATA_SOURCE, crawlName)
+            sid.setField(SolrSaver.FLD_CRAWL_NAME, crawlName)
         }
 
         if (extension) {
@@ -80,7 +80,7 @@ class FileFS extends BaseObject {
             log.warn "File ($ffs) io exception checking if we have an archive: $e"
         }
         boolean isArchive = fileSignature == 0x504B0304 || fileSignature == 0x504B0506 || fileSignature == 0x504B0708 || fileSignature== 529205248 || fileSignature== 529205268
-        if(ffs.assignedTypes.contains(FolderAnalyzer.ARCHIVE)) {
+        if(ffs.assignedTypes.contains(Constants.ARCHIVE)) {
             if(!isArchive) {
                 log.info "Should be archive: $ffs -> ($fileSignature) -- $isArchive"
             } else {
