@@ -1,6 +1,7 @@
 package com.oconeco.models
 
 import com.oconeco.analysis.FolderAnalyzer
+import com.oconeco.helpers.Constants
 import com.oconeco.persistence.SolrSaver
 import org.apache.solr.common.SolrInputDocument
 import spock.lang.Specification
@@ -15,8 +16,8 @@ import java.util.regex.Pattern
  */
 
 class FolderFSTest extends Specification {
-    Pattern ignoreFolders = FolderAnalyzer.DEFAULT_FOLDERNAME_PATTERNS.ignore
-    Pattern ignoreFiles = FolderAnalyzer.DEFAULT_FILENAME_PATTERNS.ignore
+    Pattern ignoreFolders = Constants.DEFAULT_FOLDERNAME_PATTERNS.ignore
+    Pattern ignoreFiles = Constants.DEFAULT_FILENAME_PATTERNS.ignore
     public static final int FOLDER_SIZE = 1305281
 
     static public final Map testFileNames = [
@@ -49,7 +50,7 @@ class FolderFSTest extends Specification {
         String key = 'ignore'
         List<String> basicFilenames = testFileNames[key]
         List<String> mixedFilenames = testFileNames[key] + testFileNames['office']
-        Pattern regex = FolderAnalyzer.DEFAULT_FILENAME_PATTERNS[key]
+        Pattern regex = Constants.DEFAULT_FILENAME_PATTERNS[key]
 
         when:
         def foundBasic = basicFilenames.findAll { it =~ regex }
@@ -69,20 +70,20 @@ class FolderFSTest extends Specification {
 
         where:
         key            | names                                        | regex                                         || results
-        'ignore'       | testFileNames[key]                           | FolderAnalyzer.DEFAULT_FILENAME_PATTERNS[key] || testFileNames[key]
-        'office'       | testFileNames[key]                           | FolderAnalyzer.DEFAULT_FILENAME_PATTERNS[key] || testFileNames[key]
-        'system'       | testFileNames[key]                           | FolderAnalyzer.DEFAULT_FILENAME_PATTERNS[key] || testFileNames[key]
-        'archive'      | testFileNames[key]                           | FolderAnalyzer.DEFAULT_FILENAME_PATTERNS[key] || testFileNames[key]
-        'web'          | testFileNames[key]                           | FolderAnalyzer.DEFAULT_FILENAME_PATTERNS[key] || testFileNames[key]
-        'instructions' | testFileNames[key]                           | FolderAnalyzer.DEFAULT_FILENAME_PATTERNS[key] || testFileNames[key]
-        'techDev'      | testFileNames[key]                           | FolderAnalyzer.DEFAULT_FILENAME_PATTERNS[key] || testFileNames[key]
-        'config'       | testFileNames[key]                           | FolderAnalyzer.DEFAULT_FILENAME_PATTERNS[key] || testFileNames[key]
-        'data'         | testFileNames[key]                           | FolderAnalyzer.DEFAULT_FILENAME_PATTERNS[key] || testFileNames[key]
-        'media'        | testFileNames[key]                           | FolderAnalyzer.DEFAULT_FILENAME_PATTERNS[key] || testFileNames[key]
+        'ignore'       | testFileNames[key]                           | Constants.DEFAULT_FILENAME_PATTERNS[key] || testFileNames[key]
+        'office'       | testFileNames[key]                           | Constants.DEFAULT_FILENAME_PATTERNS[key] || testFileNames[key]
+        'system'       | testFileNames[key]                           | Constants.DEFAULT_FILENAME_PATTERNS[key] || testFileNames[key]
+        'archive'      | testFileNames[key]                           | Constants.DEFAULT_FILENAME_PATTERNS[key] || testFileNames[key]
+        'web'          | testFileNames[key]                           | Constants.DEFAULT_FILENAME_PATTERNS[key] || testFileNames[key]
+        'instructions' | testFileNames[key]                           | Constants.DEFAULT_FILENAME_PATTERNS[key] || testFileNames[key]
+        'techDev'      | testFileNames[key]                           | Constants.DEFAULT_FILENAME_PATTERNS[key] || testFileNames[key]
+        'config'       | testFileNames[key]                           | Constants.DEFAULT_FILENAME_PATTERNS[key] || testFileNames[key]
+        'data'         | testFileNames[key]                           | Constants.DEFAULT_FILENAME_PATTERNS[key] || testFileNames[key]
+        'media'        | testFileNames[key]                           | Constants.DEFAULT_FILENAME_PATTERNS[key] || testFileNames[key]
 
 
-        'ignore'       | testFileNames[key] + testFileNames['office'] | FolderAnalyzer.DEFAULT_FILENAME_PATTERNS[key] || testFileNames[key]
-        'office'       | testFileNames[key] + testFileNames['ignore'] | FolderAnalyzer.DEFAULT_FILENAME_PATTERNS[key] || testFileNames[key]
+        'ignore'       | testFileNames[key] + testFileNames['office'] | Constants.DEFAULT_FILENAME_PATTERNS[key] || testFileNames[key]
+        'office'       | testFileNames[key] + testFileNames['ignore'] | Constants.DEFAULT_FILENAME_PATTERNS[key] || testFileNames[key]
 
     }
 
@@ -95,14 +96,14 @@ class FolderFSTest extends Specification {
 
         where:
         key             | names              | regex                                         || results
-        'ignore'        | testFolderNames[key] | FolderAnalyzer.DEFAULT_FOLDERNAME_PATTERNS[key] || testFolderNames[key]
-        'backups'       | testFolderNames[key] | FolderAnalyzer.DEFAULT_FOLDERNAME_PATTERNS[key] || testFolderNames[key]
-        'configuration' | testFolderNames[key] | FolderAnalyzer.DEFAULT_FOLDERNAME_PATTERNS[key] || testFolderNames[key]
-        'documents'     | testFolderNames[key] | FolderAnalyzer.DEFAULT_FOLDERNAME_PATTERNS[key] || testFolderNames[key]
-        'downloads'     | testFolderNames[key] | FolderAnalyzer.DEFAULT_FOLDERNAME_PATTERNS[key] || testFolderNames[key]
-        'pictures'      | testFolderNames[key] | FolderAnalyzer.DEFAULT_FOLDERNAME_PATTERNS[key] || testFolderNames[key]
-        'programming'   | testFolderNames[key] | FolderAnalyzer.DEFAULT_FOLDERNAME_PATTERNS[key] || testFolderNames[key]
-        'system'        | testFolderNames[key] | FolderAnalyzer.DEFAULT_FOLDERNAME_PATTERNS[key] || testFolderNames[key]
+        'ignore'        | testFolderNames[key] | Constants.DEFAULT_FOLDERNAME_PATTERNS[key] || testFolderNames[key]
+        'backups'       | testFolderNames[key] | Constants.DEFAULT_FOLDERNAME_PATTERNS[key] || testFolderNames[key]
+        'configuration' | testFolderNames[key] | Constants.DEFAULT_FOLDERNAME_PATTERNS[key] || testFolderNames[key]
+        'documents'     | testFolderNames[key] | Constants.DEFAULT_FOLDERNAME_PATTERNS[key] || testFolderNames[key]
+        'downloads'     | testFolderNames[key] | Constants.DEFAULT_FOLDERNAME_PATTERNS[key] || testFolderNames[key]
+        'pictures'      | testFolderNames[key] | Constants.DEFAULT_FOLDERNAME_PATTERNS[key] || testFolderNames[key]
+        'programming'   | testFolderNames[key] | Constants.DEFAULT_FOLDERNAME_PATTERNS[key] || testFolderNames[key]
+        'system'        | testFolderNames[key] | Constants.DEFAULT_FOLDERNAME_PATTERNS[key] || testFolderNames[key]
 //        'ignore'       | testFolderNames[key] + testFolderNames['office'] | FolderAnalyzer.DEFAULT_FILENAME_PATTERNS[key] || testFolderNames[key]
 //        'office'       | testFolderNames[key] + testFolderNames['ignore'] | FolderAnalyzer.DEFAULT_FILENAME_PATTERNS[key] || testFolderNames[key]
     }
