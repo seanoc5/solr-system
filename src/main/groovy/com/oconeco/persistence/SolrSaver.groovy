@@ -50,6 +50,7 @@ class SolrSaver {
     public static final String FLD_SUBDIR_COUNT = 'subdir_count_i'
     public static final String FLD_FILE_COUNT = "fileCount_i"
     public static final String FLD_DIR_COUNT = "dirCount_i"
+    public static final String FLD_CRAWL_NAME = "crawl_name_s"
     public static final String FLD_DATA_SOURCE = "data_source_s"
     public static final String FLD_TAG_SS = "tag_ss"
     public static final String FLD_ASSIGNED_TYPES = "assignedTypes_ss"
@@ -89,14 +90,14 @@ class SolrSaver {
 
     SolrSaver(String baseSolrUrl, String hostName) {
 //        this(baseSolrUrl)
-        log.info "Constructor baseSolrUrl:$baseSolrUrl, Homst/machine name:$hostName, WITHOUT tika"
+        log.info "\t\tConstructor baseSolrUrl:$baseSolrUrl --- Host/machine name:$hostName --- WITHOUT tika"
         this.hostName = hostName
         buildSolrClient(baseSolrUrl)
     }
 
     SolrSaver(String baseSolrUrl, String hostName, TikaConfig tikaConfig) {
 //        this(baseSolrUrl, dataSourceName)
-        log.info "Constructor baseSolrUrl:$baseSolrUrl, CrawlName:$hostName, with TIKA config: $tikaConfig"
+        log.info "\t\tConstructor baseSolrUrl:$baseSolrUrl --- CrawlName:$hostName --- with TIKA config: $tikaConfig"
         this.hostName = hostName
         buildSolrClient(baseSolrUrl)
         this.tikaConfig = tikaConfig
@@ -106,12 +107,16 @@ class SolrSaver {
     }
 
     public void buildSolrClient(String baseSolrUrl) {
-        log.info "Build solr client with baseSolrUrl: $baseSolrUrl"
+        log.info "\t\tBuild solr client with baseSolrUrl: $baseSolrUrl"
 //        solrClient = new HttpSolrClient.Builder(baseSolrUrl).build()
         solrClient = new Http2SolrClient.Builder(baseSolrUrl).build()
-        log.info("Built Solr Client: $solrClient")
+        log.info "\t\tBuilt Solr Client: $solrClient"
     }
 
+    public void closeClient(String msg = 'general close call'){
+        log.info "Closing solr client with message '$msg' ---- ($solrClient)"
+        solrClient.close()
+    }
 
     /**
      * Clear the collection of current data -- BEWARE
@@ -166,7 +171,7 @@ class SolrSaver {
         folders.each { File folder ->
             i++
             SolrInputDocument sid = createSolrInputFolderDocument(folder)
-            sid.setField(SolrSaver.FLD_DATA_SOURCE, dataSourceLabel)
+            sid.setField(SolrSaver.FLD_CRAWL_NAME, dataSourceLabel)
 
             sidList << sid
             if (sidList.size() >= SOLR_BATCH_SIZE) {
@@ -195,7 +200,7 @@ class SolrSaver {
                 String status = details?.status
                 log.debug "File: $file -- Status: $status -- details: $details"
                 SolrInputDocument sid = buildBasicTrackSolrFields(file)
-                sid.setField(SolrSaver.FLD_DATA_SOURCE, dsLabel)
+                sid.setField(SolrSaver.FLD_CRAWL_NAME, dsLabel)
                 if (tikaConfig) {
                     if (details.status == LocalFileCrawler.STATUS_INDEX_CONTENT) {
                         log.debug "content tagged as worthy of indexing, send to proc to extra and add content: $file"
@@ -240,7 +245,7 @@ class SolrSaver {
         sid.setField(FLD_NAME_S, file.name)
         sid.setField(FLD_NAME_T, file.name)
         if (dsLabel) {
-            sid.setField(FLD_DATA_SOURCE, dsLabel)
+            sid.setField(FLD_CRAWL_NAME, dsLabel)
         }
 
         if (file.isDirectory()) {
@@ -257,7 +262,7 @@ class SolrSaver {
         Date lmDate = new Date(file.lastModified())
         sid.setField(FLD_LASTMODIFIED, lmDate)
 
-//        sid.addField(FLD_DATA_SOURCE, this.dataSourceName)
+//        sid.addField(FLD_CRAWL_NAME, this.dataSourceName)
 
         return sid
     }
@@ -355,7 +360,7 @@ class SolrSaver {
      */
     def saveDocs(ArrayList<SolrInputDocument> solrInputDocuments) {
         /*solrInputDocuments.each { SolrInputDocument sid ->
-            sid.setField(FLD_DATA_SOURCE, this.dataSourceName)
+            sid.setField(FLD_CRAWL_NAME, this.dataSourceName)
         }*/
         log.info "Adding solrInputDocuments, size: ${solrInputDocuments.size()}"
         UpdateResponse resp = solrClient.add(solrInputDocuments, 1000)
