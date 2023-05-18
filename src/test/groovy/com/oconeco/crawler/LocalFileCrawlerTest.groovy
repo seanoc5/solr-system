@@ -1,6 +1,7 @@
 package com.oconeco.crawler
 
-import com.oconeco.analysis.FolderAnalyzer
+
+import com.oconeco.helpers.Constants
 import groovy.io.FileType
 import groovy.io.FileVisitResult
 import spock.lang.Specification
@@ -46,7 +47,7 @@ class LocalFileCrawlerTest extends Specification {
 
                            } else {
                                crawlFolders << it
-                               println "ADDING Crawl folder: $it"
+                               // println "ADDING Crawl folder: $it"
                                List<String> fileNames = it.list()
                                goodFileNames.addAll(fileNames)
                                println "\t\t\t${fileNames.size()}) $fileNames -- (${goodFileNames.size()}"
@@ -81,7 +82,7 @@ class LocalFileCrawlerTest extends Specification {
 
     def "GetFoldersToCrawl test content folder"() {
         when:
-        List<File> results = LocalFileCrawler.getFoldersToCrawl(testFolder, FolderAnalyzer.DEFAULT_FOLDERNAME_PATTERNS)
+        List<File> results = LocalFileCrawler.getFoldersToCrawl(testFolder, Constants.DEFAULT_FOLDERNAME_PATTERNS)
 
         then:
         results.size() == 4
@@ -92,7 +93,7 @@ class LocalFileCrawlerTest extends Specification {
         File workFolder = new File('/home/sean/work')
 
         when:
-        List<File> results = LocalFileCrawler.getFoldersToCrawl(workFolder, FolderAnalyzer.DEFAULT_FOLDERNAME_PATTERNS)
+        List<File> results = LocalFileCrawler.getFoldersToCrawl(workFolder, Constants.DEFAULT_FOLDERNAME_PATTERNS)
 
         then:
         results.size() > 1190
@@ -104,7 +105,7 @@ class LocalFileCrawlerTest extends Specification {
 //        File workFolder = new File('/home/sean/work')
 
         when:
-        def results = LocalFileCrawler.getFoldersToCrawlMap(testFolder, FolderAnalyzer.DEFAULT_FOLDERNAME_PATTERNS)
+        def results = LocalFileCrawler.getFoldersToCrawlMap(testFolder, Constants.DEFAULT_FOLDERNAME_PATTERNS)
 
         then:
         results instanceof Map<String, List<File>>
