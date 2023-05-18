@@ -20,9 +20,10 @@ log.info "Clear results: $foo"
 
 SolrQuery sq = new SolrQuery(q)
 QueryResponse resp = solrSaver.query('*:*')
+solrSaver.closeClient(this.class.name)
+
 long numFound = resp.results.getNumFound()
 log.info "NumFound: $numFound"
 assert numFound==0
-
 
 log.info "done!?"
