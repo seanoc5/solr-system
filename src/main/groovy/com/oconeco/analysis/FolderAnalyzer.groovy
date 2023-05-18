@@ -1,5 +1,6 @@
 package com.oconeco.analysis
 
+import com.oconeco.helpers.Constants
 import com.oconeco.models.BaseObject
 import com.oconeco.models.FileFS
 import com.oconeco.models.FolderFS
@@ -22,39 +23,14 @@ import java.util.regex.Pattern
  */
 
 class FolderAnalyzer extends BaseAnalyzer {
-    public static final String UNKNOWN = 'unknown'
-    public static final String ARCHIVE = 'archive'
     Logger log = Logger.getLogger(this.class.name);
-    /** label of things we can ignore (use sparingly) */
-    public static final String LBL_IGNORE = 'ignore'
-    static final Map<String, Pattern> DEFAULT_FOLDERNAME_PATTERNS = [
-            ignore       : ~/.*(\b*snapshots?\b*|\b*cache\b*|git|github|ignore.*|packages?|pkgs?|plugins?|skins?|svn|target|vscode)/,
-            backups      : ~/.*(backups?|bkups?|old|timeshift)/,
-            configuration: ~/.*(configs)/,
-            documents    : ~/.*([Dd]ocuments|[Dd]esktop)/,
-            downloads    : ~/.*([Dd]ownloads)/,
-            pictures     : ~/.*([Pp]ictures)/,
-            programming  : ~/.*(java|jupyter|src|work)/,
-            system       : ~/.*(class|sbt|sbt-\d.*|runtime)/,
-    ]
 
-    static final Map<String, Pattern> DEFAULT_FILENAME_PATTERNS = [
-            ignore      : ~/([.~]*lock.*|_.*|.*\.te?mp$|.*\.class$|robots.txt)/,
-            office      : ~/.*\.(accdb|docx?|ods|odp|odt|pptx?|rtf|vsdx?|xlsx?)/,
-            system      : ~/.*(\.(bin|deb|lib|pkg|rpm)|(gcc.*))/,
-            archive     : ~/.*\.(arc|gz|rar|zip|tar.gz|zip)/,
-            web         : ~/.*(html?)/,
-            instructions: ~'(?i).*(adoc|readme.*|md)',
-            techDev     : ~/.*(c|css|go|groovy|gradle|jar|java|javascript|js|php|schema|sh)/,
-            config      : ~/.*(cfg|config.*|pem|properties|xml|yaml)/,
-            data        : ~/.*(csv|jsonl?d?|lst|tab)/,
-            media       : ~/.*(avi|jpe?g|ogg|mp3|mpe?g|wav)/,
-    ]
+
     ConfigObject config
 
     List<String> extensions = []
-    Map<String, Pattern> fileNamePatterns = DEFAULT_FILENAME_PATTERNS
-    Map<String, Pattern> folderNamePatterns = DEFAULT_FOLDERNAME_PATTERNS
+    Map<String, Pattern> fileNamePatterns = Constants.DEFAULT_FILENAME_PATTERNS
+    Map<String, Pattern> folderNamePatterns = Constants.DEFAULT_FOLDERNAME_PATTERNS
 
     ArchiveStreamFactory archiveStreamFactory = new ArchiveStreamFactory();
 
@@ -66,11 +42,13 @@ class FolderAnalyzer extends BaseAnalyzer {
         this.config = config
         if (config.namePatterns?.folders) {
             folderNamePatterns = config.namePatterns.folders
-            log.info "Loading Folder analzer of foldernames from 'config.namePatterns.files': ${folderNamePatterns.collect { '\n\t\t' + it }}"
+//            log.info "\t\tLoading Folder analzer of foldernames from 'config.namePatterns.files': ${folderNamePatterns.collect { '\n\t\t' + it }}"
+            log.info "\t\tLoading Folder analzer of foldernames from 'config.namePatterns.files': ${fileNamePatterns.keySet()}"
         }
         if (config.namePatterns?.files) {
             fileNamePatterns = config.namePatterns.files
-            log.info "Loading Folder analzer of filenames from 'config.namePatterns.files': ${fileNamePatterns.collect { '\n\t\t' + it }}"
+//            log.info "\t\tLoading Folder analzer of filenames from 'config.namePatterns.files': ${fileNamePatterns.collect { '\n\t\t' + it }}"
+            log.info "\t\tLoading Folder analzer of filenames from 'config.namePatterns.files': ${fileNamePatterns.keySet()}"
         }
 
     }
@@ -98,7 +76,7 @@ class FolderAnalyzer extends BaseAnalyzer {
             }
         } else {
             log.debug "\t\tNO LABEL folderType assigned?? $ffs  --> ${((FolderFS) ffs).me.absolutePath}"
-            ffs.assignedTypes << UNKNOWN
+            ffs.assignedTypes << Constants.UNKNOWN
         }
         return labels
     }
@@ -131,8 +109,8 @@ class FolderAnalyzer extends BaseAnalyzer {
                 }
             } else {
                 log.debug "\t\tNO LABEL assigned?? $fileFS  --> ${((File) fileFS.me).absolutePath}"
-                fileFS.assignedTypes << UNKNOWN
-                allLabels << UNKNOWN
+                fileFS.assignedTypes << Constants.UNKNOWN
+                allLabels << Constants.UNKNOWN
             }
         }
         return allLabels
