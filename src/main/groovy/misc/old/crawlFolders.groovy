@@ -1,6 +1,7 @@
 package misc.old
 
-import com.oconeco.crawler.LocalFileCrawler
+import com.oconeco.crawler.LocalFileSystemCrawler
+import com.oconeco.helpers.Constants
 import org.apache.log4j.Logger
 
 /**
@@ -8,21 +9,21 @@ import org.apache.log4j.Logger
  */
 Logger log = Logger.getLogger(this.class.name);
 log.info "Start here (crawl folders..."
-List skipFolderNames = ['components','public','lang', 'gatsby-theme-bulmaio','.ipynb_checkpoints']
 
-List<String> startFolders = ['/home/sean/work']
+List<String> startFolders = ['/home/sean/Documents']
 
 startFolders.each { String sf ->
     File startFolder = new File(sf)
     log.info "Crawling parent folder: $startFolder"
 
     // get list of non-noisy folders to crawl (or compare against stored info (check if we need to crawl...
-    Set<File> foldersToCrawl = LocalFileCrawler.getFoldersToCrawl(startFolder)
-    log.info "Folders size: ${foldersToCrawl.size()}"
+    def  resultsMap = LocalFileSystemCrawler.startCrawl(startFolder)
+    log.info "Folders size: ${resultsMap.size()}"
 
     // see if there are common folders -- dev-time informational/insight only
-    def foldersGroups = foldersToCrawl.groupBy { it.name }
-    def dups = foldersGroups.findAll {String name, List values ->
+    def crawlFolders = resultsMap[Constants.LBL_CRAWL]
+    def ignoreFolders = resultsMap[Constants.LBL_IGNORE]
+    def dups = ignoreFolders.findAll {String name, List values ->
         values.size() > 1
     }.sort { it.value.size() * -1}
 
