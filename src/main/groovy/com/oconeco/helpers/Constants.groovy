@@ -4,11 +4,13 @@ import java.util.regex.Pattern
 
 class Constants {
 
-    public static final String UNKNOWN = 'unknown'
-    public static final String ARCHIVE = 'archive'
+    public static final String LBL_ARCHIVE = 'archive'
+    public static final String LBL_CRAWL = 'crawl'
     public static final String LBL_IGNORE = 'ignore'
+    public static final String LBL_UNKNOWN = 'unknown'
+
     public static final Map<String, Pattern> DEFAULT_FOLDERNAME_PATTERNS = [
-            ignore       : ~/.*(\.gradle|\.m2|\b*snapshots?\b*|\b*caches?\b*|git|github|ignore.*|packages?|pkgs?|plugins?|repository|skins?|svn|target|vscode)/,
+            ignore       : ~/.*(\.gradle|\.m2|\b*snapshots?\b*|\b*caches?\b*|git|github|ignore.*|node_modules|packages?|pkgs?|plugins?|repository|skins?|svn|target|vscode)/,
             backups      : ~/.*(backups?|bkups?|old|timeshift)/,
             configuration: ~/.*(configs)/,
             documents    : ~/.*([Dd]ocuments|[Dd]esktop)/,
@@ -29,5 +31,8 @@ class Constants {
             data        : ~/.*(csv|jsonl?d?|lst|tab)/,
             media       : ~/.*(avi|jpe?g|ogg|mp3|mpe?g|wav)/,
     ]
-    public static int DEFAULT_FOLDER_SIZE
+    public static int DEFAULT_FOLDER_SIZE = 4096     // todo -- revisit, this is just an arbitrary starting size...?
+
+    public static final String TOCRAWL = 'crawl'
+    public static final String TOIGNORE = 'ignore'
 }
