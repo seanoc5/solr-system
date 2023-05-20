@@ -7,7 +7,6 @@ import groovy.io.FileVisitResult
 import org.apache.log4j.Logger
 
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.regex.Pattern
 
 /**
@@ -17,53 +16,75 @@ import java.util.regex.Pattern
  * @description: class to crawl local filesystems
  */
 
-class LocalFileSystemCrawler  {
-    Logger log = Logger.getLogger(this.class.name);
+class LocalFileSystemCrawler {
+    static log = Logger.getLogger(this.class.name);
+//    String name = 'n.a.'
+//    String location = 'none'
+//    int statusDepth = 3
 
-    LocalFileSystemCrawler(String name, String location, int statusDepth=3) {
-        super(name, location, statusDepth)
-        log.info "${this.class.name} constructor with name: $name, location:$location, statusDepth:$statusDepth..."
-    }
+//    LocalFileSystemCrawler(String name, String location, int statusDepth = 3) {
+////        super(name, location, statusDepth)
+//        log.info "${this.class.name} constructor with name: $name, location:$location, statusDepth:$statusDepth..."
+//        this.name = name
+//        this.location = location
+//        this.statusDepth = statusDepth
+//    }
 
-    def startCrawl(def source, Map namePatterns) {
-        log.info "Start crawl with source path:($source) and name patterns map: $namePatterns"
-        Path startFolder = getStartFolder(source, namePatterns)
-        def results = visitFolders(startFolder, namePatterns)
+    static def startCrawl(def source, Map namePatternsFolder = Constants.DEFAULT_FOLDERNAME_PATTERNS) {
+        log.info "Start crawl with source path:($source) and name patterns map: $namePatternsFolder"
+        File startFolder = getStartDirectory(source, namePatternsFolder)
+        def results = visitFolders(startFolder, namePatternsFolder)
         return results
     }
 
-    Path getStartFolder(def source, Map<String, Pattern> namePatterns) {
-        Path startPath = null
+
+    /**
+     * helper method to accept various inputs,and return the filesystem object (File/dir) to actuallly crawl
+     * @param source
+     * @param namePatterns
+     * @return
+     */
+    static File getStartDirectory(def source, Map<String, Pattern> namePatterns) {
+        File startDir = null
         if (source instanceof Path) {
             log.info "got a proper path (${source.class.name}): $source"
-            startPath = source
+            startDir = source.toFile()
         } else if (source instanceof File) {
-            startPath = (File) source.toPath()
+            startDir = source
         } else if (source instanceof String) {
-            startPath = Paths.get(source)
+            startDir = new File(source)
         } else {
             log.warn "Unknown source type (${source.class.name}, trying a blind cast..."
-            startPath = ((Path) source)
+            startDir = ((Path) source)
         }
-        return startPath
+        return startDir
     }
 
-    def visitFolders(Path startPath, Map<String, Pattern> namePatterns) {
+
+    /**
+     * user filevisitor pattern to get all the folders which are not explicitly ignored
+     * @param startDir
+     * @param namePatterns
+     * @return map of ignored and not-ignored folders
+     *
+     * this is a quick/light scan of folders, assumes following processing will order crawl of folders by priority,
+     * and even check for updates to skip folders with no apparent changes
+     */
+    static def visitFolders(File startDir, Map<String, Pattern> namePatterns) {
         List<Path> foldersToCrawl = []
         List<Path> ignoredFolders = []
         Pattern ignorePattern = namePatterns.get(Constants.LBL_IGNORE)
+
         Map options = [type     : FileType.DIRECTORIES,
                        preDir   : {
-//                           allFileNames.addAll(it.list())
                            if (it ==~ ignorePattern) {
                                ignoredFolders << it
                                log.info "\t\t\tINGOREing folder: $it -- matches ignorePattern: $ignorePattern"
-//                               log.info "INGOREing folder: $it -- matches ignorePattern: $ignorePattern -- files:$ignoreFiles"
                                return FileVisitResult.SKIP_SUBTREE
 
                            } else {
                                foldersToCrawl << it
-                               log.info "\t\tADDING Crawl folder: $it"
+                               log.info "\t\tADDING Crawl folder: $it (${it.class.name})"
                            }
                        },
 /*
@@ -77,11 +98,17 @@ class LocalFileSystemCrawler  {
                        visitRoot: true,
         ]
 
-        log.debug "Starting crawl of folder: ($startPath)  ..."
-        startPath.traverse(options) { def folder ->
+        log.debug "Starting crawl of folder: ($startDir)  ..."
+
+        startDir.traverse(options) { def folder ->
             log.debug "\t\ttraverse folder $folder"
         }
-        Map resuts = [foldersToCrawl:foldersToCrawl, ignoredFolders:ignoredFolders]
-        return resuts
+        Map results = [:]
+        results.put(Constants.LBL_CRAWL, foldersToCrawl)
+        results.put(Constants.LBL_IGNORE, ignoredFolders)
+
+        return results
     }
+//    public static final String FOLDERS_TO_CRAWL = 'crawl'       // todo -- merge these with other similar constants or strings
+//    public static final String FOLDERS_TO_IGNORE = 'ignore'
 }
