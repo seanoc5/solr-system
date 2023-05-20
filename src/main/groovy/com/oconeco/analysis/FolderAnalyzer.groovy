@@ -76,7 +76,7 @@ class FolderAnalyzer extends BaseAnalyzer {
             }
         } else {
             log.debug "\t\tNO LABEL folderType assigned?? $ffs  --> ${((FolderFS) ffs).me.absolutePath}"
-            ffs.assignedTypes << Constants.UNKNOWN
+            ffs.assignedTypes << Constants.LBL_UNKNOWN
         }
         return labels
     }
@@ -109,8 +109,8 @@ class FolderAnalyzer extends BaseAnalyzer {
                 }
             } else {
                 log.debug "\t\tNO LABEL assigned?? $fileFS  --> ${((File) fileFS.me).absolutePath}"
-                fileFS.assignedTypes << Constants.UNKNOWN
-                allLabels << Constants.UNKNOWN
+                fileFS.assignedTypes << Constants.LBL_UNKNOWN
+                allLabels << Constants.LBL_UNKNOWN
             }
         }
         return allLabels
