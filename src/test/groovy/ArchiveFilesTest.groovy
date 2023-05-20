@@ -69,7 +69,7 @@ class ArchiveFilesTest extends Specification {
                 println "${entry.name} (${size} :-:  mtime: ${entry.modTime}"
 //                println "\t\tFile: ${entry.name} (${entry.size})"
             } else {
-                println "UNKNOWN entry (NOT FILE no Directory): ${entry.name}"
+                println "LBL_UNKNOWN entry (NOT FILE no Directory): ${entry.name}"
             }
             entries << entry
         }
@@ -108,7 +108,7 @@ class ArchiveFilesTest extends Specification {
                 println "${entry.name} (${size} :-:  mtime: ${entry.modTime}"
                 println "\t\tFile: ${entry.name} (${entry.size})"
             } else {
-                println "UNKNOWN entry (NOT FILE no Directory): ${entry.name}"
+                println "LBL_UNKNOWN entry (NOT FILE no Directory): ${entry.name}"
             }
             entries << entry
         }

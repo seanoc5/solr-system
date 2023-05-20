@@ -14,8 +14,6 @@ import java.util.regex.Pattern
  */
 
 class LocalFileSystemCrawlerTest extends Specification {
-    public static final String TOCRAWL = 'foldersToCrawl'
-    public static final String TOIGNORE = 'ignoredFolders'
     def "basic localhost crawl of test folder inside code folder "() {
         given:
         String hostname = InetAddress.getLocalHost().getHostName()
@@ -25,12 +23,12 @@ class LocalFileSystemCrawlerTest extends Specification {
 
         when:
         def results = crawler.startCrawl(startFolder, namePatterns)
-        def toCrawl = results[TOCRAWL]
-        List<String> crawlNames = toCrawl.collect{Path p ->
-            String n = p.getFileName()
-            n
+        def toCrawl = results[Constants.TOCRAWL]
+        def toIgnore = results[Constants.TOIGNORE]
+        List<String> crawlNames = toCrawl.collect{File file ->
+            file.name
         }
-        def ignoreNames = results[TOIGNORE].collect {Path p -> p.getFileName().toString()}
+        def ignoreNames = results[Constants.TOIGNORE].collect { File file -> file.name}
         List<String> cnames = ['content','testsub','subFolder2', 'subfolder3']
 
         then:
@@ -47,8 +45,8 @@ class LocalFileSystemCrawlerTest extends Specification {
         long start = System.currentTimeMillis()
 
         String hostname = InetAddress.getLocalHost().getHostName()
-        def userHome = System.getProperty("user.home");
-        def startFolder = Path.of(userHome);
+        def userHome = System.getProperty("user.home")
+        File startFolder = new File("${userHome}/Documents")
         LocalFileSystemCrawler crawler = new LocalFileSystemCrawler('testSeanHome', hostname)
         Map<String, Pattern> namePatterns =  Constants.DEFAULT_FOLDERNAME_PATTERNS
 
@@ -57,12 +55,12 @@ class LocalFileSystemCrawlerTest extends Specification {
 
         long end = System.currentTimeMillis()
         long elapsed = end - start
-        log.info "Elapsed time: ${elapsed}ms (${elapsed/1000} sec)"
+        println "Elapsed time: ${elapsed}ms (${elapsed/1000} sec)"
 
         then:
         results.size() == 2
-        results.keySet()[0] == 'foldersToCrawl'
-        results.keySet()[1] == 'ignoredFolders'
+        results.keySet()[0] == Constants.TOCRAWL
+        results.keySet()[1] == Constants.TOIGNORE
 
 //        results.keySet() == ['foldersToCrawl', 'ignoreFolders']
     }

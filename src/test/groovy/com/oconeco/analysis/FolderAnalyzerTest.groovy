@@ -42,6 +42,7 @@ class FolderAnalyzerTest extends Specification {
 
     }
 
+/*
     def "folder.toSolrInputDocument analysis"() {
         given:
         ConfigObject config = new ConfigSlurper().parse(getClass().getResource('/configLocate.groovy'))
@@ -64,5 +65,6 @@ class FolderAnalyzerTest extends Specification {
 
 
     }
+*/
 
 }

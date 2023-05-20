@@ -32,7 +32,7 @@ class ArchiveUtilsTest extends Specification {
             } else if (entry.isFile()) {
                 println "\t\tFile: ${entry.name} (${entry.size})"
             } else {
-                println "UNKNOWN entry (NOT FILE no Directory): ${entry.name}"
+                println "LBL_UNKNOWN entry (NOT FILE no Directory): ${entry.name}"
             }
             entries << entry
         }
