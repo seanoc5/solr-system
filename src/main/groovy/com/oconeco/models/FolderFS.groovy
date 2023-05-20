@@ -3,6 +3,7 @@ package com.oconeco.models
 import com.oconeco.analysis.BaseAnalyzer
 import com.oconeco.analysis.FileAnalyzer
 import com.oconeco.analysis.FolderAnalyzer
+import com.oconeco.helpers.Constants
 import com.oconeco.persistence.SolrSaver
 import org.apache.log4j.Logger
 import org.apache.solr.common.SolrInputDocument
@@ -191,7 +192,7 @@ class FolderFS extends BaseObject {
 //        def updateTime =
 
         if (crawlName) {
-            sidFolder.setField(SolrSaver.FLD_CRAWL_NAME, crawlName)
+            sidFolder.setField(Constants.FLD_CRAWL_NAME, crawlName)
         }
 
         if (ignoredFiles) {
