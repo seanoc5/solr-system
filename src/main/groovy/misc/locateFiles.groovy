@@ -1,11 +1,10 @@
 package misc
 
-import com.oconeco.crawler.LocalFileCrawler
+import com.oconeco.helpers.Constants
 import com.oconeco.helpers.SolrCrawlArgParser
 import com.oconeco.persistence.SolrSaver
 import org.apache.log4j.Logger
-import org.apache.solr.client.solrj.response.UpdateResponse
-import org.apache.solr.common.SolrInputDocument
+
 /**
  * Script to function much like slocate in linux.
  * Crawl all folders (with skip configs to skip things we don't care about).
@@ -49,7 +48,10 @@ startFolders.each { String dsLabel, String sf ->
 
 
     // get list of non-noisy folders to crawl (or compare against stored info (check if we need to crawl...
-    Map<String, List<File>> resultsMap = LocalFileCrawler.getFoldersToCrawlMap(startFolder, folderNamePatterns)
+    log.error "Need to revise this code, switch from LocalFileCrawler to LocalFileSystemCrawler"
+    Map<String, List<File>> resultsMap = null       //LocalFileCrawler.getFoldersToCrawlMap(startFolder, folderNamePatterns)
+
+
     List<File> crawlFolders = resultsMap.foldersToCrawl
 //    Set<File> foldersToCrawl = LocalFileCrawler.getFoldersToCrawl(startFolder, fileNamePatterns)
     log.info "Folders to crawl(${crawlFolders.size()})"
@@ -61,17 +63,18 @@ startFolders.each { String dsLabel, String sf ->
     log.info "Crawl Folders size: ${crawlFolders.size()}"
 
     crawlFolders.each { File crawlableFolder ->
-        Map<File, Map> filesToCrawlMap = LocalFileCrawler.getFilesToCrawlList(crawlableFolder, LocalFileCrawler.FILE_REGEX_TO_SKIP_DEFAULT, LocalFileCrawler.FILE_EXTENSIONS_TO_INDEX, LocalFileCrawler.FILE_EXTENSIONS_TO_ANALYZE)
-        log.info "\t$fileCount) folder: ${crawlableFolder.absolutePath} -- files to crawl count: ${filesToCrawlMap.size()}"
-        fileCount += filesToCrawlMap.size()
-        List<SolrInputDocument> sidList = solrSaver.buildFilesToCrawlInputList(filesToCrawlMap, dsLabel)
-        if (sidList) {
-//            log.info "Files to crawl list size: ${filesToCrawlMap.size()}"
-            UpdateResponse response = solrSaver.saveFilesCollection(sidList)
-            log.debug "Update response: $response"
-        } else {
-            log.info "\t\tSkipping empty crawl list: $sidList (folder: $crawlableFolder)"
-        }
+//        change with something else
+//        Map<File, Map> filesToCrawlMap = LocalFileCrawler.getFilesToCrawlList(crawlableFolder, LocalFileCrawler.FILE_REGEX_TO_SKIP_DEFAULT, LocalFileCrawler.FILE_EXTENSIONS_TO_INDEX, LocalFileCrawler.FILE_EXTENSIONS_TO_ANALYZE)
+//        log.info "\t$fileCount) folder: ${crawlableFolder.absolutePath} -- files to crawl count: ${filesToCrawlMap.size()}"
+//        fileCount += filesToCrawlMap.size()
+//        List<SolrInputDocument> sidList = solrSaver.buildFilesToCrawlInputList(filesToCrawlMap, dsLabel)
+//        if (sidList) {
+////            log.info "Files to crawl list size: ${filesToCrawlMap.size()}"
+//            UpdateResponse response = solrSaver.saveFilesCollection(sidList)
+//            log.debug "Update response: $response"
+//        } else {
+//            log.info "\t\tSkipping empty crawl list: $sidList (folder: $crawlableFolder)"
+//        }
     }
 
     Date end = new Date()
@@ -84,7 +87,7 @@ startFolders.each { String dsLabel, String sf ->
 }
 
 public void wipeSavedContent(String source, String dsLabel, SolrSaver solrSaver) {
-    String query = "${SolrSaver.FLD_CRAWL_NAME}:\"${dsLabel}\""
+    String query = "${Constants.FLD_CRAWL_NAME}:\"${dsLabel}\""
     String sourceFilter = ""
     long existingCount = solrSaver.getDocumentCount(query)
     log.info "Found existing count: $existingCount"
