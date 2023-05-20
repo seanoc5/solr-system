@@ -1,6 +1,6 @@
 package com.oconeco.persistence
 
-import com.oconeco.crawler.LocalFileCrawler
+import com.oconeco.helpers.Constants
 import com.oconeco.models.FolderFS
 import org.apache.commons.io.FilenameUtils
 import org.apache.log4j.Logger
@@ -34,6 +34,7 @@ class SolrSaver {
     public static final String ANALYZE = 'analyze'
 
     public static final String FLD_ID = 'id'
+    public static final String FLD_CRAWL_NAME = "crawl_name_s"
     public static final String FLD_DEPTH = 'depth_i'
     public static final String FLD_TYPE = 'type_s'
     public static final String FLD_PATH_S = 'path_s'
@@ -50,7 +51,6 @@ class SolrSaver {
     public static final String FLD_SUBDIR_COUNT = 'subdir_count_i'
     public static final String FLD_FILE_COUNT = "fileCount_i"
     public static final String FLD_DIR_COUNT = "dirCount_i"
-    public static final String FLD_CRAWL_NAME = "crawl_name_s"
     public static final String FLD_DATA_SOURCE = "data_source_s"
     public static final String FLD_TAG_SS = "tag_ss"
     public static final String FLD_ASSIGNED_TYPES = "assignedTypes_ss"
@@ -171,7 +171,7 @@ class SolrSaver {
         folders.each { File folder ->
             i++
             SolrInputDocument sid = createSolrInputFolderDocument(folder)
-            sid.setField(SolrSaver.FLD_CRAWL_NAME, dataSourceLabel)
+            sid.setField(Constants.FLD_CRAWL_NAME, dataSourceLabel)
 
             sidList << sid
             if (sidList.size() >= SOLR_BATCH_SIZE) {
@@ -193,6 +193,7 @@ class SolrSaver {
     }
 
 
+/*
     List<SolrInputDocument> buildFilesToCrawlInputList(Map<File, Map> filesToCrawl, String dsLabel = 'n.a.', String source = 'n.a.') {
         List<SolrInputDocument> inputDocuments = []
         if (filesToCrawl?.size() > 0) {
@@ -200,13 +201,13 @@ class SolrSaver {
                 String status = details?.status
                 log.debug "File: $file -- Status: $status -- details: $details"
                 SolrInputDocument sid = buildBasicTrackSolrFields(file)
-                sid.setField(SolrSaver.FLD_CRAWL_NAME, dsLabel)
+                sid.setField(Constants.FLD_CRAWL_NAME, dsLabel)
                 if (tikaConfig) {
-                    if (details.status == LocalFileCrawler.STATUS_INDEX_CONTENT) {
+                    if (details.status == Constants.STATUS_INDEX_CONTENT) {
                         log.debug "content tagged as worthy of indexing, send to proc to extra and add content: $file"
                         addSolrIndexFields(file, sid)
 
-                    } else if (details.status == LocalFileCrawler.STATUS_ANALYZE) {
+                    } else if (details.status == Constants.STATUS_ANALYZE) {
                         addSolrIndexFields(file, sid)
                         addSolrAnalyzeFields(file, sid)
 
@@ -226,6 +227,7 @@ class SolrSaver {
         }
         return inputDocuments
     }
+*/
 
 
     /**
@@ -245,7 +247,7 @@ class SolrSaver {
         sid.setField(FLD_NAME_S, file.name)
         sid.setField(FLD_NAME_T, file.name)
         if (dsLabel) {
-            sid.setField(FLD_CRAWL_NAME, dsLabel)
+            sid.setField(Constants.FLD_CRAWL_NAME, dsLabel)
         }
 
         if (file.isDirectory()) {
