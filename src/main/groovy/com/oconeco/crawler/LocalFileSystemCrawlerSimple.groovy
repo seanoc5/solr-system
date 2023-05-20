@@ -27,6 +27,7 @@ import java.util.regex.Pattern
  * Crawl file system but check stored info and only update folders/files which are newer than stored info
  * todo -- finish comparison code
  * Created by sean on 11/4/15.
+ * @deprecated -- move over to LocalFileSystemCrawler
  */
 class LocalFileSystemCrawlerSimple {
     static Pattern FILE_REGEX_TO_SKIP_DEFAULT = Pattern.compile('(\\~\\$.*|_.*|.*\\.te?mp$|.*\\.class$|robots.txt|.*\\.odb$|.*json|.*\\.pos)')
@@ -130,14 +131,14 @@ class LocalFileSystemCrawlerSimple {
                                ignoredFolders << it
                                log.info "\t\t\tINGOREing folder: $it -- matches ignorePattern: $ignorePattern"
                                return FileVisitResult.SKIP_SUBTREE
-                           } else if (!Files.isExecutable(it)) {
-                               log.warn "No permissions to enter/execute dir: $it, skipping!"
-                               ignoredFolders << it
-                               return FileVisitResult.SKIP_SUBTREE
-                           } else if (!Files.isReadable(it)) {
-                               log.warn "Path not readable: $it, skipping!"
-                               ignoredFolders << it
-                               return FileVisitResult.SKIP_SUBTREE
+//                           } else if (!Files.isExecutable(it)) {
+//                               log.warn "No permissions to enter/execute dir: $it, skipping!"
+//                               ignoredFolders << it
+//                               return FileVisitResult.SKIP_SUBTREE
+//                           } else if (!Files.isReadable(it)) {
+//                               log.warn "Path not readable: $it, skipping!"
+//                               ignoredFolders << it
+//                               return FileVisitResult.SKIP_SUBTREE
                            } else {
                                foldersToCrawl << buildMetaMapFolder(it)
                                log.debug "\t\tADDING Crawl folder: $it"
