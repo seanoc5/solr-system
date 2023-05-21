@@ -1,6 +1,7 @@
 package com.oconeco.analysis
 
-import com.oconeco.models.BaseObject
+
+import com.oconeco.models.SavableObject
 import org.apache.log4j.Logger
 /**
  * @author :    sean
@@ -17,7 +18,7 @@ abstract class BaseAnalyzer {
 //        log.debug "BaseAnalyzer() constructor..."
 //    }
 
-    abstract List<String> analyze(BaseObject object)
+    abstract List<String> analyze(SavableObject object)
 
     String toString(){
         String s = this.class.simpleName

@@ -1,6 +1,7 @@
 package com.oconeco.analysis
 
-import com.oconeco.models.FileFS
+
+import com.oconeco.models.FSFile
 import spock.lang.Specification
 
 /**
@@ -15,7 +16,7 @@ class FileAnalyzerTest extends Specification {
         given:
         FileAnalyzer analyzer = new FileAnalyzer()
         File folder = new File(getClass().getResource('/content').toURI())
-        List<FileFS> fileFSList = FileFS.getFileFSList(folder)
+        List<FSFile> fileFSList = FSFile.getFileFSList(folder)
 
         when:
         def results = analyzer.analyze(fileFSList)

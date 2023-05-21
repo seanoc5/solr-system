@@ -1,7 +1,7 @@
 package com.oconeco.analysis
 
-import com.oconeco.models.FolderFS
-import org.apache.solr.common.SolrInputDocument
+
+import com.oconeco.models.FSFolder
 import spock.lang.Specification
 
 /**
@@ -23,7 +23,7 @@ class FolderAnalyzerTest extends Specification {
         FolderAnalyzer analyzer = new FolderAnalyzer(config)
 
         File folder = new File(getClass().getResource('/content').toURI())
-        FolderFS folderFS = new FolderFS(folder)
+        FSFolder folderFS = new FSFolder(folder)
 
         when:
         List<String> assignedLabels = folderFS.analyze(analyzer)
@@ -46,7 +46,7 @@ class FolderAnalyzerTest extends Specification {
     def "folder.toSolrInputDocument analysis"() {
         given:
         ConfigObject config = new ConfigSlurper().parse(getClass().getResource('/configLocate.groovy'))
-        FolderFS folderFS = new FolderFS(new File(getClass().getResource('/content').toURI()))
+        FSFolder folderFS = new FSFolder(new File(getClass().getResource('/content').toURI()))
         FolderAnalyzer analyzer = new FolderAnalyzer(config)
         List<String> labels = folderFS.analyze(analyzer)
 
