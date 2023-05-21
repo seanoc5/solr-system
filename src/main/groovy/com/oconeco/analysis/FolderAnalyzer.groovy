@@ -1,9 +1,9 @@
 package com.oconeco.analysis
 
 import com.oconeco.helpers.Constants
-import com.oconeco.models.BaseObject
-import com.oconeco.models.FileFS
-import com.oconeco.models.FolderFS
+import com.oconeco.models.SavableObject
+import com.oconeco.models.FSFile
+import com.oconeco.models.FSFolder
 import org.apache.commons.compress.archivers.ArchiveEntry
 import org.apache.commons.compress.archivers.ArchiveException
 import org.apache.commons.compress.archivers.ArchiveInputStream
@@ -35,7 +35,13 @@ class FolderAnalyzer extends BaseAnalyzer {
     ArchiveStreamFactory archiveStreamFactory = new ArchiveStreamFactory();
 
     FolderAnalyzer() {
+        this(Constants.DEFAULT_FILENAME_PATTERNS, Constants.DEFAULT_FOLDERNAME_PATTERNS)
         log.info "Blank constructor, using defaults..."
+    }
+
+    FolderAnalyzer(Map<String, Pattern> fileNamePatterns, Map<String, Pattern> folderNamePatterns) {
+        this.fileNamePatterns = fileNamePatterns
+        this.folderNamePatterns = folderNamePatterns
     }
 
     FolderAnalyzer(ConfigObject config) {
@@ -54,12 +60,12 @@ class FolderAnalyzer extends BaseAnalyzer {
     }
 
 
-    FolderAnalyzer(Map fnPatterns) {
-        folderNamePatterns = fnPatterns
-    }
+//    FolderAnalyzer(Map fnPatterns) {
+//        folderNamePatterns = fnPatterns
+//    }
 
-    List<String> analyze(BaseObject object) {
-        FolderFS ffs = (FolderFS)object
+    List<String> analyze(SavableObject object) {
+        FSFolder ffs = (FSFolder)object
         List<String> labels = []
         folderNamePatterns.each { String label, Pattern pattern ->
             if (ffs.name ==~ pattern) {
@@ -75,7 +81,7 @@ class FolderAnalyzer extends BaseAnalyzer {
                 log.debug " \t\t........ More that one label?? $labels -- $ffs"
             }
         } else {
-            log.debug "\t\tNO LABEL folderType assigned?? $ffs  --> ${((FolderFS) ffs).me.absolutePath}"
+            log.debug "\t\tNO LABEL folderType assigned?? $ffs  --> ${((FSFolder) ffs).thing.absolutePath}"
             ffs.assignedTypes << Constants.LBL_UNKNOWN
         }
         return labels
@@ -87,11 +93,11 @@ class FolderAnalyzer extends BaseAnalyzer {
      * @param files
      * @return list of types found, plus we updated the sourcec list (non-FP friendly...)
      */
-    List<String> assignFileTypes(List<FileFS> files) {
+    List<String> assignFileTypes(List<FSFile> files) {
         List<String> allLabels = []
-        files.each { FileFS fileFS ->
+        files.each { FSFile fileFS ->
             log.debug "\t\tAssign file type: $fileFS"
-            String fname = ((File) fileFS.me).name
+            String fname = ((File) fileFS.thing).name
 //            List<String> labels = []
             fileNamePatterns.each { String label, Pattern pattern ->
                 Matcher m = (fname =~ pattern)
@@ -108,7 +114,7 @@ class FolderAnalyzer extends BaseAnalyzer {
                     log.debug "More that one label?? ${fileFS.assignedTypes} -- $fileFS"
                 }
             } else {
-                log.debug "\t\tNO LABEL assigned?? $fileFS  --> ${((File) fileFS.me).absolutePath}"
+                log.debug "\t\tNO LABEL assigned?? $fileFS  --> ${((File) fileFS.thing).absolutePath}"
                 fileFS.assignedTypes << Constants.LBL_UNKNOWN
                 allLabels << Constants.LBL_UNKNOWN
             }
@@ -123,11 +129,11 @@ class FolderAnalyzer extends BaseAnalyzer {
      * @param filesFs
      * @return
      */
-    def analyzeArchives(List<FileFS> filesFs) {
+    def analyzeArchives(List<FSFile> filesFs) {
 
-        filesFs.each { FileFS ffs ->
+        filesFs.each { FSFile ffs ->
             if (ffs.isArchive(ffs)) {
-                File f = ffs.me
+                File f = ffs.thing
                 log.info "\t\tFound archive: $ffs -- crawl through and add children to this folder"
                 ArchiveInputStream archiveInputStream = null
                 BufferedInputStream inputStream = f.newInputStream()
@@ -159,7 +165,7 @@ class FolderAnalyzer extends BaseAnalyzer {
 
 
 //    @Override
-//    List<String> analyze(BaseObject object) {
+//    List<String> analyze(SavableObject object) {
 //        return null
 //    }
 }
