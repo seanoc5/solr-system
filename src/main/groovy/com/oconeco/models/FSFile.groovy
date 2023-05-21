@@ -4,7 +4,6 @@ import com.oconeco.analysis.BaseAnalyzer
 import com.oconeco.helpers.Constants
 import com.oconeco.persistence.SolrSaver
 import groovy.io.FileType
-import org.apache.commons.io.FilenameUtils
 import org.apache.log4j.Logger
 import org.apache.solr.common.SolrInputDocument
 /**
@@ -18,26 +17,28 @@ import org.apache.solr.common.SolrInputDocument
  * structure for handling information about a folder from the FS (filesystem),
  * handles both basic information from the filesystem, and analysis results from some process
  */
-class FileFS extends BaseObject {
+class FSFile extends SavableObject {
     Logger log = Logger.getLogger(this.class.name)
     public static final String TYPE = 'File'
     String extension
     String mimeType
 //    List<String> permissions
 
-
-    FileFS(File f, int depth = 1) {
-        log.debug "File(f:${f.absolutePath}) constructor"
-        id = f.absolutePath
-        this.me = f
-        name = f.name
-        size = f.size()
-        this.depth = depth
-        lastModifiedDate = new Date(f.lastModified())
-        type = TYPE
-        // todo -- more here -- also check FolderFS object, and analyze() method,
-        extension = FilenameUtils.getExtension(f.name)
+    FSFile(String id) {
+        super(id)
     }
+//    FSFile(File f, int depth = 1) {
+//        log.debug "File(f:${f.absolutePath}) constructor"
+//        id = f.absolutePath
+//        this.thing = f
+//        name = f.name
+//        size = f.size()
+//        this.depth = depth
+//        lastModifiedDate = new Date(f.lastModified())
+//        type = TYPE
+//        // todo -- more here -- also check FSFolder object, and analyze() method,
+//        extension = FilenameUtils.getExtension(f.name)
+//    }
 
 
     // todo -- should this be object.analze, or analyzer.analyze(object)???
@@ -56,7 +57,7 @@ class FileFS extends BaseObject {
     }
 
     SolrInputDocument toSolrInputDocument(String crawlName=null) {
-        File f = me
+        File f = thing
         SolrInputDocument sid = super.toSolrInputDocument()
 //        sid.addField(SolrSaver.FLD_SIZE, size)
         if(crawlName){
@@ -71,9 +72,9 @@ class FileFS extends BaseObject {
         return sid
     }
 
-    boolean isArchive(FileFS ffs) {
+    boolean isArchive(FSFile ffs) {
         int fileSignature = 0;
-        File f = ffs.me
+        File f = ffs.thing
         try (RandomAccessFile raf = new RandomAccessFile(f, "r")) {
             fileSignature = raf.readInt();
         } catch (IOException e) {
@@ -91,21 +92,21 @@ class FileFS extends BaseObject {
 
     }
 
-    public static List<FileFS> getFileFSList(File folder, boolean recurse = false){
-        List<FileFS> fileFSList = []
+    public static List<FSFile> getFileFSList(File folder, boolean recurse = false){
+        List<FSFile> fileFSList = []
         if(folder && folder.isDirectory()){
             if(recurse) {
                 int parentPathCount = folder.path.split(File.separator)
                 folder.eachFileRecurse(FileType.FILES){
                     int childPathCount = it.path.split(File.separator)
                     int depth = childPathCount = parentPathCount
-                    FileFS childFS= new FileFS(it, depth)
+                    FSFile childFS= new FSFile(it, depth)
                     fileFSList << childFS
                 }
             } else {
                 folder.eachFile(FileType.FILES){
                     int childPathCount = it.path.split(File.separator)
-                    FileFS childFS= new FileFS(it)
+                    FSFile childFS= new FSFile(it)
                     fileFSList << childFS
                 }
             }
