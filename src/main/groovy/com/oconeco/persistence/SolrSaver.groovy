@@ -1,7 +1,7 @@
 package com.oconeco.persistence
 
 import com.oconeco.helpers.Constants
-import com.oconeco.models.FolderFS
+import com.oconeco.models.FSFolder
 import org.apache.commons.io.FilenameUtils
 import org.apache.log4j.Logger
 import org.apache.solr.client.solrj.SolrQuery
@@ -62,7 +62,7 @@ class SolrSaver {
     public static final String FLD_INDEX_DATETIME = "indexedTime_dt"            // pdate dynamic field
 
     public static String FLD_IGNORED_FILES_COUNT = 'ignoredFilesCount_i'
-    public static String FLD_IGNORED_FILES = 'ignoredFiles'
+    public static String FLD_IGNORED_FILES = 'ignoredFileNames'
     public static String FLD_IGNORED_FOLDERS_COUNT = 'ignoredFoldersCount_i'
     public static String FLD_IGNORED_FOLDERS = 'ignoredFolders'
 
@@ -149,7 +149,7 @@ class SolrSaver {
      *
      */
     SolrInputDocument createSolrInputFolderDocument(File folder) {
-        FolderFS folderFS = new FolderFS(folder)
+        FSFolder folderFS = new FSFolder(folder)
         return folderFS.toSolrInputDocument()
     }
 
@@ -344,7 +344,7 @@ class SolrSaver {
                 log.error "Exception: $e"
             }
         } else {
-            log.warn "No docs to commit... $fileDocs (don't call me if you don't need me...)"
+            log.warn "No docs to commit... $fileDocs (don't call thing if you don't need thing...)"
         }
         return ursp
     }
