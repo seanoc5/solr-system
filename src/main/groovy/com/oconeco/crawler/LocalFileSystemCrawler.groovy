@@ -2,6 +2,7 @@ package com.oconeco.crawler
 
 
 import com.oconeco.helpers.Constants
+import com.oconeco.models.FSFolder
 import groovy.io.FileType
 import groovy.io.FileVisitResult
 import org.apache.log4j.Logger
@@ -63,15 +64,15 @@ class LocalFileSystemCrawler {
 
     /**
      * user filevisitor pattern to get all the folders which are not explicitly ignored
-     * @param startDir
+     * @param startFolder
      * @param namePatterns
      * @return map of ignored and not-ignored folders
      *
      * this is a quick/light scan of folders, assumes following processing will order crawl of folders by priority,
      * and even check for updates to skip folders with no apparent changes
      */
-    static def visitFolders(File startDir, Map<String, Pattern> namePatterns) {
-        List<Path> foldersToCrawl = []
+    static def visitFolders(FSFolder startFolder, Map<String, Pattern> namePatterns) {
+        List<FSFolder> foldersToCrawl = []
         List<Path> ignoredFolders = []
         Pattern ignorePattern = namePatterns.get(Constants.LBL_IGNORE)
 
@@ -98,9 +99,9 @@ class LocalFileSystemCrawler {
                        visitRoot: true,
         ]
 
-        log.debug "Starting crawl of folder: ($startDir)  ..."
+        log.debug "Starting crawl of folder: ($startFolder)  ..."
 
-        startDir.traverse(options) { def folder ->
+        startFolder.traverse(options) { def folder ->
             log.debug "\t\ttraverse folder $folder"
         }
         Map results = [:]
@@ -109,6 +110,31 @@ class LocalFileSystemCrawler {
 
         return results
     }
-//    public static final String FOLDERS_TO_CRAWL = 'crawl'       // todo -- merge these with other similar constants or strings
-//    public static final String FOLDERS_TO_IGNORE = 'ignore'
+
+
+    /**
+     * Get all the non-ignore files in a folder
+     * param folder - folder to get files from
+     * param ignoredFolders - ignore pattern
+     * return list of files
+     */
+    def getFolderFiles(File folder, Pattern ignoreFiles){
+        List<File> filesList = []
+        if(folder?.exists()){
+            if(folder.canRead()) {
+                folder.eachFile(FileType.FILES) { File file ->
+                    if (shouldIgnore(file, ignoreFiles)) {
+                        log.debug "Ignoring file: $file"
+                    } else {
+                        filesList << file
+                    }
+                }
+            } else {
+                log.warn "\t\tCannot read folder: ${folder.absolutePath}"
+            }
+        } else {
+            log.warn "\t\tFolder (${folder.absolutePath}) does not exist!!"
+        }
+        return filesList
+    }
 }
