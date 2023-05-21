@@ -1,7 +1,7 @@
 package com.oconeco.analysis
 
-import com.oconeco.models.BaseObject
-import com.oconeco.models.FileFS
+import com.oconeco.models.SavableObject
+import com.oconeco.models.FSFile
 import org.apache.log4j.Logger
 
 import java.util.regex.Pattern
@@ -43,15 +43,15 @@ class FileAnalyzer extends BaseAnalyzer {
     }
 
 
-    List<String> analyze(List<FileFS> fileFsList) {
+    List<String> analyze(List<FSFile> fileFsList) {
         List<String> labels = []
-        fileFsList.each { FileFS filefs ->
+        fileFsList.each { FSFile filefs ->
             log.info "Analyze fileFS: $filefs"
             String label = analyze(filefs)
         }
     }
 
-    List<String> analyze(BaseObject object) {
+    List<String> analyze(SavableObject object) {
         log.warn "more code here!!! FileAnalyzer.analyze(object)"
         object.assignedTypes << UNKNOWN_LABEL
         return object.assignedTypes
