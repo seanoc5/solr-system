@@ -89,7 +89,7 @@ class LocalFileSystemCrawlerSimple {
             log.info "\t\tgiven a nio path: $nioPath -- using that!"
             nioPath = startPath
         } else {
-            log.debug "\t\tconverting path ($startPath) from def type (${startPath.class.name} to Path (nio)"
+            log.debug "\t\tconverting path ($startPath) from def type (${startPath.class.crawlName} to Path (nio)"
             nioPath = Paths.get(startPath)
         }
 
@@ -516,7 +516,7 @@ class LocalFileSystemCrawlerSimple {
             log.debug "pathObject $dirObject is already instance of Path, no conversion needed..."
             path = dirObject
         } else {
-            log.info "pathObject $dirObject is instance of '${dirObject.class.name}', trying to convert..."
+            log.info "pathObject $dirObject is instance of '${dirObject.class.crawlName}', trying to convert..."
             path = Paths.get(dirObject)
         }
 

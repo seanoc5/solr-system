@@ -19,22 +19,23 @@ import java.util.regex.Pattern
 
 class LocalFileSystemCrawler {
     static log = Logger.getLogger(this.class.name);
-//    String name = 'n.a.'
-//    String location = 'none'
-//    int statusDepth = 3
+    String crawlName = 'n.a.'
+    String locationName = 'n.a.'
+    int statusDepth = 3
 
-//    LocalFileSystemCrawler(String name, String location, int statusDepth = 3) {
-////        super(name, location, statusDepth)
-//        log.info "${this.class.name} constructor with name: $name, location:$location, statusDepth:$statusDepth..."
-//        this.name = name
-//        this.location = location
-//        this.statusDepth = statusDepth
-//    }
+    LocalFileSystemCrawler(String locationName, String crawlName, int statusDepth = 3) {
+//        super(name, location, statusDepth)
+        log.info "${this.class.name} constructor with name: $crawlName, location:$locationName, statusDepth:$statusDepth..."
+        this.crawlName = crawlName
+        this.locationName = locationName
+        this.statusDepth = statusDepth
+    }
 
-    static def startCrawl(def source, Map namePatternsFolder = Constants.DEFAULT_FOLDERNAME_PATTERNS) {
+    Map<String, List<FSFolder>> buildCrawlFolders(def source, Map namePatternsFolder = Constants.DEFAULT_FOLDERNAME_PATTERNS) {
         log.info "Start crawl with source path:($source) and name patterns map: $namePatternsFolder"
-        File startFolder = getStartDirectory(source, namePatternsFolder)
-        def results = visitFolders(startFolder, namePatternsFolder)
+        File startFolder = getStartDirectory(source)
+        Pattern ignorePattern = namePatternsFolder[Constants.LBL_IGNORE]
+        Map<String, List<FSFolder>> results = visitFolders(startFolder, ignorePattern)
         return results
     }
 
@@ -45,7 +46,7 @@ class LocalFileSystemCrawler {
      * @param namePatterns
      * @return
      */
-    static File getStartDirectory(def source, Map<String, Pattern> namePatterns) {
+    File getStartDirectory(def source) {
         File startDir = null
         if (source instanceof Path) {
             log.info "got a proper path (${source.class.name}): $source"
@@ -55,7 +56,7 @@ class LocalFileSystemCrawler {
         } else if (source instanceof String) {
             startDir = new File(source)
         } else {
-            log.warn "Unknown source type (${source.class.name}, trying a blind cast..."
+            log.warn "Unknown source type (${source.class.crawlName}, trying a blind cast..."
             startDir = ((Path) source)
         }
         return startDir
@@ -71,21 +72,28 @@ class LocalFileSystemCrawler {
      * this is a quick/light scan of folders, assumes following processing will order crawl of folders by priority,
      * and even check for updates to skip folders with no apparent changes
      */
-    static def visitFolders(FSFolder startFolder, Map<String, Pattern> namePatterns) {
+    Map<String,List<FSFolder>> visitFolders(File startFolder, Pattern ignorePattern) {
         List<FSFolder> foldersToCrawl = []
-        List<Path> ignoredFolders = []
-        Pattern ignorePattern = namePatterns.get(Constants.LBL_IGNORE)
+        List<FSFolder> ignoredFolders = []
+        Path startPath = startFolder.toPath()
+//        Pattern ignorePattern = namePatterns.get(Constants.LBL_IGNORE)
 
         Map options = [type     : FileType.DIRECTORIES,
                        preDir   : {
+                           File f = (File)it
+                           Path thisPath = f.toPath()
+                           Path reletivePath = startPath.relativize(thisPath)
+//                           List parts = reletivePath.
+                           int pathElements = reletivePath.getNameCount();
+                           FSFolder fsFolder = new FSFolder(it, this.locationName, this.crawlName, pathElements)
                            if (it ==~ ignorePattern) {
-                               ignoredFolders << it
+                               ignoredFolders << fsFolder
                                log.info "\t\t\tINGOREing folder: $it -- matches ignorePattern: $ignorePattern"
                                return FileVisitResult.SKIP_SUBTREE
 
                            } else {
-                               foldersToCrawl << it
-                               log.info "\t\tADDING Crawl folder: $it (${it.class.name})"
+                               foldersToCrawl << fsFolder
+                               log.info "\t\tADDING Crawl folder: $it"
                            }
                        },
 /*
@@ -104,7 +112,7 @@ class LocalFileSystemCrawler {
         startFolder.traverse(options) { def folder ->
             log.debug "\t\ttraverse folder $folder"
         }
-        Map results = [:]
+        Map<String,List<FSFolder>> results = [:]           // note: is it possible to initialize with keys that are variables??
         results.put(Constants.LBL_CRAWL, foldersToCrawl)
         results.put(Constants.LBL_IGNORE, ignoredFolders)
 
