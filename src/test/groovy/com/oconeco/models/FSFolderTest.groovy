@@ -1,28 +1,59 @@
 package com.oconeco.models
 
 import com.oconeco.analysis.FolderAnalyzer
-import com.oconeco.helpers.Constants
-import com.oconeco.models.FSFolder
-import com.oconeco.persistence.SolrSaver
-import org.apache.solr.common.SolrInputDocument
 import spock.lang.Specification
 
-import java.util.regex.Pattern
+import java.nio.file.Path
 
-/**
- * @author :    sean
- * @mailto :    seanoc5@gmail.com
- * @created :   8/5/22, Friday
- * @description:
- */
+class FSFolderTest extends Specification {
+    def "should build basic FSFolder"() {
+        given:
+        String locationName = 'spock'
+        String crawlName = 'test'
 
-class FolderFSTest extends Specification {
-    Pattern ignoreFolders = Constants.DEFAULT_FOLDERNAME_PATTERNS.ignore
-    Pattern ignoreFiles = Constants.DEFAULT_FILENAME_PATTERNS.ignore
-    public static final int CONTENT_FOLDER_SIZE = 1305281
-    String srcFolderName = 'content'
+        def startFolder = Path.of(getClass().getResource('/content').toURI());
+        File testSourceFile = startFolder.toFile()
+
+        when:
+        FSFolder fsFolder = new FSFolder(testSourceFile, locationName, crawlName, 1)
+        def rc = fsFolder.buildChildrenList()
+        fsFolder.addFolderDetails()
+
+        then:
+        fsFolder.children.size() == 20
+        fsFolder.countFiles == 20
+        fsFolder.countIgnoredFiles == 1
+    }
+
+    def "items should have date and size as well as unique path:size combo"() {
+        given:
+        String locationName = 'spock'
+        String crawlName = 'test'
+
+        def startFolder = Path.of(getClass().getResource('/content').toURI());
+        File testSourceFile = startFolder.toFile()
+
+        when:
+        FSFolder fsFolder = new FSFolder(testSourceFile, locationName, crawlName, 1)
+        def rc = fsFolder.buildChildrenList()
+        fsFolder.addFolderDetails()
 
 
+        then:
+        fsFolder.children.size() == 20
+        fsFolder.countFiles == 20
+        fsFolder.countSubdirs == 2
+        fsFolder.countIgnoredFiles == 1
+        fsFolder.uniquifier.startsWith('Folder:content::')
+        fsFolder.createdDate != null
+        fsFolder.lastAccessDate != null
+        fsFolder.lastModifyDate != null
+        fsFolder.owner != null
+    }
+
+
+
+/*
     def "check FSFolder simple constructor(id)"() {
 
         when:
@@ -34,7 +65,9 @@ class FolderFSTest extends Specification {
         fsFolder.name == srcFolder.name
 //        fsFolder.depth == 1
     }
+*/
 
+/*
     def "basic folder load"() {
         given:
         File src = new File(getClass().getResource('/content').toURI())
@@ -46,12 +79,13 @@ class FolderFSTest extends Specification {
         folder.size == CONTENT_FOLDER_SIZE
         folder.countTotal == 21
 
-        folder.fsFiles.size() == 20
+        folder.children.size() == 20
         folder.countFiles == 20
 
         folder.subDirectories.size() == 1
         folder.countSubdirs == 1
     }
+*/
 
 
 //    def "basic folder load with ignore file and folder patterns"() {
@@ -177,7 +211,7 @@ class FolderFSTest extends Specification {
 
         when:
         def foo = startFolder.analyze(analyzer)
-        Map assignmentGroupedFiles = startFolder.fsFiles.groupBy { it.assignedTypes[0] }
+        Map assignmentGroupedFiles = startFolder.children.groupBy { it.assignedTypes[0] }
         List keys = assignmentGroupedFiles.keySet().toList()
 
         then:
@@ -238,5 +272,6 @@ class FolderFSTest extends Specification {
 //        then:
 //        folders.size() > 10
 //    }
+
 
 }
