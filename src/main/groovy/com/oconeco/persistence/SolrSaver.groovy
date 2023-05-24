@@ -1,8 +1,6 @@
 package com.oconeco.persistence
 
-import com.oconeco.helpers.Constants
 import com.oconeco.models.FSFolder
-import org.apache.commons.io.FilenameUtils
 import org.apache.log4j.Logger
 import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.client.solrj.impl.Http2SolrClient
@@ -11,15 +9,9 @@ import org.apache.solr.client.solrj.response.UpdateResponse
 import org.apache.solr.common.SolrInputDocument
 import org.apache.tika.config.TikaConfig
 import org.apache.tika.detect.Detector
-import org.apache.tika.exception.TikaException
-import org.apache.tika.io.TikaInputStream
-import org.apache.tika.metadata.Metadata
-import org.apache.tika.metadata.TikaCoreProperties
 import org.apache.tika.parser.AutoDetectParser
-import org.apache.tika.parser.ParseContext
 import org.apache.tika.parser.Parser
 import org.apache.tika.sax.BodyContentHandler
-
 /**
  * Looking at helper class to save solr_system (file crawl to start with content to solr
  */
@@ -65,6 +57,7 @@ class SolrSaver {
     public static String FLD_IGNORED_FILES = 'ignoredFileNames'
     public static String FLD_IGNORED_FOLDERS_COUNT = 'ignoredFoldersCount_i'
     public static String FLD_IGNORED_FOLDERS = 'ignoredFolders'
+    public static String FLD_UNIQUE = 'unique_s'
 
     final Integer SOLR_BATCH_SIZE = 5000
     final Integer MIN_FILE_SIZE = 10
@@ -155,6 +148,17 @@ class SolrSaver {
 
 
     /**
+     * Create Solr Input doc from archive entry
+     *
+     */
+//    SolrInputDocument createSolrInputFolderDocument(ArchiveEntry) {
+//        SolrInputDocument sid = new SolrInputDocument()
+//
+//        return sid
+//    }
+
+
+    /**
      * Take a list of file folders and save them to solr
      * todo -- revisit for better approach...
      * todo -- catch errors, general improvement
@@ -163,6 +167,7 @@ class SolrSaver {
      * @param source name of machine, email account, browser account.... processed by this larger process
      * @return list of UpdateResponse objects from batched calls to solr
      */
+/*
     List<UpdateResponse> saveFolderList(List<File> folders, String dataSourceLabel = 'unlabeled', String source='') {
         log.info "$dataSourceLabel) Save folders list (${folders.size()})..."
         List<UpdateResponse> updates = []
@@ -170,6 +175,7 @@ class SolrSaver {
         int i = 0
         folders.each { File folder ->
             i++
+//            SolrInputDocument sid = folder.
             SolrInputDocument sid = createSolrInputFolderDocument(folder)
             sid.setField(Constants.FLD_CRAWL_NAME, dataSourceLabel)
 
@@ -191,6 +197,7 @@ class SolrSaver {
         }
         return updates
     }
+*/
 
 
 /*
@@ -235,6 +242,7 @@ class SolrSaver {
      * @param filesToTrack
      * @return
      */
+/*
     static SolrInputDocument buildBasicTrackSolrFields(File file, String dsLabel = '') {
         SolrInputDocument sid = new SolrInputDocument()
         String id = "${file.canonicalPath}--${file.lastModified()}"
@@ -268,6 +276,7 @@ class SolrSaver {
 
         return sid
     }
+*/
 
 
     /**
@@ -275,6 +284,7 @@ class SolrSaver {
      * @param filesToIndex
      * @return
      */
+/*
     def addSolrIndexFields(File file, SolrInputDocument sid) {
         if (file.exists()) {
             if (file.size() > MIN_FILE_SIZE) {
@@ -321,12 +331,15 @@ class SolrSaver {
         }
 
     }
+*/
 
 
+/*
     static void addSolrAnalyzeFields(File file, SolrInputDocument sid) {
         sid.setField(FLD_TAG_SS, ANALYZE)
         log.debug "\t\tsetting file: $file to tag: $ANALYZE"
     }
+*/
 
 
     /**
@@ -334,6 +347,7 @@ class SolrSaver {
      * @param fileDocs
      * @return
      */
+/*
     UpdateResponse saveFilesCollection(Collection<SolrInputDocument> fileDocs, int msToCommit = 1000) {
         UpdateResponse ursp = null
         if (fileDocs) {
@@ -348,6 +362,7 @@ class SolrSaver {
         }
         return ursp
     }
+*/
 
 
     def commitUpdates() {
@@ -361,9 +376,6 @@ class SolrSaver {
      * @return UpdateResponse
      */
     def saveDocs(ArrayList<SolrInputDocument> solrInputDocuments) {
-        /*solrInputDocuments.each { SolrInputDocument sid ->
-            sid.setField(FLD_CRAWL_NAME, this.dataSourceName)
-        }*/
         log.info "Adding solrInputDocuments, size: ${solrInputDocuments.size()}"
         UpdateResponse resp = solrClient.add(solrInputDocuments, 1000)
         return resp
