@@ -1,11 +1,17 @@
 package com.oconeco.models
 
-import com.oconeco.analysis.BaseAnalyzer
 import com.oconeco.helpers.Constants
 import com.oconeco.persistence.SolrSaver
-import groovy.io.FileType
+import org.apache.commons.compress.archivers.ArchiveEntry
+import org.apache.commons.io.FilenameUtils
 import org.apache.log4j.Logger
 import org.apache.solr.common.SolrInputDocument
+
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.attribute.FileOwnerAttributeView
+import java.nio.file.attribute.FileTime
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -22,28 +28,80 @@ class FSFile extends SavableObject {
     public static final String TYPE = 'File'
     String extension
     String mimeType
+    String owner
 //    List<String> permissions
+    Date lastAccessDate
+    Date lastModifyDate
+    Boolean archive
+    Boolean compressed
 
-    FSFile(String id) {
-        super(id)
+    FSFile(File f, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN, Integer depth = null) {
+        super(f,locationName, depth)
+        id = locationName + ':' + f.absolutePath
+        type = TYPE
+
+        if(!this.thing) {
+            this.thing = f
+        }
+        name = f.name
+        size = f.size()
+
+        if(depth) {
+            this.depth = depth
+        }
+
+        if(crawlName==Constants.LBL_UNKNOWN || crawlName == null) {
+            log.debug "\t\t you likely want to add crawl name...."
+        } else {
+            this.crawlName = crawlName
+        }
+
+        lastModifiedDate = new Date(f.lastModified())
+
+        // todo -- more here -- also check FSFolder object, and analyze() method,
+        extension = FilenameUtils.getExtension(f.name)
+        Path path = f.toPath()
+
+        BasicFileAttributes attr = Files.readAttributes(path, BasicFileAttributes.class);
+        FileTime lastAccessTime = attr.lastAccessTime()
+        lastAccessDate = new Date(lastAccessTime.toMillis())
+        FileTime lastModifyTime = attr.lastModifiedTime()
+        lastModifyDate = new Date(lastModifyTime.toMillis())
+        createdDate = new Date(attr.creationTime().toMillis())
+        FileOwnerAttributeView ownerAttributeView = Files.getFileAttributeView(path, FileOwnerAttributeView.class);
+        owner = ownerAttributeView.getOwner();
+
+        log.debug "File(${this.toString()})"
     }
-//    FSFile(File f, int depth = 1) {
-//        log.debug "File(f:${f.absolutePath}) constructor"
-//        id = f.absolutePath
-//        this.thing = f
-//        name = f.name
-//        size = f.size()
-//        this.depth = depth
+
+    FSFile(ArchiveEntry archiveEntry, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN, Integer depth = null) {
+        super(archiveEntry,locationName, depth)
+        id = locationName + ':' + archiveEntry.name
+        type = 'ArchiveEntry'
+
+        if(!this.thing) {
+            this.thing = archiveEntry
+        }
+        name = archiveEntry.name
+        size = archiveEntry.size
+
+//        if(depth) {
+//            this.depth = depth
+//        }
+
+        if(crawlName==Constants.LBL_UNKNOWN || crawlName == null) {
+            log.debug "\t\t you likely want to add crawl name...."
+        } else {
+            this.crawlName = crawlName
+        }
+
 //        lastModifiedDate = new Date(f.lastModified())
-//        type = TYPE
-//        // todo -- more here -- also check FSFolder object, and analyze() method,
-//        extension = FilenameUtils.getExtension(f.name)
-//    }
 
+        // todo -- more here -- also check FSFolder object, and analyze() method,
+        extension = FilenameUtils.getExtension(archiveEntry.name)
+//        owner = ownerAttributeView.getOwner();
 
-    // todo -- should this be object.analze, or analyzer.analyze(object)???
-    def analyze(BaseAnalyzer analyzer) {
-        log.info "MORE CODE here:: Analyze Folder: $this with analyzer:$analyzer"
+        log.debug "Archive Entry File(${this.toString()})"
     }
 
     String toString() {
@@ -56,62 +114,42 @@ class FSFile extends SavableObject {
         return s
     }
 
-    SolrInputDocument toSolrInputDocument(String crawlName=null) {
-        File f = thing
+    SolrInputDocument toSolrInputDocument() {
+//        File f = thing
         SolrInputDocument sid = super.toSolrInputDocument()
 //        sid.addField(SolrSaver.FLD_SIZE, size)
         if(crawlName){
-            sid.setField(Constants.FLD_CRAWL_NAME, crawlName)
+            sid.setField(SolrSaver.FLD_CRAWL_NAME, crawlName)
         }
 
         if (extension) {
             sid.addField(SolrSaver.FLD_EXTENSION_SS, extension)
         }
-        sid.addField(SolrSaver.FLD_NAME_SIZE_S, "${f.name}:${f.size()}")
+        sid.addField(SolrSaver.FLD_NAME_SIZE_S, "${this.name}:${this.size}")
 //        sid.addField(SolrSaver.FLD_DEPTH, depth)
         return sid
     }
 
-    boolean isArchive(FSFile ffs) {
+    boolean isArchive() {
         int fileSignature = 0;
-        File f = ffs.thing
+        File f = this.thing
         try (RandomAccessFile raf = new RandomAccessFile(f, "r")) {
             fileSignature = raf.readInt();
         } catch (IOException e) {
             log.warn "File ($ffs) io exception checking if we have an archive: $e"
         }
         boolean isArchive = fileSignature == 0x504B0304 || fileSignature == 0x504B0506 || fileSignature == 0x504B0708 || fileSignature== 529205248 || fileSignature== 529205268
-        if(ffs.assignedTypes.contains(Constants.LBL_ARCHIVE)) {
+        if(assignedTypes?.contains(Constants.LBL_ARCHIVE)) {
             if(!isArchive) {
-                log.info "Should be archive: $ffs -> ($fileSignature) -- $isArchive"
+                log.info "Should be archive: $f -> ($fileSignature) -- $isArchive"
             } else {
-                log.debug "is archive: $ffs"
+                log.debug "is archive: $f"
             }
         }
         return isArchive
 
     }
 
-    public static List<FSFile> getFileFSList(File folder, boolean recurse = false){
-        List<FSFile> fileFSList = []
-        if(folder && folder.isDirectory()){
-            if(recurse) {
-                int parentPathCount = folder.path.split(File.separator)
-                folder.eachFileRecurse(FileType.FILES){
-                    int childPathCount = it.path.split(File.separator)
-                    int depth = childPathCount = parentPathCount
-                    FSFile childFS= new FSFile(it, depth)
-                    fileFSList << childFS
-                }
-            } else {
-                folder.eachFile(FileType.FILES){
-                    int childPathCount = it.path.split(File.separator)
-                    FSFile childFS= new FSFile(it)
-                    fileFSList << childFS
-                }
-            }
-        }
-        return fileFSList
-    }
+
 
 }

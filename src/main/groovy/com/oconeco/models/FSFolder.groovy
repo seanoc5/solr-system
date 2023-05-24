@@ -1,13 +1,17 @@
 package com.oconeco.models
 
-import com.oconeco.analysis.BaseAnalyzer
-import com.oconeco.analysis.FileAnalyzer
-import com.oconeco.analysis.FolderAnalyzer
 import com.oconeco.helpers.Constants
 import com.oconeco.persistence.SolrSaver
+import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
 import org.apache.solr.common.SolrInputDocument
 
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.attribute.FileOwnerAttributeView
+import java.nio.file.attribute.FileTime
+import java.util.regex.Pattern
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -23,34 +27,36 @@ import org.apache.solr.common.SolrInputDocument
 class FSFolder extends SavableObject {
     public static final String TYPE = 'Folder'
     Logger log = Logger.getLogger(this.class.name);
-    /** the actual filesystem object for reference (user/permission info as available) */
-//    File thisFile
 
-    /** basic list of files in this dir */
-    List<FSFile> fsFiles = []
-
-    // numerics to help with (later) analysis....
+    // numerics to help with (later) analysis.... (consider just moving these to toSolrInputDocument calculations...)
     Long countFiles
     Long countSubdirs
+    Long countIgnoredFiles
+    Long countIgnoredSubDirs
     Long countTotal
 
 //    // summary/searchable metadata (might maintain useful order, but no promises)
     List<Date> fileDates = []
-    List<Long> filesSizes = []
+    List<Long> filesSizes= []
 //
 //    // more useful metadata
     FSFolder parentFSFolder = null
-    List<FSFolder> childFsFolders = []
-    List<String> childAssignedTypes = []
+    List<FSFolder> childFsFolders
+    List<String> childAssignedTypes
     List<String> ignoredFileNames = []
 //
 //    // todo -- do we need/want both Files and FolderFSs??
-    List<FSFolder> ignoredFsFolders = []
-//    List<File> ignoredDirectories = []
-//
-//    /** in a given crawl, count 'duplicate' names as a metric for the anaylzer */
-//    int sameNameCount = 0
-//    public static final String
+//    List<FSFolder> ignoredFsFolders
+    List<File> ignoredDirectories = []
+
+    Date lastAccessDate
+    Date lastModifyDate
+    Date createdDate
+    String owner
+    Boolean isArchive
+    Boolean isCompressed
+
+
 
     /**
      * TJust build a filesystem folder (wi
@@ -62,30 +68,24 @@ class FSFolder extends SavableObject {
     FSFolder(File folder) {
         super(folder)
         name = folder.name
-//        parent.sourceName = 'unknown'
-//        addFolderDetails(sourceName, folder)
+        type = TYPE
+        id = this.locationName + ':' + srcFolder.absolutePath
+        name = srcFolder.getName()
+
+        addFolderDetails()
     }
 
     /**
      * This constructor has the ability to recurse through the filesystem and build tree
      * @param id
-     * @param sourceName
+     * @param locationName
      */
-//    FSFolder(File thing, String sourceName) {
-//        super(thing, sourceName)
-//        addFolderDetails(sourceName, folder)
-//    }
-
-    /**
-     * This constructor has the ability to recurse through the filesystem and build tree
-     * @param id
-     * @param sourceName
-     * @param depth
-     */
-//    FSFolder(File thing, String sourceName, Integer depth) {
-//        super(thing, sourceName, depth)
-//        addFolderDetails(sourceName, folder)
-//    }
+    FSFolder(File srcFolder, String locationName, String crawlName = Constants.LBL_UNKNOWN, Integer depth = null) {
+        super(srcFolder, locationName, crawlName, depth)
+        type = TYPE
+        id = this.locationName + ':' + srcFolder.absolutePath
+        name = srcFolder.getName()
+    }
 
 
     String toString() {
@@ -111,8 +111,8 @@ class FSFolder extends SavableObject {
             sidFolder.setField(SolrSaver.FLD_IGNORED_FILES_COUNT, ignoredFileNames.size())
         }
         if (ignoredDirectories) {
-            sidFolder.setField(SolrSaver.FLD_IGNORED_FOLDERS + '_ss', ignoredDirectories.collect { it.name })
-            sidFolder.setField(SolrSaver.FLD_IGNORED_FOLDERS + '_txt', ignoredDirectories.collect { it.name })
+            sidFolder.setField(SolrSaver.FLD_IGNORED_FOLDERS + '_ss', ignoredDirectories.collect { it.crawlName })
+            sidFolder.setField(SolrSaver.FLD_IGNORED_FOLDERS + '_txt', ignoredDirectories.collect { it.crawlName })
             sidFolder.setField(SolrSaver.FLD_IGNORED_FOLDERS_COUNT, ignoredDirectories.size())
         }
         if (sameNameCount > 1) {
@@ -126,8 +126,8 @@ class FSFolder extends SavableObject {
         sidList << sidFolder
 
         List<String> assignments = []
-        fsFiles.each { FSFile ffs ->
-            SolrInputDocument sidFfs = ffs.toSolrInputDocument(crawlName)
+        children.each { def child ->
+            SolrInputDocument sidFfs = child.toSolrInputDocument(crawlName)
             sidList << sidFfs
         }
 
@@ -135,20 +135,71 @@ class FSFolder extends SavableObject {
     }
 
 
-    def addFolderDetails(File folder) {
-        id = srcFolder.absolutePath
-        me = srcFolder
-        name = srcFolder.name
-        type = TYPE
-        long diskSpace = 0
-        lastModifiedDate = new Date(srcFolder.lastModified())
-        this.depth = depth
-        log.debug "\t\tFiltering folder with ignore pattern: $ignoreFilesPattern "
+    def addFolderDetails() {
+        File srcFolder = (File) this.thing
+        size = FileUtils.sizeOfDirectory(srcFolder)
+        uniquifier = buildUniqueString()
 
-        countFiles = fsFiles.size()
-        countSubdirs = childFsFolders.size()
-        countTotal = countFiles + countSubdirs
-        this.size = diskSpace
+        Path path = srcFolder.toPath()
+
+        BasicFileAttributes attr = Files.readAttributes(path, BasicFileAttributes.class);
+        FileTime lastAccessTime = attr.lastAccessTime()
+        lastAccessDate = new Date(lastAccessTime.toMillis())
+        FileTime lastModifyTime = attr.lastModifiedTime()
+        lastModifyDate = new Date(lastModifyTime.toMillis())
+        createdDate = new Date(attr.creationTime().toMillis())
+        FileOwnerAttributeView ownerAttributeView = Files.getFileAttributeView(path, FileOwnerAttributeView.class);
+        owner = ownerAttributeView.getOwner();
+
+
+//        countFiles = fsFiles.size()
+//        countSubdirs = childFsFolders.size()
+//        countTotal = countFiles + countSubdirs
     }
 
+    def buildChildrenList(Pattern ignoreFilesPattern = Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE]) {
+        File folder = (File) thing
+        children = []
+        childFsFolders = []
+        if (folder.exists()) {
+            if (folder.canRead()) {
+                countSubdirs = 0
+                countFiles = 0
+                countTotal=0
+                folder.eachFile { File file ->
+                    countTotal++
+                    if (file.isDirectory()) {
+                        FSFolder fsFolder = new FSFolder(file, locationName,crawlName, this.depth+1)
+                        log.info "\t\t$countTotal) more code here to track directories, ignored or followed...."
+                        countSubdirs++
+                        childFsFolders << fsFolder
+                    } else {
+                        if (file.name ==~ ignoreFilesPattern) {
+                            ignoredFileNames << file.name
+//                            countIgnoredFiles++
+                            log.debug "Ignoring file: $file"
+                        } else {
+
+                            FSFile fsFile = new FSFile(file, locationName, this.crawlName, this.depth)
+                            fsFile.parent = this.id
+
+                            children << fsFile
+
+                            fileDates << file.lastModified()
+                            filesSizes << file.size()
+
+                        }
+                    }
+                }
+                this.countFiles = children.size()
+                this.countIgnoredFiles = ignoredFileNames.size()
+//                this.countIgnoredSubDirs = ignoredDirectories.size()
+            } else {
+                log.warn "\t\tCannot read folder: ${folder.absolutePath}"
+            }
+        } else {
+            log.warn "\t\tFolder (${folder.absolutePath}) does not exist!!"
+        }
+
+    }
 }
