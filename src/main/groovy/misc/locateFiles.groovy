@@ -1,10 +1,4 @@
 package misc
-
-import com.oconeco.helpers.Constants
-import com.oconeco.helpers.SolrCrawlArgParser
-import com.oconeco.persistence.SolrSaver
-import org.apache.log4j.Logger
-
 /**
  * Script to function much like slocate in linux.
  * Crawl all folders (with skip configs to skip things we don't care about).
@@ -13,6 +7,7 @@ import org.apache.log4j.Logger
  * <li>also configs on what should have contents extracted
  * <li>and config on what content should be "analyzed"
  */
+/*
 Logger log = Logger.getLogger(this.class.name);
 log.info "Start ${this.class.name}, with args: $args"
 
@@ -110,3 +105,4 @@ def commitResponse = solrSaver.commitUpdates()
 log.info "Commited: $commitResponse"
 
 log.info "done!?"
+*/

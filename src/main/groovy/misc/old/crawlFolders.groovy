@@ -17,7 +17,7 @@ startFolders.each { String sf ->
     log.info "Crawling parent folder: $startFolder"
 
     // get list of non-noisy folders to crawl (or compare against stored info (check if we need to crawl...
-    def  resultsMap = LocalFileSystemCrawler.startCrawl(startFolder)
+    def  resultsMap = LocalFileSystemCrawler.buildCrawlFolders(startFolder)
     log.info "Folders size: ${resultsMap.size()}"
 
     // see if there are common folders -- dev-time informational/insight only

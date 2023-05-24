@@ -3,7 +3,6 @@ package misc
 import com.oconeco.analysis.FileAnalyzer
 import com.oconeco.analysis.FolderAnalyzer
 import com.oconeco.crawler.LocalFileSystemCrawler
-import com.oconeco.crawler.LocalFileSystemCrawlerSimple
 import com.oconeco.helpers.SolrCrawlArgParser
 import com.oconeco.persistence.SolrSaver
 import org.apache.log4j.Logger
@@ -38,7 +37,7 @@ long start = System.currentTimeMillis()
 
 crawlMap.each { String label, String startPath ->
     log.info "crawl map item with label:'$label' --- and --- startpath:'$startPath'..."
-    Map<String, List<Map<String,Object>>> crawlFolders = LocalFileSystemCrawler.startCrawl(label, startPath, folderNamePatterns)
+    Map<String, List<Map<String,Object>>> crawlFolders = LocalFileSystemCrawler.buildCrawlFolders(label, startPath, folderNamePatterns)
 //    Map<String, List<Map<String,Object>>> crawlFolders = LocalFileSystemCrawlerSimple.processStartFolder(label, startPath, folderNamePatterns)
     crawlFolders.each {String type, List<Map<String, Object>> foldersMap->
         log.info "\t\tCrawl type [$type] --- folder count: ${foldersMap.size()}"
