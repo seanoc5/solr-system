@@ -33,6 +33,6 @@ class Constants {
     ]
     public static int DEFAULT_FOLDER_SIZE = 4096     // todo -- revisit, this is just an arbitrary starting size...?
 
-    public static final String TOCRAWL = 'crawl'
-    public static final String TOIGNORE = 'ignore'
+//    public static final String TOCRAWL = 'crawl'
+//    public static final String TOIGNORE = 'ignore'
 }
