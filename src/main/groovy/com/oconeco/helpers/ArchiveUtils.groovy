@@ -21,6 +21,7 @@ class ArchiveUtils {
     static final Logger log = Logger.getLogger(this.class.name)
 
     static ArchiveInputStream getArchiveInputStream(File archiveFile) {
+        log.info "Process archive file: $archiveFile"
         ArchiveInputStream ais = null
         InputStream inputStream = null
         String name = archiveFile.name
@@ -46,21 +47,20 @@ class ArchiveUtils {
         ArchiveEntry entry = null
         while ((entry = ais.getNextEntry()) != null) {
             if (entry.isDirectory()) {
-                log.info "Dir: ${entry.name} (${entry.size})"
                 entries << entry
+                log.info "Dir: ${entry.name} (${entry.size})"
             } else {
-                log.info "archive entry file (${entry.name}) -- type:(${entry.class.name})"
+                log.info "\t\tarchive entry file (${entry.name}) -- type:(${entry.class.simpleName})"
 //                Long rsize = entry.getRealSize()
                 Long size = entry.size
-                log.debug "\t\tFile: ${entry.name} (${entry.size})"
                 entries << entry
+                log.debug "\t\tFile: ${entry.name} (${entry.size})"
 
-//            } else {
-//                println "LBL_UNKNOWN entry (NOT FILE no Directory): ${entry.name}"
             }
         }
         return entries
     }
+
 
     static boolean isArchiveFileByExtension(File file){
         String name = file.name.toLowerCase()
