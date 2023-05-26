@@ -3,7 +3,9 @@ package misc
 import com.oconeco.analysis.FileAnalyzer
 import com.oconeco.analysis.FolderAnalyzer
 import com.oconeco.crawler.LocalFileSystemCrawler
+import com.oconeco.helpers.Constants
 import com.oconeco.helpers.SolrCrawlArgParser
+import com.oconeco.models.FSFolder
 import com.oconeco.persistence.SolrSaver
 import org.apache.log4j.Logger
 
@@ -21,28 +23,28 @@ log.info "\t\tCrawl Map (start folders): $crawlMap"
 String solrUrl = config.solrUrl
 log.info "\t\tSolr url: $solrUrl"
 
-String source = config.sourceName ?: 'undefined'
-Map folderNamePatterns = config.namePatterns.folders
-Pattern ignorePattern = config.namePatterns.folders.ignore
+String locationName = config.sourceName ?: 'undefined'
+String crawlName = config.ccrawlName ?: 'undefined'
 
-SolrSaver solrSaver = new SolrSaver(solrUrl, source)
+//Map folderNamePatterns = config.namePatterns.folders
+Pattern fileIgnorePattern = config.namePatterns.folders.ignore
+
+SolrSaver solrSaver = new SolrSaver(solrUrl, locationName)
 log.info "\t\tSolr Saver created: $solrSaver"
 
 FolderAnalyzer folderAnalyzer = new FolderAnalyzer(config)
 FileAnalyzer fileAnalyzer = new FileAnalyzer(config)
 
 def linkOption = LinkOption.NOFOLLOW_LINKS
-
+LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName)
 long start = System.currentTimeMillis()
 
 crawlMap.each { String label, String startPath ->
     log.info "crawl map item with label:'$label' --- and --- startpath:'$startPath'..."
-    Map<String, List<Map<String,Object>>> crawlFolders = LocalFileSystemCrawler.buildCrawlFolders(label, startPath, folderNamePatterns)
-//    Map<String, List<Map<String,Object>>> crawlFolders = LocalFileSystemCrawlerSimple.processStartFolder(label, startPath, folderNamePatterns)
-    crawlFolders.each {String type, List<Map<String, Object>> foldersMap->
-        log.info "\t\tCrawl type [$type] --- folder count: ${foldersMap.size()}"
+     def crawlFolders = crawler.buildCrawlFolders(startPath, fileIgnorePattern)
+    crawlFolders.each { FSFolder fsfolder->
+        log.info "\t\tCrawl folder: $fsfolder"
     }
-//    log.info "\t\tcrawlFolders:'$crawlFolders'..."
 }
 
 solrSaver.closeClient()
@@ -55,7 +57,7 @@ log.info "${this.class.name} Elapsed time: ${elapsed}ms (${elapsed/1000} sec)"
 //    Path path = Paths.get(startPath)
 //    Map crawlFolders = null
 //    if(Files.exists(path, linkOption )) {
-//        crawlFolders = LocalFileSystemCrawlerSimple.processStartFolder(path, ignorePattern)
+//        crawlFolders = LocalFileSystemCrawlerSimple.processStartFolder(path, fileIgnorePattern)
 //    } else {
 //        log.warn "File '$startPath' either does not exist, or is a symbolic link"
 //    }
