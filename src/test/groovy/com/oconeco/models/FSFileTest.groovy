@@ -10,28 +10,29 @@ import spock.lang.Specification
 class FSFileTest extends Specification {
     String locationName = 'spock'
     String crawlName = 'test'
-    String paramsJsonName = 'params.json'
+
+    String jsonName = 'params.json'
     String zipName = 'datasources.zip'
     String tarName = 'combinedTestContent.tgz'
 
     def "should create basic FSFile"() {
         given:
-        File testFile = new File(getClass().getResource("/content/${paramsJsonName}").toURI())
+        File jsonFile = new File(getClass().getResource("/content/${jsonName}").toURI())
 
         when:
-        FSFile fsFile = new FSFile(testFile, locationName, crawlName, 1)
+        FSFile fsFile = new FSFile(jsonFile, locationName, crawlName, 1)
 
         then:
-        fsFile.name == paramsJsonName
+        fsFile.name == jsonName
         fsFile.type == FSFile.TYPE
         fsFile.thing instanceof File
-        fsFile.thing== testFile
+        fsFile.thing == jsonFile
 
     }
 
     def "should create SolrInputDocument from zipfile"() {
         given:
-        def zip = new File(getClass().getResource("/content/${zipName}").toURI())
+        File zip = new File(getClass().getResource("/content/${zipName}").toURI())
         ArchiveInputStream aiszip = ArchiveUtils.getArchiveInputStream(zip)
 
         when:
@@ -39,7 +40,7 @@ class FSFileTest extends Specification {
         aiszip?.close()
         List<SolrInputDocument> sidList = []
         zipEntries.each { ArchiveEntry ae ->
-            if(ae.isDirectory()) {
+            if (ae.isDirectory()) {
                 FSFolder fsFolder = new FSFolder(ae, locationName, crawlName)
                 SolrInputDocument sid = fsFolder.toSolrInputDocument()
                 sidList << sid
@@ -50,9 +51,10 @@ class FSFileTest extends Specification {
             }
         }
         SolrInputDocument firstSID = sidList[0]
-
+        boolean archiveFile = ArchiveUtils.isArchiveFileByExtension(zip)
 
         then:
+        archiveFile==true
         zipEntries != null
         sidList.size() == 2
         firstSID.getFieldValue(SolrSaver.FLD_ID) == "${locationName}:objects.json"
@@ -65,20 +67,20 @@ class FSFileTest extends Specification {
 
     def "should create SolrInputDocument from tarball"() {
         given:
-        def zip = new File(getClass().getResource("/content/${tarName}").toURI())
-        ArchiveInputStream aiszip = ArchiveUtils.getArchiveInputStream(zip)
+        File tarball = new File(getClass().getResource("/content/${tarName}").toURI())
+        ArchiveInputStream aiszip = ArchiveUtils.getArchiveInputStream(tarball)
 
         when:
         def archiveEntries = ArchiveUtils.gatherArchiveEntries(aiszip)
         aiszip?.close()
         List<SolrInputDocument> sidList = []
         archiveEntries.each { ArchiveEntry ae ->
-            if(ae.isDirectory()) {
-                ArchiveFolder archiveFolder = new ArchiveFolder(ae, locationName, crawlName)
+            if (ae.isDirectory()) {
+                ArchFolder archiveFolder = new ArchFolder(ae, locationName, crawlName)
                 SolrInputDocument sid = fsFolder.toSolrInputDocument()
                 sidList << sid
             } else {
-                ArchiveFile archiveFile = new ArchiveFile(ae, locationName, crawlName)
+                ArchFile archiveFile = new ArchFile(ae, locationName, crawlName)
                 SolrInputDocument sid = fsFile.toSolrInputDocument()
                 sidList << sid
             }
