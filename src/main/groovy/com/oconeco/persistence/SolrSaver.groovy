@@ -26,7 +26,9 @@ class SolrSaver {
     public static final String ANALYZE = 'analyze'
 
     public static final String FLD_ID = 'id'
-    public static final String FLD_CRAWL_NAME = "crawl_name_s"
+    public static final String FLD_CRAWL_NAME = "crawlName_s"
+    public static final String FLD_LOCATION_NAME = "locationName_s"
+
     public static final String FLD_DEPTH = 'depth_i'
     public static final String FLD_TYPE = 'type_s'
     public static final String FLD_PATH_S = 'path_s'
@@ -34,29 +36,29 @@ class SolrSaver {
     public static final String FLD_NAME_S = 'name_s'
     public static final String FLD_NAME_T = 'name_t'
     public static final String FLD_CONTENT_BODY = 'content_txt_en'
-    public static final String FLD_PARENT_PATH = 'parent_path_s'
+    public static final String FLD_PARENT_PATH = 'parentPath_s'
     public static final String FLD_LASTMODIFIED = 'lastModified_dt'
-    public static final String FLD_FILENAME_SS = "filename_ss"
-    public static final String FLD_DIRNAME_SS = "dirname_ss"
-    public static final String FLD_HIDDENNAME_SS = "hiddenname_ss"
+    public static final String FLD_FILENAME_SS = "fileName_ss"
+    public static final String FLD_DIRNAME_SS = "dirName_ss"
+    public static final String FLD_HIDDENNAME_SS = "hiddenName_ss"
     public static final String FLD_EXTENSION_SS = "extension_ss"
-    public static final String FLD_SUBDIR_COUNT = 'subdir_count_i'
+
+    public static final String FLD_SUBDIR_COUNT = 'subdirCount_i'
     public static final String FLD_FILE_COUNT = "fileCount_i"
     public static final String FLD_DIR_COUNT = "dirCount_i"
-    public static final String FLD_DATA_SOURCE = "data_source_s"
+    public static final String FLD_SIZE = "size_i"
     public static final String FLD_TAG_SS = "tag_ss"
     public static final String FLD_ASSIGNED_TYPES = "assignedTypes_ss"
     public static final String FLD_CHILDASSIGNED_TYPES = "childAssignedTypes_ss"
-    public static final String FLD_SIZE = "size_i"
     public static final String FLD_SAME_NAME_COUNT = "sameNameCount_i"
     public static final String FLD_NAME_SIZE_S = "nameSize_s"
-    public static final String FLD_HOSTNAME = "hostname_s"
+    public static final String FLD_HOSTNAME = "hostName_s"
     public static final String FLD_INDEX_DATETIME = "indexedTime_dt"            // pdate dynamic field
 
     public static String FLD_IGNORED_FILES_COUNT = 'ignoredFilesCount_i'
-    public static String FLD_IGNORED_FILES = 'ignoredFileNames'
+    public static String FLD_IGNORED_FILES = 'ignoredFileNames_ss'
     public static String FLD_IGNORED_FOLDERS_COUNT = 'ignoredFoldersCount_i'
-    public static String FLD_IGNORED_FOLDERS = 'ignoredFolders'
+    public static String FLD_IGNORED_FOLDERS = 'ignoredFolders_ss'
     public static String FLD_UNIQUE = 'unique_s'
 
     final Integer SOLR_BATCH_SIZE = 5000
