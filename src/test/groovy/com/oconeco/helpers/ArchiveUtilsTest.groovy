@@ -15,12 +15,35 @@ import spock.lang.Specification
  */
 
 class ArchiveUtilsTest extends Specification {
-    File tarball = new File(getClass().getResource("/content/fuzzywuzzy.tar.gz").toURI())
+    File targz = new File(getClass().getResource("/content/fuzzywuzzy.tar.gz").toURI())
+    File tgz = new File(getClass().getResource("/content/combinedTestContent.tgz").toURI())
+    File zip = new File(getClass().getResource("/content/datasources.zip").toURI())
+    File bz2 = new File(getClass().getResource("/content/testsub.tar.bz2").toURI())
+
+    def "should get entries from several different archive types"() {
+        when:
+        def tarballEntries = ArchiveUtils.gatherArchiveEntries(targz)
+        def tgzEntries = ArchiveUtils.gatherArchiveEntries(tgz)
+        def zipEntries = ArchiveUtils.gatherArchiveEntries(zip)
+        def bz2Entries = ArchiveUtils.gatherArchiveEntries(bz2)
+
+        then:
+        tarballEntries != null
+        tgzEntries != null
+        zipEntries != null
+        bz2Entries != null
+
+        tarballEntries.size()==123
+        tgzEntries.size()==40
+        zipEntries.size()==2
+        bz2Entries.size()==8
+    }
+
 
     def "unzip tarball"() {
         given:
         println("Archive file: ${tarball.absolutePath}")
-        InputStream gzi = new GzipCompressorInputStream(tarball.newInputStream());
+        InputStream gzi = new GzipCompressorInputStream(targz.newInputStream());
         ArchiveInputStream tarArchive = new TarArchiveInputStream(gzi)
 
         when:
@@ -36,6 +59,7 @@ class ArchiveUtilsTest extends Specification {
             }
             entries << entry
         }
+        tarArchive.close()
 
         then:
         entries.size() == 123
@@ -50,11 +74,8 @@ class ArchiveUtilsTest extends Specification {
 
     def "GetArchiveInputStream"() {
         given:
-        File targz = new File(getClass().getResource("/content/fuzzywuzzy.tar.gz").toURI())
         println("Tarball Archive file: $targz -> ${targz.absolutePath}")
-        File tgz = new File(getClass().getResource("/content/compressedchart-0.1.0.tgz").toURI())
-        File zip = new File(getClass().getResource("/content/datasources.zip").toURI())
-        File bz2 = new File(getClass().getResource("/content/testsub.tar.bz2").toURI())
+
 
         when:
         ArchiveInputStream aistgz = ArchiveUtils.getArchiveInputStream(tgz)
@@ -74,10 +95,10 @@ class ArchiveUtilsTest extends Specification {
         aisbz2?.close()
 
         then:
-        tgzEntries.size()==40
-        targzEntries.size()==123
-        zipEntries.size()==2
-        bz2Entries.size()==8
+        tgzEntries.size() == 40
+        targzEntries.size() == 123
+        zipEntries.size() == 2
+        bz2Entries.size() == 8
     }
 
 
