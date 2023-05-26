@@ -31,11 +31,10 @@ class LocalFileSystemCrawler {
         this.statusDepth = statusDepth
     }
 
-    Map<String, List<FSFolder>> buildCrawlFolders(def source, Map namePatternsFolder = Constants.DEFAULT_FOLDERNAME_PATTERNS) {
-        log.info "Start crawl with source path:($source) and name patterns map: $namePatternsFolder"
+    List<FSFolder> buildCrawlFolders(def source, Pattern ignorePattern) {
+        log.info "Start crawl with source path:($source) and name ignore pattern: $ignorePattern"
         File startFolder = getStartDirectory(source)
-        Pattern ignorePattern = namePatternsFolder[Constants.LBL_IGNORE]
-        Map<String, List<FSFolder>> results = visitFolders(startFolder, ignorePattern)
+        List<FSFolder> results = visitFolders(startFolder, ignorePattern)
         return results
     }
 
@@ -72,29 +71,29 @@ class LocalFileSystemCrawler {
      * this is a quick/light scan of folders, assumes following processing will order crawl of folders by priority,
      * and even check for updates to skip folders with no apparent changes
      */
-    Map<String,List<FSFolder>> visitFolders(File startFolder, Pattern ignorePattern) {
-        List<FSFolder> foldersToCrawl = []
-        List<FSFolder> ignoredFolders = []
+    List<FSFolder> visitFolders(File startFolder, Pattern ignorePattern) {
+        List<FSFolder> foldersList = []
+//        List<FSFolder> ignoredFolders = []
         Path startPath = startFolder.toPath()
-//        Pattern ignorePattern = namePatterns.get(Constants.LBL_IGNORE)
 
         Map options = [type     : FileType.DIRECTORIES,
                        preDir   : {
-                           File f = (File)it
+                           File f = (File) it
                            Path thisPath = f.toPath()
                            Path reletivePath = startPath.relativize(thisPath)
 //                           List parts = reletivePath.
                            int pathElements = reletivePath.getNameCount();
                            FSFolder fsFolder = new FSFolder(it, this.locationName, this.crawlName, pathElements)
                            if (it ==~ ignorePattern) {
-                               ignoredFolders << fsFolder
+                               fsFolder.shouldIgnore = true
                                log.info "\t\t\tINGOREing folder: $it -- matches ignorePattern: $ignorePattern"
                                return FileVisitResult.SKIP_SUBTREE
 
                            } else {
-                               foldersToCrawl << fsFolder
+                               fsFolder.shouldIgnore = false
                                log.info "\t\tADDING Crawl folder: $it"
                            }
+                           foldersList << fsFolder
                        },
 /*
                        postDir  : {
@@ -112,11 +111,13 @@ class LocalFileSystemCrawler {
         startFolder.traverse(options) { def folder ->
             log.debug "\t\ttraverse folder $folder"
         }
-        Map<String,List<FSFolder>> results = [:]           // note: is it possible to initialize with keys that are variables??
-        results.put(Constants.LBL_CRAWL, foldersToCrawl)
-        results.put(Constants.LBL_IGNORE, ignoredFolders)
+//        Map<String, List<FSFolder>> results = [:]
+        // note: is it possible to initialize with keys that are variables??
+//        results.put(Constants.LBL_CRAWL, foldersToCrawl)
+//        results.put(Constants.LBL_IGNORE, ignoredFolders)
 
-        return results
+//        return results
+        return foldersList
     }
 
 
@@ -126,10 +127,10 @@ class LocalFileSystemCrawler {
      * param ignoredFolders - ignore pattern
      * return list of files
      */
-    def getFolderFiles(File folder, Pattern ignoreFiles){
+    def getFolderFiles(File folder, Pattern ignoreFiles) {
         List<File> filesList = []
-        if(folder?.exists()){
-            if(folder.canRead()) {
+        if (folder?.exists()) {
+            if (folder.canRead()) {
                 folder.eachFile(FileType.FILES) { File file ->
                     if (shouldIgnore(file, ignoreFiles)) {
                         log.debug "Ignoring file: $file"
