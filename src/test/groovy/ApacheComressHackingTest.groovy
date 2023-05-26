@@ -13,9 +13,9 @@ import spock.lang.Specification
  * @description:
  */
 
-class ArchiveFilesTest extends Specification {
+class ApacheComressHackingTest extends Specification {
 
-    def "test zip file"() {
+    def "apache compress zip file"() {
         // https://itsallbinary.com/apache-commons-compress-simplest-zip-zip-with-directory-compression-level-unzip/
         given:
         File zip = new File(getClass().getResource('/content/test.zip').toURI())
@@ -46,7 +46,7 @@ class ArchiveFilesTest extends Specification {
 
     }
 
-    def "test tarball tar.gz file"() {
+    def "apache compress tarball tar.gz file"() {
         given:
         List<TarArchiveEntry> entries = []
         File tarball = new File(getClass().getResource('/content/fuzzywuzzy.tar.gz').toURI())
@@ -83,16 +83,18 @@ class ArchiveFilesTest extends Specification {
         entries[2].name == 'fuzzywuzzy/build/pom.xml'
     }
 
-    def "multiple archive file types some with compression "() {
-        given:
-        List<String> srcArchFiles = ['compressedchart-0.1.0.tgz', 'datasources.zip', 'testsub.tar.bz2']
-        Map<String, Object>  archEntryMap = [:]
 
+    // todo -- currently broken
+    def "apache compress  multiple archive file types some with compression "() {
+        given:
+        List<String> srcArchFiles = ['combinedTestContent.tgz', 'datasources.zip', 'testsub.tar.bz2']
+        Map<String, Object>  archEntryMap = [:]
+        ArchiveInputStream tarArchive
         srcArchFiles.each { String archFileName ->
             File f = new File(getClass().getResource("/content/${archFileName}").toURI())
             println("Archive file: $archFileName -> ${f.absolutePath}")
             InputStream gzi = new GzipCompressorInputStream(f.newInputStream());
-            ArchiveInputStream tarArchive = new TarArchiveInputStream(gzi)
+            tarArchive = new TarArchiveInputStream(gzi)
         }
 
         when:
