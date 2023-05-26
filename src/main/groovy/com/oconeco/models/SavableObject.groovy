@@ -57,6 +57,16 @@ class SavableObject {
     /** a string that should uniquely identify this thing, and hence, expose duplicate items */
     String uniquifier = null
 
+    // these may not be applicable for all, but perhaps enough to move into this base object
+    String mimeType
+    String owner
+//    List<String> permissions
+    Date lastAccessDate
+//    Date lastModifyDate
+    Boolean archive = true
+    Boolean compressed = true
+
+
     /**
      * placeholder 'empty' constructor -- probably should use a 'bigger' constructor
      */
@@ -98,6 +108,7 @@ class SavableObject {
     SavableObject(def thing, String locationName, Integer depth) {
         this(thing, locationName)
         this.depth = depth
+        log.debug "Creating savable object thing: $thing"
     }
 
 

@@ -35,7 +35,9 @@ class FSFolder extends SavableObject {
     Long countIgnoredSubDirs
     Long countTotal
 
-//    // summary/searchable metadata (might maintain useful order, but no promises)
+    /** flag to track if this folder should be crawled into, or ignored */
+    boolean shouldIgnore = false
+    /** summary/searchable metadata (might maintain useful order, but no promises) */
     List<Date> fileDates = []
     List<Long> filesSizes= []
 //
@@ -65,7 +67,7 @@ class FSFolder extends SavableObject {
      * @param ignoreFilesPattern
      * @param ignoreSubdirectories
      */
-    FSFolder(File folder) {
+    FSFolder(def folder) {
         super(folder)
         name = folder.name
         type = TYPE
