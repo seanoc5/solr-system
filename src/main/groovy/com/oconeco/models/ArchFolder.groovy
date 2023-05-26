@@ -23,11 +23,9 @@ import java.nio.file.attribute.FileTime
  * structure for handling information about an entry from an archive file (tar.gz, zip, etc),
  * handles both basic information from the filesystem, and analysis results from some process
  */
-class ArchiveFile extends SavableObject {
+class ArchFolder extends SavableObject {
     Logger log = Logger.getLogger(this.class.name)
-    public static final String TYPE = 'ArchiveFile'
-    String extension
-    String mimeType
+    public static final String TYPE = 'ArchFolder'
     String owner
 //    List<String> permissions
     Date lastAccessDate
@@ -35,9 +33,9 @@ class ArchiveFile extends SavableObject {
     Boolean archive = true
     Boolean compressed = true
 
-    ArchiveFile(ArchiveEntry ae, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN, Integer depth = null) {
+    ArchFolder(ArchiveEntry ae, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN, Integer depth = null) {
         super(ae,locationName, depth)
-        id = locationName + ':' + 'ae.path'
+        id = locationName + ':' + f.absolutePath
         type = TYPE
 
         if(!this.thing) {
@@ -75,7 +73,7 @@ class ArchiveFile extends SavableObject {
     }
 
 /*
-    ArchiveFile(org.apache.commons.compress.archivers.ArchiveEntry archiveEntry, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN, Integer depth = null) {
+    ArchFile(org.apache.commons.compress.archivers.ArchiveEntry archiveEntry, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN, Integer depth = null) {
         super(archiveEntry,locationName, depth)
         id = locationName + ':' + archiveEntry.name
         type = 'ArchiveEntry'
@@ -127,7 +125,11 @@ class ArchiveFile extends SavableObject {
         if (extension) {
             sid.addField(SolrSaver.FLD_EXTENSION_SS, extension)
         }
-        sid.addField(SolrSaver.FLD_NAME_SIZE_S, "${this.name}:${this.size}")
+        if(this.size) {
+            sid.addField(SolrSaver.FLD_NAME_SIZE_S, "${this.name}:${this.size}")
+        } else {
+            sid.addField(SolrSaver.FLD_NAME_SIZE_S, "${this.name}:unknown")
+        }
 //        sid.addField(SolrSaver.FLD_DEPTH, depth)
         return sid
     }
