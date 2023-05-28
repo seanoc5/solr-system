@@ -1,6 +1,6 @@
 package com.oconeco.persistence
 
-import com.oconeco.models.FSFolder
+
 import org.apache.log4j.Logger
 import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.client.solrj.impl.Http2SolrClient
@@ -143,10 +143,10 @@ class SolrSaver {
      * Create Solr Input doc
      *
      */
-    SolrInputDocument createSolrInputFolderDocument(File folder) {
-        FSFolder folderFS = new FSFolder(folder)
-        return folderFS.toSolrInputDocument()
-    }
+//    SolrInputDocument createSolrInputFolderDocument(File folder) {
+//        FSFolder folderFS = new FSFolder(folder)
+//        return folderFS.toSolrInputDocument()
+//    }
 
 
     /**
