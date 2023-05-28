@@ -204,6 +204,7 @@ class AnalysisHelper {
      * @return Map with term, freq, and bucket
      */
     static Map<String, Map<String, Object>> addTermFreqBuckets(Map<String, Integer> termFrequencies, int scale = 5, int minTermCount =2) {
+        log.warn "Incomplete or broken analysis code?? addTermFreqBuckets..."
         Map<String, Map<String, Object>> termsWithBuckets = [:]
         List indexes = (1..scale)
         Collection<Number> dataset =  minTermCount ? termFrequencies.values().findAll {it >= minTermCount} : termFrequencies.values()
