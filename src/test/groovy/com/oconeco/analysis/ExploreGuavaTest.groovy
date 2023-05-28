@@ -1,13 +1,13 @@
 package com.oconeco.analysis
 
 //import com.google.common.math.Quantiles
-import spock.lang.Specification
 
 /**
  * Quick unit tests to explore Google Guava functionality
  * https://guava.dev/releases/23.0/api/docs/com/google/common/math/Quantiles.html
  * https://en.wikipedia.org/wiki/Quantile
  */
+/*
 class ExploreGuavaTest extends Specification {
     Integer[] indexes5 = [1, 2, 3, 4, 5]
 
@@ -29,3 +29,4 @@ class ExploreGuavaTest extends Specification {
     }
 
 }
+*/

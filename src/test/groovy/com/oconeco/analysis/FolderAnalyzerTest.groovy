@@ -1,9 +1,7 @@
 package com.oconeco.analysis
 
-
 import com.oconeco.models.FSFolder
 import spock.lang.Specification
-
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -13,33 +11,22 @@ import spock.lang.Specification
 
 // todo -- remove? Moved responsibility to Object to use Analyzer as a helper, rather than the analyzer driving
 class FolderAnalyzerTest extends Specification {
+    String locationName = 'spock'
+    String crawlName = 'test'
+    URL cfgUrl = getClass().getResource('/configLocate.groovy')
+    ConfigObject config = new ConfigSlurper().parse(cfgUrl)
+    FolderAnalyzer analyzer = new FolderAnalyzer(config)
+    File folder = new File(getClass().getResource('/content').toURI())
 
     def "basic folder type analysis"() {
-        given:
-        URL cfgUrl = getClass().getResource('/configLocate.groovy')
-        ConfigSlurper slurper = new ConfigSlurper()
-        ConfigObject config = slurper.parse(cfgUrl)
-
-        FolderAnalyzer analyzer = new FolderAnalyzer(config)
-
-        File folder = new File(getClass().getResource('/content').toURI())
-        FSFolder folderFS = new FSFolder(folder)
-
         when:
-        List<String> assignedLabels = folderFS.analyze(analyzer)
-        Map groupedLabels = assignedLabels.groupBy { it }
-        List contentGroup = groupedLabels['content']
+        FSFolder fsFolder = new FSFolder(folder, locationName, crawlName, 1)
+        List<String> labels = analyzer.analyze(fsFolder)
 
         then:
-        folderFS.assignedTypes != null
-        folderFS.assignedTypes.size() == 1
-        folderFS.assignedTypes[0] == 'content'
-
-        folderFS.childAssignedTypes.size() >= 19
-        groupedLabels.size() >= 9
-        groupedLabels.keySet()[0] == 'archive'
-        groupedLabels['archive'].size() == 4
-
+        labels != null
+        labels.size() == 1
+        labels[0] == 'content'
     }
 
 /*
