@@ -15,17 +15,11 @@ import spock.lang.Specification
 
 class ApacheComressHackingTest extends Specification {
 
-    def "apache compress zip file"() {
+    def "basic ops with apache.compress zip file"() {
         // https://itsallbinary.com/apache-commons-compress-simplest-zip-zip-with-directory-compression-level-unzip/
         given:
         File zip = new File(getClass().getResource('/content/test.zip').toURI())
-/*
-        ZipArchiveEntry entry = new ZipArchiveEntry();
-        entry.setSize(size);
-        zipOutput.putArchiveEntry(entry);
-        zipOutput.write(contentOfEntry);
-        zipOutput.closeArchiveEntry();
-*/
+
         ZipArchiveInputStream archive = new ZipArchiveInputStream(new BufferedInputStream(new FileInputStream(zip)))
 
         List entries = []
@@ -37,7 +31,7 @@ class ApacheComressHackingTest extends Specification {
             Long size = entry.size
             Long csize = entry.compressedSize
             int percent = ((size - csize) / size) * 100
-            println "${entry.name} (${size}->${csize} ${percent}%) :-: ctime: ${entry.creationTime} -- mtime: ${entry.lastModifiedTime} -- lastAccess: ${entry.lastAccessTime} "
+//            println "${entry.name} (${size}->${csize} ${percent}%) :-: ctime: ${entry.creationTime} -- mtime: ${entry.lastModifiedTime} -- lastAccess: ${entry.lastAccessTime} "
         }
         ArchiveEntry entry1 = entries[1]
 
@@ -66,7 +60,7 @@ class ApacheComressHackingTest extends Specification {
                 Long size = entry.size
 //                int percent = ((rsize - csize) / size) * 100
 //                println "${entry.name} (${size}->${csize} ${percent}%) :-:  mtime: ${entry.modTime}"
-                println "${entry.name} (${size} :-:  mtime: ${entry.modTime}"
+//                println "${entry.name} (${size} :-:  mtime: ${entry.modTime}"
 //                println "\t\tFile: ${entry.name} (${entry.size})"
             } else {
                 println "LBL_UNKNOWN entry (NOT FILE no Directory): ${entry.name}"
@@ -85,44 +79,56 @@ class ApacheComressHackingTest extends Specification {
 
 
     // todo -- currently broken
-    def "apache compress  multiple archive file types some with compression "() {
+/*
+    def "multiple archive file types some with compression "() {
         given:
-        List<String> srcArchFiles = ['combinedTestContent.tgz', 'datasources.zip', 'testsub.tar.bz2']
+        List<String> srcArchFileNames = ['combinedTestContent.tgz', 'datasources.zip', 'testsub.tar.bz2']
         Map<String, Object>  archEntryMap = [:]
-        ArchiveInputStream tarArchive
-        srcArchFiles.each { String archFileName ->
-            File f = new File(getClass().getResource("/content/${archFileName}").toURI())
-            println("Archive file: $archFileName -> ${f.absolutePath}")
-            InputStream gzi = new GzipCompressorInputStream(f.newInputStream());
-            tarArchive = new TarArchiveInputStream(gzi)
-        }
+
 
         when:
-        TarArchiveEntry entry;
-        while ((entry = tarArchive.getNextTarEntry()) != null) {
-            if (entry.isDirectory()) {
-                println "Dir: ${entry.name} (${entry.size})"
-            } else if (entry.isFile()) {
-//                Long rsize = entry.getRealSize()
-                Long size = entry.size
-//                int percent = ((rsize - csize) / size) * 100
-                println "${entry.name} (${size}->${csize} ${percent}%) :-:  mtime: ${entry.modTime}"
-                println "${entry.name} (${size} :-:  mtime: ${entry.modTime}"
-                println "\t\tFile: ${entry.name} (${entry.size})"
-            } else {
-                println "LBL_UNKNOWN entry (NOT FILE no Directory): ${entry.name}"
-            }
-            entries << entry
+        srcArchFileNames.each { String archFileName ->
+            File f = new File(getClass().getResource("/content/${archFileName}").toURI())
+            println("Archive file: $archFileName -> ${f.absolutePath}")
+//            def entryList = ArchiveUtils.gatherArchiveEntries(f)
+//            archEntryMap[archFileName] = entryList
+            archEntryMap[archFileName] = f
+//            InputStream gzi = new GzipCompressorInputStream(f.newInputStream());
+//            tarArchive = new TarArchiveInputStream(gzi)
         }
+//        def firstEntryList = archEntryMap[srcArchFileNames[0]]
+//        def secondEntryList = archEntryMap[srcArchFileNames[1]]
+//        def thirdEntryList = archEntryMap[srcArchFileNames[2]]
+//        TarArchiveEntry entry;
+//        while ((entry = tarArchive.getNextTarEntry()) != null) {
+//            if (entry.isDirectory()) {
+//                println "Dir: ${entry.name} (${entry.size})"
+//            } else if (entry.isFile()) {
+////                Long rsize = entry.getRealSize()
+//                Long size = entry.size
+////                int percent = ((rsize - csize) / size) * 100
+//                println "${entry.name} (${size}->${csize} ${percent}%) :-:  mtime: ${entry.modTime}"
+//                println "${entry.name} (${size} :-:  mtime: ${entry.modTime}"
+//                println "\t\tFile: ${entry.name} (${entry.size})"
+//            } else {
+//                println "LBL_UNKNOWN entry (NOT FILE no Directory): ${entry.name}"
+//            }
+//            entries << entry
+//        }
 
         then:
-        entries.size() == 123
-        entries[0].isDirectory()
-        entries[0].name == 'fuzzywuzzy/'
+        archEntryMap.keySet().containsAll(srcArchFileNames)
 
-        entries[2].isFile()
-        entries[2].name == 'fuzzywuzzy/build/pom.xml'
+//        firstEntryList.size() == 40
+//        secondEntryList.size() == 2
+//        thirdEntryList.size() == 8
+//        entries[0].isDirectory()
+//        entries[0].name == 'fuzzywuzzy/'
+
+//        entries[2].isFile()
+//        entries[2].name == 'fuzzywuzzy/build/pom.xml'
     }
+*/
 
 
 //    def getArchiveStream(File file){

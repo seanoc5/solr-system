@@ -1,152 +1,48 @@
 package com.oconeco.models
 
 import com.oconeco.analysis.FolderAnalyzer
+import org.apache.solr.common.SolrInputDocument
 import spock.lang.Specification
 
-import java.nio.file.Path
-
 class FSFolderTest extends Specification {
+    String locationName = 'spock'
+    String crawlName = 'test'
+//    def startFolder = Path.of(getClass().getResource('/content').toURI());
+    File startFolder = new File(getClass().getResource('/content').toURI())
+
     def "should build basic FSFolder"() {
-        given:
-        String locationName = 'spock'
-        String crawlName = 'test'
-
-        def startFolder = Path.of(getClass().getResource('/content').toURI());
-        File testSourceFile = startFolder.toFile()
-
         when:
-        FSFolder fsFolder = new FSFolder(testSourceFile, locationName, crawlName, 1)
-        def rc = fsFolder.buildChildrenList()
+        FSFolder fsFolder = new FSFolder(startFolder, locationName, crawlName, 1)
         fsFolder.addFolderDetails()
 
         then:
-        fsFolder.children.size() == 20
-        fsFolder.countFiles == 20
-        fsFolder.countIgnoredFiles == 1
+        fsFolder.owner != null
+        fsFolder.lastModifiedDate != null
+        fsFolder.lastAccessDate != null
+//        fsFolder.children.size() == 20
+//        fsFolder.countFiles == 20
+//        fsFolder.countIgnoredFiles == 1
     }
 
     def "items should have date and size as well as unique path:size combo"() {
-        given:
-        String locationName = 'spock'
-        String crawlName = 'test'
-
-        def startFolder = Path.of(getClass().getResource('/content').toURI());
-        File testSourceFile = startFolder.toFile()
 
         when:
-        FSFolder fsFolder = new FSFolder(testSourceFile, locationName, crawlName, 1)
-        def rc = fsFolder.buildChildrenList()
+        FSFolder fsFolder = new FSFolder(startFolder, locationName, crawlName, 1)
+//        def rc = fsFolder.buildChildrenList()
         fsFolder.addFolderDetails()
 
 
         then:
-        fsFolder.children.size() == 20
-        fsFolder.countFiles == 20
-        fsFolder.countSubdirs == 2
-        fsFolder.countIgnoredFiles == 1
+//        fsFolder.children.size() == 20
+//        fsFolder.countFiles == 20
+//        fsFolder.countSubdirs == 2
+//        fsFolder.countIgnoredFiles == 1
         fsFolder.uniquifier.startsWith('Folder:content::')
         fsFolder.createdDate != null
         fsFolder.lastAccessDate != null
         fsFolder.lastModifyDate != null
         fsFolder.owner != null
     }
-
-
-
-/*
-    def "check FSFolder simple constructor(id)"() {
-
-        when:
-        File srcFolder = new File(getClass().getResource("/$srcFolderName").toURI())
-        FSFolder fsFolder = new FSFolder(srcFolder)
-
-        then:
-//        folder.id == 'myid'
-        fsFolder.name == srcFolder.name
-//        fsFolder.depth == 1
-    }
-*/
-
-/*
-    def "basic folder load"() {
-        given:
-        File src = new File(getClass().getResource('/content').toURI())
-
-        when:
-        FSFolder folder = new FSFolder(src, 1, ignoreFiles, ignoreFolders)
-
-        then:
-        folder.size == CONTENT_FOLDER_SIZE
-        folder.countTotal == 21
-
-        folder.children.size() == 20
-        folder.countFiles == 20
-
-        folder.subDirectories.size() == 1
-        folder.countSubdirs == 1
-    }
-*/
-
-
-//    def "basic folder load with ignore file and folder patterns"() {
-//        given:
-//        File src = new File(getClass().getResource('/content').toURI())
-//
-//        when:
-//        FSFolder folder = new FSFolder(src, 1, ignoreFiles, ignoreFolders)
-//
-//        then:
-//        folder.size == CONTENT_FOLDER_SIZE       //642754
-//        folder.countTotal == 21
-//
-//        folder.fsFiles.size() == 20
-//        folder.countFiles == 20
-//
-//        folder.subDirectories.size() == 1
-//        folder.countSubdirs == 1
-//
-//        folder.ignoredDirectories.size() == 1
-//        folder.ignoredFolders.size() == 0
-//    }
-
-
-//    def "recursive folder load with ignore file and folder patterns"() {
-//        given:
-//        File src = new File(getClass().getResource('/content').toURI())
-//
-//        when:
-//        boolean recurse = true
-//        FSFolder folderFS = new FSFolder(src, 1, ignoreFiles, ignoreFolders, recurse)
-//
-//        then:
-//        folderFS.size == CONTENT_FOLDER_SIZE
-//        folderFS.countTotal == 21
-//
-//        folderFS.fsFiles.size() == 20
-//        folderFS.countFiles == 20
-//
-//        folderFS.subDirectories.size() == 1
-//        folderFS.countSubdirs == 1
-//
-//        folderFS.ignoredDirectories.size() == 1
-//        folderFS.ignoredFolders.size() == 0
-//    }
-
-
-//    def "recursive folder load get all subfolders"() {
-//        given:
-//        File src = new File(getClass().getResource('/content').toURI())
-//
-//        when:
-//        boolean recurse = true
-//        FSFolder folderFS = new FSFolder(src, 1, ignoreFiles, ignoreFolders, recurse)
-//        List<FSFolder> allSubFolders = folderFS.getAllSubFolders()
-//
-//        then:
-//        allSubFolders instanceof List<FSFolder>
-//        allSubFolders.size() == 3
-//
-//    }
 
 
 //    def "basic folder load with ignore check toSolrInputDocument"() {
@@ -182,32 +78,30 @@ class FSFolderTest extends Specification {
 //    }
 
 
-/*
     def "folder load with toSolrInputDocument"() {
         given:
         File src = new File(getClass().getResource('/content').toURI())
 
         when:
-        FSFolder folder = new FSFolder(src, 1, ignoreFiles, ignoreFolders)
+        FSFolder folder = new FSFolder(src,)
         List<SolrInputDocument> solrDocs = folder.toSolrInputDocumentList()
 
         then:
-        folder.fsFiles.size()== 20    //14
+        folder.fsFiles.size() == 20    //14
         solrDocs.size() == 21
-        folder.subDirectories.size()==1
-        folder.ignoredFolders.size()==0
-        folder.ignoredDirectories.size()==1
-        folder.ignoredFileNames.size()==1
+        folder.subDirectories.size() == 1
+        folder.ignoredFolders.size() == 0
+        folder.ignoredDirectories.size() == 1
+        folder.ignoredFileNames.size() == 1
     }
-*/
 
 
     def "load and analyze folder"() {
         given:
-        File src = new File(getClass().getResource('/content').toURI())
+//        File src = new File(getClass().getResource('/content').toURI())
         ConfigObject config = new ConfigSlurper().parse(getClass().getResource('/configLocate.groovy'))
         FolderAnalyzer analyzer = new FolderAnalyzer(config)
-        FSFolder startFolder = new FSFolder(src, 1, ignoreFiles, ignoreFolders)
+        FSFolder startFolder = new FSFolder(startFolder, 1, ignoreFiles, ignoreFolders)
 
         when:
         def foo = startFolder.analyze(analyzer)

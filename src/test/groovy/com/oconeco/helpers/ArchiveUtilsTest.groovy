@@ -42,7 +42,6 @@ class ArchiveUtilsTest extends Specification {
 
     def "unzip tarball"() {
         given:
-        println("Archive file: ${tarball.absolutePath}")
         InputStream gzi = new GzipCompressorInputStream(targz.newInputStream());
         ArchiveInputStream tarArchive = new TarArchiveInputStream(gzi)
 
