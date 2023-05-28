@@ -1,7 +1,3 @@
-
-
-
-
 ## Process & Overview
 - Locate - track folders and files
 - Full Crawl folders  (~once per week)
@@ -22,6 +18,10 @@
     - parent folder
     - children folders
 
+
+## Thoughs and Questions
+- Should FolderAnalyzer "know about" children (i.e. FileAnalyzer)?
+- or should the crawler call the individual analysis for each object/type? (better flexibility? let the crawler "know" the intent/goal)
 
 ## Analysis
 
