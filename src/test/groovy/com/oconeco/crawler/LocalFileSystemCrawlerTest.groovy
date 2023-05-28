@@ -3,10 +3,12 @@ package com.oconeco.crawler
 
 import com.oconeco.helpers.Constants
 import com.oconeco.models.FSFolder
+import org.apache.log4j.Logger
 import spock.lang.Specification
 
 import java.nio.file.Path
 import java.util.regex.Pattern
+
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -15,60 +17,60 @@ import java.util.regex.Pattern
  */
 
 class LocalFileSystemCrawlerTest extends Specification {
+    Logger log = Logger.getLogger(this.class.name);
+    String locationName = 'spock'
+    String crawlName = 'test'
+    Pattern ignorePattern = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]
+    def startFolder = Path.of(getClass().getResource('/content').toURI());
+    LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName)
+
+
     def "basic localhost crawl of test folder inside code folder "() {
-        given:
-        String hostname = InetAddress.getLocalHost().getHostName()
-        def startFolder = Path.of(getClass().getResource('/content').toURI());
-        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(hostname, 'testCrawl')
-        Map<String, Pattern> namePatterns =  Constants.DEFAULT_FOLDERNAME_PATTERNS
 
         when:
-        def results = crawler.buildCrawlFolders(startFolder, namePatterns)
-//        def toCrawl = results[Constants.LBL_CRAWL]
-//        def toIgnore = results[Constants.LBL_IGNORE]
-//        List<String> crawlNames = toCrawl?.collect{ FSFolder fsFolder ->
-//            fsFolder.name
-//        }
-//        def ignoreNames = results[Constants.LBL_IGNORE]?.collect { FSFolder fsFolder -> fsFolder.name}
-//        List<String> cnames = ['content','testsub','subFolder2', 'subfolder3']
-//        FSFolder firstFsFolderToCrawl = toCrawl[0]
+        def results = crawler.buildCrawlFolders(startFolder, ignorePattern)
+        def toCrawl = results.findAll { !it.ignore }
+        def toIgnore = results.findAll { it.ignore }
+
+        List<String> crawlNames = toCrawl?.collect { FSFolder fsFolder -> fsFolder.name }
+        def ignoreNames = toIgnore?.collect { FSFolder fsFolder -> fsFolder.name }
+
+        List<String> cnames = ['content', 'testsub', 'subFolder2', 'subfolder3']
+        FSFolder firstFsFolderToCrawl = toCrawl[0]
 
         then:
         results != null
-//        results.size() == 2
-//        toCrawl.size() == 4
-//        crawlNames.containsAll(cnames)
-//        firstFsFolderToCrawl.name == 'content'
-//        firstFsFolderToCrawl.depth == 1
-//        firstFsFolderToCrawl.type == FSFolder.TYPE
-//
-//        ignoreNames.containsAll(['ignoreMe'])
+        results.size() == 5
+        toCrawl.size() == 4
+        crawlNames.containsAll(cnames)
+        firstFsFolderToCrawl.name == 'content'
+        firstFsFolderToCrawl.depth == 1
+        firstFsFolderToCrawl.type == FSFolder.TYPE
+
+        ignoreNames.containsAll(['ignoreMe'])
     }
 
 
- def "hacked test for specific local filesystem"() {
+    def "crawl and process archive files to solr input docs"() {
         given:
-        long start = System.currentTimeMillis()
-
-        String hostname = InetAddress.getLocalHost().getHostName()
-        def userHome = System.getProperty("user.home")
-        File startFolder = new File("${userHome}/Documents")
-        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(hostname, 'testSeanHome')
-        Map<String, Pattern> namePatterns =  Constants.DEFAULT_FOLDERNAME_PATTERNS
+        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, 'testCrawl')
+//        Pattern ignoreNamePattern = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]
 
         when:
-        def results = crawler.buildCrawlFolders(startFolder, namePatterns)
-
-        long end = System.currentTimeMillis()
-        long elapsed = end - start
-        println "Elapsed time: ${elapsed}ms (${elapsed/1000} sec)"
+        def results = crawler.buildCrawlFolders(startFolder, ignorePattern)
+        results.each {FSFolder fsFolder ->
+            if(fsFolder.ignore) {
+                log.info "Skip crawling files in folder: $fsFolder"
+            } else{
+                log.info "crawl files in folder: $fsFolder"
+                def folderFiles = crawler.getFolderFiles(fsFolder, ignorePattern)
+                log.info "Folder files: ${folderFiles.size()}"
+            }
+        }
 
         then:
-        results.size() > 1
-//        results.keySet()[0] == Constants.LBL_CRAWL
-//        results.keySet()[1] == Constants.LBL_IGNORE
+        results.size() == 5
 
-//        results.keySet() == ['foldersToCrawl', 'ignoreFolders']
     }
 
 
