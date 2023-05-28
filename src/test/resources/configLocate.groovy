@@ -23,7 +23,7 @@ namePatterns.files = [
         media       : ~/.*(avi|jpe?g|ogg|mp3|mpe?g|png|wav)/,
         logs        : ~/.*(logs?\.?\d*)/,
         archive     : ~/.*(arc|cab|dmg|gz|jar|parquet|rar|zip|tar\.(bz2?|gz|Z)|war|zip)/,
-        compressed: ~/.*\.(bz2?|gz|z|Z)/,
+        compressed  : ~/.*\.(bz2?|gz|z|Z)/,
         web         : ~/.*(html?)/,
         system      : ~/.*(_SUCCESS|bat|bin|bkup|cache|class|cookies|deb|gcc|lib|\.old|pkg|rpm|#$)/,
 ]
@@ -31,12 +31,12 @@ namePatterns.files = [
 namePatterns.folders = [
         ignore : ~/(__snapshots__|\.bsp|\.cache|\.csv|\.gradle|\.git|\.github|\.idea|\.settings|\.svn|\.vscode|_global|ignore.*|runtime)/,
         content: ~/(content)/,
-        office: ~/(?i).*(documents)/,
+        office : ~/(?i).*(documents)/,
         techDev: ~/.*(groovy|gradle|classes)/,
         system : ~/(_global)/,
         techDev: ~/(.gradle|compile|groovy|java|main|scala|src|target|test|resources|wrapper)/,
-        test: ~/(?i).*(test)/,
-        work: ~/(?i).*(lucidworks|oconeco|work)/,
+        test   : ~/(?i).*(test)/,
+        work   : ~/(?i).*(lucidworks|oconeco|work)/,
 ]
 
 
