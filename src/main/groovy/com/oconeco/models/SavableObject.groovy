@@ -5,6 +5,9 @@ import com.oconeco.persistence.SolrSaver
 import org.apache.log4j.Logger
 import org.apache.solr.common.SolrInputDocument
 
+import java.util.regex.Matcher
+import java.util.regex.Pattern
+
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -20,10 +23,12 @@ class SavableObject {
     String id
     /** label or name of thing */
     String name
+    /** path or similar */
+    String path
     /** object type label */
     String type
     /** if hierarchacical (quite common) what is the depth here? */
-    Integer depth = null
+    Integer depth = 0
     /** size of thing -- (ie count of files and subdirs in a folder */
     Long size
     /** name of 'source', where this came from, e.g.: hostname, browser profile, email account,.... */
@@ -45,10 +50,11 @@ class SavableObject {
     /** rough metric for how popular or well-used this dir is */
     def popularity
 
+    // todo -- look into using categories as well?
     /** type assigned programmatically (by this package's analysis code) */
-    List<String> assignedTypes
+    List<String> labels
     /** user tagging */
-    List<String> taggedTypes
+    List<String> tags
     /** machine learning clusters (unsupervised) */
     List<String> mlClusterType
     /** machine learning classifics (supervised) */
@@ -60,11 +66,19 @@ class SavableObject {
     // these may not be applicable for all, but perhaps enough to move into this base object
     String mimeType
     String owner
+
 //    List<String> permissions
     Date lastAccessDate
 //    Date lastModifyDate
     Boolean archive = true
     Boolean compressed = true
+    /** general flag on should the system ignore this object.
+     * Note: crawler may still include object (and maybe even content) and save it,
+     * but this flag can mean it should be filtered out of search & analysis
+     */
+    Boolean ignore = false
+    /** debug/tracking information on what (if any) string matched the ignore regex pattern */
+    String matchIgnore = null
 
 
     /**
@@ -103,11 +117,11 @@ class SavableObject {
      * More common constrcutor - set the source thing, as well as depth (descendent object will add find & the other details
      * @param thing -(file, folder, bookmark, url,...)
      * @param locationName - name source, e.g. hostname for filesystem crawls, profile for browser history/bookmarks, email account...
-     * @param depth - depth of thing relative to start (calling code will provide this)
+     * @param parent - depth of thing relative to start (calling code will provide this)
      */
-    SavableObject(def thing, String locationName, Integer depth) {
+    SavableObject(def thing, String locationName, SavableObject parent) {
         this(thing, locationName)
-        this.depth = depth
+        this.depth = parent.depth + 1
         log.debug "Creating savable object thing: $thing"
     }
 
@@ -122,19 +136,25 @@ class SavableObject {
         sid.setField(SolrSaver.FLD_TYPE, type)
         sid.setField(SolrSaver.FLD_NAME_S, name)
         sid.setField(SolrSaver.FLD_NAME_T, name)
-        sid.setField(SolrSaver.FLD_SIZE, size)
-        sid.setField(SolrSaver.FLD_DEPTH, depth)
-        sid.setField(SolrSaver.FLD_ASSIGNED_TYPES, assignedTypes)
+        if(size)
+            sid.setField(SolrSaver.FLD_SIZE, size)
+        if(depth)
+            sid.setField(SolrSaver.FLD_DEPTH, depth)
+        if(labels)
+            sid.setField(SolrSaver.FLD_ASSIGNED_TYPES, labels)
         // todo -- consider switching to a batch time, rather than creating a new timestamp for each doc
         sid.setField(SolrSaver.FLD_INDEX_DATETIME, new Date())
-        sid.setField(SolrSaver.FLD_LASTMODIFIED, lastModifiedDate)
-        sid.setField(SolrSaver.FLD_UNIQUE, uniquifier)
-
-        if(taggedTypes){
-            sid.setField(SolrSaver.FLD_TAG_SS, taggedTypes)
+        if(lastModifiedDate) {
+            sid.setField(SolrSaver.FLD_LASTMODIFIED, lastModifiedDate)
         } else {
-//            log.debug "no tagged types?? $sid"
+            log.warn "No modified date for savableObject: $this"
         }
+
+        if(uniquifier)
+            sid.setField(SolrSaver.FLD_UNIQUE, uniquifier)
+
+        if(tags)
+            sid.setField(SolrSaver.FLD_TAG_SS, tags)
 
         if(this.crawlName) {
             sid.addField(SolrSaver.FLD_CRAWL_NAME, this.crawlName)
@@ -147,6 +167,25 @@ class SavableObject {
     String buildUniqueString(){
         String uniq = type + ':' + name + '::' + size
         return uniq
+    }
+
+
+    /**
+     * compare the name of the thing to regex pattern of what to ignore,
+     * @param fsFile Java
+     * @param ignoreFiles
+     * @return
+     */
+    String matchIgnorePattern(Pattern ignoreFiles){
+        Matcher matcher = name =~ ignoreFiles
+        if(matcher.matches()){
+            String firstGroupMatch = matcher.group(1)
+            matchIgnore = firstGroupMatch        // todo - consider more complicated patterns, get all matches/groups??
+            log.info "LocalFileSystemCrawler ignoring file (${this.class.simpleName}: $name) -- matched on: '$matchIgnore' -- pattern ($ignoreFiles)"       // todo change back to debug
+        } else {
+            log.debug "\t\tnot ignoring: $name"
+        }
+        return matchIgnore
     }
 
 }

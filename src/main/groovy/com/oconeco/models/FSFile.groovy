@@ -2,7 +2,6 @@ package com.oconeco.models
 
 import com.oconeco.helpers.Constants
 import com.oconeco.persistence.SolrSaver
-import org.apache.commons.compress.archivers.ArchiveEntry
 import org.apache.commons.io.FilenameUtils
 import org.apache.log4j.Logger
 import org.apache.solr.common.SolrInputDocument
@@ -35,9 +34,10 @@ class FSFile extends SavableObject {
     Boolean archive
     Boolean compressed
 
-    FSFile(File f, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN, Integer depth = null) {
+    FSFile(File f, SavableObject parent, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN) {
         super(f,locationName, depth)
-        id = locationName + ':' + f.absolutePath
+        path = f.absolutePath
+        id = locationName + ':' + path
         type = TYPE
 
         if(!this.thing) {
@@ -74,6 +74,8 @@ class FSFile extends SavableObject {
         log.debug "File(${this.toString()})"
     }
 
+    // todo -- remove this, move logic to something like fsFile.expandArchive()
+/*
     FSFile(ArchiveEntry archiveEntry, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN, Integer depth = null) {
         super(archiveEntry,locationName, depth)
         id = locationName + ':' + archiveEntry.name
@@ -103,13 +105,14 @@ class FSFile extends SavableObject {
 
         log.debug "Archive Entry File(${this.toString()})"
     }
+*/
 
     String toString() {
         String s = null
-        if (assignedTypes) {
-            s = "${type}: ${name} :: (${assignedTypes[0]})"
+        if (labels) {
+            s = "${type}: ${name} :: (${labels[0]})"
         } else {
-            s = "${type}: ${name}"
+            s = "${type}: ${name}" + (ignore ? "[ignore:$ignore]" : '')
         }
         return s
     }
@@ -139,7 +142,7 @@ class FSFile extends SavableObject {
             log.warn "File ($ffs) io exception checking if we have an archive: $e"
         }
         boolean isArchive = fileSignature == 0x504B0304 || fileSignature == 0x504B0506 || fileSignature == 0x504B0708 || fileSignature== 529205248 || fileSignature== 529205268
-        if(assignedTypes?.contains(Constants.LBL_ARCHIVE)) {
+        if(labels?.contains(Constants.LBL_ARCHIVE)) {
             if(!isArchive) {
                 log.info "Should be archive: $f -> ($fileSignature) -- $isArchive"
             } else {

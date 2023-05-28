@@ -1,7 +1,6 @@
 package com.oconeco.crawler
 
-
-import com.oconeco.helpers.Constants
+import com.oconeco.models.FSFile
 import com.oconeco.models.FSFolder
 import groovy.io.FileType
 import groovy.io.FileVisitResult
@@ -9,7 +8,6 @@ import org.apache.log4j.Logger
 
 import java.nio.file.Path
 import java.util.regex.Pattern
-
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -30,6 +28,8 @@ class LocalFileSystemCrawler {
         this.locationName = locationName
         this.statusDepth = statusDepth
     }
+
+
 
     List<FSFolder> buildCrawlFolders(def source, Pattern ignorePattern) {
         log.info "Start crawl with source path:($source) and name ignore pattern: $ignorePattern"
@@ -85,15 +85,17 @@ class LocalFileSystemCrawler {
                            int pathElements = reletivePath.getNameCount();
                            FSFolder fsFolder = new FSFolder(it, this.locationName, this.crawlName, pathElements)
                            if (it ==~ ignorePattern) {
-                               fsFolder.shouldIgnore = true
+                               fsFolder.ignore = true
                                log.info "\t\t\tINGOREing folder: $it -- matches ignorePattern: $ignorePattern"
+                               foldersList << fsFolder
                                return FileVisitResult.SKIP_SUBTREE
 
                            } else {
-                               fsFolder.shouldIgnore = false
+                               fsFolder.ignore = false
                                log.info "\t\tADDING Crawl folder: $it"
+                               foldersList << fsFolder
                            }
-                           foldersList << fsFolder
+
                        },
 /*
                        postDir  : {
@@ -111,14 +113,15 @@ class LocalFileSystemCrawler {
         startFolder.traverse(options) { def folder ->
             log.debug "\t\ttraverse folder $folder"
         }
-//        Map<String, List<FSFolder>> results = [:]
-        // note: is it possible to initialize with keys that are variables??
-//        results.put(Constants.LBL_CRAWL, foldersToCrawl)
-//        results.put(Constants.LBL_IGNORE, ignoredFolders)
 
-//        return results
         return foldersList
     }
+
+//    def getFolderFiles(FSFolder fsFolder, Pattern ignoreFiles) {
+//        def results = getFolderFiles(fsFolder.thing, ignoreFiles)
+//        return results
+//    }
+
 
 
     /**
@@ -127,23 +130,46 @@ class LocalFileSystemCrawler {
      * param ignoredFolders - ignore pattern
      * return list of files
      */
-    def getFolderFiles(File folder, Pattern ignoreFiles) {
+//    def getFolderFiles(File folder, Pattern ignoreFiles) {        // todo -- check and delete this line
+    def getFolderFiles(FSFolder fSFolder, Pattern ignoreFilesPattern) {
         List<File> filesList = []
+        File folder = fSFolder.thing
         if (folder?.exists()) {
             if (folder.canRead()) {
                 folder.eachFile(FileType.FILES) { File file ->
-                    if (shouldIgnore(file, ignoreFiles)) {
-                        log.debug "Ignoring file: $file"
+                    FSFile fsFile = new FSFile(file,fSFolder, locationName, crawlName)
+                    filesList << fsFile
+                    def ignore = fsFile.matchIgnorePattern(ignoreFilesPattern)
+                    if (ignore) {
+                        log.debug "\t\tIGNORING file: $file"
+//                        fsFile.ignore=true
                     } else {
-                        filesList << file
+                        log.debug "\t\tNOT ignoring file: $file"
+//                        fsFile.ignore= false //redundant??
                     }
                 }
             } else {
-                log.warn "\t\tCannot read folder: ${folder.absolutePath}"
+                log.warn "\t\tCannot read folder: ${fSFolder.absolutePath}"
             }
         } else {
-            log.warn "\t\tFolder (${folder.absolutePath}) does not exist!!"
+            log.warn "\t\tFolder (${fSFolder.absolutePath}) does not exist!!"
         }
+        fSFolder.children = filesList
         return filesList
     }
+
+//    boolean shouldIgnore(File file, Pattern ignoreFiles) {
+//    }
+
+
+    /**
+     * consider moving this to analyzer code
+     * @param folder
+     * @param savedFolderDoc
+     * @return
+     */
+//    boolean folderHasUpdates(FSFolder folder, SolrDocument savedFolderDoc){
+//        log.info "Folder to consider: $folder -- Saved info: $savedFolderDoc"
+//        return true
+//    }
 }

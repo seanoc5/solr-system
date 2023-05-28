@@ -3,17 +3,11 @@ package com.oconeco.models
 import com.oconeco.helpers.Constants
 import com.oconeco.persistence.SolrSaver
 import org.apache.commons.compress.archivers.ArchiveEntry
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.io.FilenameUtils
 import org.apache.log4j.Logger
 import org.apache.solr.common.SolrInputDocument
-
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.attribute.BasicFileAttributes
-import java.nio.file.attribute.FileOwnerAttributeView
-import java.nio.file.attribute.FileTime
-import java.util.zip.ZipEntry
 
 /**
  * @author :    sean
@@ -31,17 +25,25 @@ class ArchFile extends SavableObject {
     public static final String TYPE = 'ArchFile'
     String extension
 
+    ArchFile(SavableObject paren, ArchiveEntry ae, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN) {
+        this(ae, parent, locationName, crawlName)
+        String simpleId = this.id
+        String parentId = parentFile.id
+        this.id = parentId + "::" + simpleId
+    }
+
     ArchFile(ArchiveEntry ae, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN, Integer depth = null) {
         super(ae, locationName, depth)
-        id = locationName + ':' + 'ae.path'
+        path = ae.name
+        name = ae.name
+        id = locationName + ':' + ae.name
         type = TYPE
 
         if (!this.thing) {
             this.thing = ae
         }
-        name = ae.name
-        Long aesize =ae.getSize()
-        if(aesize> 0) {
+        Long aesize = ae.getSize()
+        if (aesize > 0) {
             size = aesize
         } else {
             // https://stackoverflow.com/questions/13228168/zipoutputstream-leaving-size-1
@@ -50,12 +52,45 @@ class ArchFile extends SavableObject {
 
         if (depth) {
             this.depth = depth
+        } else {
+            log.debug "\t\tno depth set: $this"
         }
 
+        setLastModifiedDate(ae)
+
+        if (crawlName == Constants.LBL_UNKNOWN || crawlName == null) {
+            log.info "\t\t you likely want to add crawl name...."
+        } else {
+            this.crawlName = crawlName
+        }
+
+//        lastModifiedDate = new Date(f.lastModified())
+
+        // todo -- more here -- also check FSFolder object, and analyze() method,
+        String ext = FilenameUtils.getExtension(ae.name)
+        if (ext) {
+            this.extension = ext
+        } else {
+            log.info "\t\tno extension found for name: ${ae.name} (ext:$ext)"
+        }
+//        Path path = f.toPath()
+//
+//        BasicFileAttributes attr = Files.readAttributes(path, BasicFileAttributes.class);
+//        FileTime lastAccessTime = attr.lastAccessTime()
+//        lastAccessDate = new Date(lastAccessTime.toMillis())
+//        FileTime lastModifyTime = attr.lastModifiedTime()
+//        lastModifyDate = new Date(lastModifyTime.toMillis())
+//        createdDate = new Date(attr.creationTime().toMillis())
+//        FileOwnerAttributeView ownerAttributeView = Files.getFileAttributeView(path, FileOwnerAttributeView.class);
+//        owner = ownerAttributeView.getOwner();
+
+        log.debug "File(${this.toString()})"
+    }
+
+    public void setLastModifiedDate(ArchiveEntry ae) {
         if (ae instanceof ZipArchiveEntry) {
-            ZipArchiveEntry zae = (ZipArchiveEntry) ae
-            long tstamp = zae.getTime()
-            if (tstamp){
+            long tstamp = ae.getTime()
+            if (tstamp) {
                 lastModifiedDate = new Date(tstamp)
                 log.debug "Zip entry modified time field(s): $lastModifiedDate "
             } else {
@@ -71,30 +106,19 @@ class ArchFile extends SavableObject {
                 log.info "No xdosdate for file entry: $ae"
             }
 */
-        }
-
-        if (crawlName == Constants.LBL_UNKNOWN || crawlName == null) {
-            log.info "\t\t you likely want to add crawl name...."
+        } else if (ae instanceof TarArchiveEntry) {
+            // todo -- check last modified date processing
+            def lmd = ((TarArchiveEntry)ae).getLastModifiedDate()
+            lastModifiedDate = ((TarArchiveEntry)ae).lastModifiedDate
+//            if (tstamp) {
+//                lastModifiedDate = new Date(tstamp)
+//                log.debug "Zip entry modified time field(s): $lastModifiedDate "
+//            } else {
+//                log.info "No Modified date/time in zip entry: $zae"
+//            }
         } else {
-            this.crawlName = crawlName
+            log.warn "unhandled archive entry (type: ${ae.class.simpleName}) ${ae.name}"
         }
-
-//        lastModifiedDate = new Date(f.lastModified())
-
-        // todo -- more here -- also check FSFolder object, and analyze() method,
-        extension = FilenameUtils.getExtension(ae.name)
-//        Path path = f.toPath()
-//
-//        BasicFileAttributes attr = Files.readAttributes(path, BasicFileAttributes.class);
-//        FileTime lastAccessTime = attr.lastAccessTime()
-//        lastAccessDate = new Date(lastAccessTime.toMillis())
-//        FileTime lastModifyTime = attr.lastModifiedTime()
-//        lastModifyDate = new Date(lastModifyTime.toMillis())
-//        createdDate = new Date(attr.creationTime().toMillis())
-//        FileOwnerAttributeView ownerAttributeView = Files.getFileAttributeView(path, FileOwnerAttributeView.class);
-//        owner = ownerAttributeView.getOwner();
-
-        log.debug "File(${this.toString()})"
     }
 
 /*
@@ -131,8 +155,8 @@ class ArchFile extends SavableObject {
 
     String toString() {
         String s = null
-        if (assignedTypes) {
-            s = "${type}: ${name} :: (${assignedTypes[0]})"
+        if (labels) {
+            s = "${type}: ${name} :: (${labels[0]})"
         } else {
             s = "${type}: ${name}"
         }
@@ -140,15 +164,16 @@ class ArchFile extends SavableObject {
     }
 
     SolrInputDocument toSolrInputDocument() {
-//        File f = thing
         SolrInputDocument sid = super.toSolrInputDocument()
-//        sid.addField(SolrSaver.FLD_SIZE, size)
         if (crawlName) {
             sid.setField(SolrSaver.FLD_CRAWL_NAME, crawlName)
         }
+//        sid.addField(SolrSaver.FLD_SIZE, size)
 
         if (extension) {
             sid.addField(SolrSaver.FLD_EXTENSION_SS, extension)
+        } else {
+            log.info "\t\tno extention for archive file: $this"
         }
         sid.addField(SolrSaver.FLD_NAME_SIZE_S, "${this.name}:${this.size}")
 //        sid.addField(SolrSaver.FLD_DEPTH, depth)
@@ -164,7 +189,7 @@ class ArchFile extends SavableObject {
             log.warn "File ($ffs) io exception checking if we have an archive: $e"
         }
         boolean isArchive = fileSignature == 0x504B0304 || fileSignature == 0x504B0506 || fileSignature == 0x504B0708 || fileSignature == 529205248 || fileSignature == 529205268
-        if (assignedTypes?.contains(Constants.LBL_ARCHIVE)) {
+        if (labels?.contains(Constants.LBL_ARCHIVE)) {
             if (!isArchive) {
                 log.info "Should be archive: $f -> ($fileSignature) -- $isArchive"
             } else {
