@@ -25,12 +25,14 @@ import java.util.regex.Pattern
 class FolderAnalyzer extends BaseAnalyzer {
     Logger log = Logger.getLogger(this.class.name);
 
-
+    /**
+     * @deprecated ?? is there a real reason to track this, or just accept it as a constructor arg....
+     */
     ConfigObject config
 
-    List<String> extensions = []
-    Map<String, Pattern> fileNamePatterns = Constants.DEFAULT_FILENAME_PATTERNS
-    Map<String, Pattern> folderNamePatterns = Constants.DEFAULT_FOLDERNAME_PATTERNS
+//    List<String> extensions = []
+//    Map<String, Pattern> fileNamePatterns = Constants.DEFAULT_FILENAME_PATTERNS
+    Map<String, Pattern> namePatternsMap = Constants.DEFAULT_FOLDERNAME_PATTERNS
 
     ArchiveStreamFactory archiveStreamFactory = new ArchiveStreamFactory();
 
@@ -39,24 +41,16 @@ class FolderAnalyzer extends BaseAnalyzer {
         log.info "Blank constructor, using defaults..."
     }
 
-    FolderAnalyzer(Map<String, Pattern> fileNamePatterns, Map<String, Pattern> folderNamePatterns) {
+    FolderAnalyzer(Map<String, Pattern> fileNamePatterns, Map<String, Pattern> namePatternsMap) {
         this.fileNamePatterns = fileNamePatterns
-        this.folderNamePatterns = folderNamePatterns
+        this.namePatternsMap = namePatternsMap
     }
 
     FolderAnalyzer(ConfigObject config) {
         this.config = config
         if (config.namePatterns?.folders) {
-            folderNamePatterns = config.namePatterns.folders
-//            log.info "\t\tLoading Folder analzer of foldernames from 'config.namePatterns.files': ${folderNamePatterns.collect { '\n\t\t' + it }}"
-            log.info "\t\tLoading Folder analzer of foldernames from 'config.namePatterns.files': ${fileNamePatterns.keySet()}"
+            namePatternsMap = config.namePatterns.folders
         }
-        if (config.namePatterns?.files) {
-            fileNamePatterns = config.namePatterns.files
-//            log.info "\t\tLoading Folder analzer of filenames from 'config.namePatterns.files': ${fileNamePatterns.collect { '\n\t\t' + it }}"
-            log.info "\t\tLoading Folder analzer of filenames from 'config.namePatterns.files': ${fileNamePatterns.keySet()}"
-        }
-
     }
 
 
@@ -65,24 +59,30 @@ class FolderAnalyzer extends BaseAnalyzer {
 //    }
 
     List<String> analyze(SavableObject object) {
-        FSFolder ffs = (FSFolder)object
         List<String> labels = []
-        folderNamePatterns.each { String label, Pattern pattern ->
-            if (ffs.name ==~ pattern) {
-                log.info "\t\tASSIGNING label: $label -- $ffs"
-                labels << label
-                ffs.assignedTypes << label
-            } else {
-                log.debug "\\t\t ($label) no match on pattern: $pattern -- $ffs"
+        if(object) {
+            if(!object.labels) object.labels = []
+//            if(!object.labels) object.labels = []
+            FSFolder ffs = (FSFolder) object
+            namePatternsMap.each { String label, Pattern pattern ->
+                if (ffs.name ==~ pattern) {
+                    log.info "\t\tASSIGNING label: $label -- $ffs"
+                    ffs.labels << label
+                } else {
+                    log.debug "\\t\t ($label) no match on pattern: $pattern -- $ffs"
+                }
             }
-        }
-        if (labels) {
-            if (labels.size() > 1) {
-                log.debug " \t\t........ More that one label?? $labels -- $ffs"
+            labels = object.labels
+            if (labels) {
+                if (labels.size() > 1) {
+                    log.debug " \t\t........ More that one label?? $labels -- $ffs"
+                }
+            } else {
+                log.debug "\t\tNO LABEL folderType assigned?? $ffs  --> ${((FSFolder) ffs).thing.absolutePath}"
+                ffs.labels << Constants.LBL_UNKNOWN
             }
         } else {
-            log.debug "\t\tNO LABEL folderType assigned?? $ffs  --> ${((FSFolder) ffs).thing.absolutePath}"
-            ffs.assignedTypes << Constants.LBL_UNKNOWN
+            log.warn "Not a valid object: $object -- nothing to analyze"
         }
         return labels
     }
@@ -104,18 +104,18 @@ class FolderAnalyzer extends BaseAnalyzer {
                 if (m.matches()) {
                     log.debug "\t\tASSIGNING label: $label -- $fileFS :: matcher: ${m[0]}"
                     allLabels << label
-                    fileFS.assignedTypes << label
+                    fileFS.labels << label
                 } else {
                     log.debug "\\t\t ($label) no match on pattern: $pattern -- $fileFS"
                 }
             }
-            if (fileFS.assignedTypes) {
-                if (fileFS.assignedTypes.size() > 1) {
-                    log.debug "More that one label?? ${fileFS.assignedTypes} -- $fileFS"
+            if (fileFS.labels) {
+                if (fileFS.labels.size() > 1) {
+                    log.debug "More that one label?? ${fileFS.labels} -- $fileFS"
                 }
             } else {
                 log.debug "\t\tNO LABEL assigned?? $fileFS  --> ${((File) fileFS.thing).absolutePath}"
-                fileFS.assignedTypes << Constants.LBL_UNKNOWN
+                fileFS.labels << Constants.LBL_UNKNOWN
                 allLabels << Constants.LBL_UNKNOWN
             }
         }
