@@ -10,7 +10,7 @@ class Constants {
     public static final String LBL_UNKNOWN = 'unknown'
 
     public static final Map<String, Pattern> DEFAULT_FOLDERNAME_PATTERNS = [
-            ignore       : ~/.*(\.gradle|\.m2|\b*snapshots?\b*|\b*caches?\b*|git|github|ignore.*|node_modules|packages?|pkgs?|plugins?|repository|skins?|svn|target|vscode)/,
+            ignore       : ~/.*(\.gradle|\.m2|\b*snapshots?\b*|\b*caches?\b*|git|github|ignore.*|node_modules|packages?|pkgs?|plugins?|repository|skins?|skipme.*|svn|target|tmp|vscode)/,
             backups      : ~/.*(backups?|bkups?|old|timeshift)/,
             configuration: ~/.*(configs)/,
             documents    : ~/.*([Dd]ocuments|[Dd]esktop)/,
@@ -19,8 +19,9 @@ class Constants {
             programming  : ~/.*(java|jupyter|src|work)/,
             system       : ~/.*(class|sbt|sbt-\d.*|runtime)/,
     ]
+
     public static final Map<String, Pattern> DEFAULT_FILENAME_PATTERNS = [
-            ignore      : ~/([.~]*lock.*|_.*|.*\.te?mp$|.*\.class$|robots.txt)/,
+            ignore      : ~/([.~]*lock.*|_.*|.*\.te?mp$|.*\.class$|.*\.pem|robots.txt|skipme.*|.*\.tmp)/,
             office      : ~/.*\.(accdb|docx?|ods|odp|odt|pptx?|rtf|vsdx?|xlsx?)/,
             system      : ~/.*(\.(bin|deb|lib|pkg|rpm)|(gcc.*))/,
             archive     : ~/.*\.(arc|gz|rar|zip|tar.gz|zip)/,
