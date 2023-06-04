@@ -1,7 +1,10 @@
 package com.oconeco.models
 
+import com.oconeco.helpers.ArchiveUtils
 import com.oconeco.helpers.Constants
 import com.oconeco.persistence.SolrSaver
+import org.apache.commons.compress.archivers.ArchiveEntry
+import org.apache.commons.compress.archivers.ArchiveInputStream
 import org.apache.commons.io.FilenameUtils
 import org.apache.log4j.Logger
 import org.apache.solr.common.SolrInputDocument
@@ -29,22 +32,31 @@ class FSFile extends SavableObject {
     String mimeType
     String owner
 //    List<String> permissions
-    Date lastAccessDate
-    Date lastModifyDate
-    Boolean archive
-    Boolean compressed
+
+    String osName
+//    Date lastAccessDate
+//    Date lastModifyDate
+//    Boolean archive
+//    Boolean compressed
 
     FSFile(File f, SavableObject parent, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN) {
-        super(f,locationName, depth)
+        super(f, parent, locationName)
         path = f.absolutePath
-        id = locationName + ':' + path
+        // todo -- revisit if this replacing backslashes with forward slashes helps, I had trouble querying for id with backslashes (SoC 20230603)
+        id = (locationName + ':' + path).replaceAll('\\\\', '/')
         type = TYPE
+        hidden = f.isHidden()
+        if(hidden)
+            log.info "\t\tprocessing hidden file: $f"
 
         if(!this.thing) {
             this.thing = f
         }
         name = f.name
         size = f.size()
+
+        dedup = buildDedupString()
+
 
         if(depth) {
             this.depth = depth
@@ -62,14 +74,17 @@ class FSFile extends SavableObject {
         extension = FilenameUtils.getExtension(f.name)
         Path path = f.toPath()
 
-        BasicFileAttributes attr = Files.readAttributes(path, BasicFileAttributes.class);
+        osName = System.getProperty("os.name")
+
+
+        BasicFileAttributes attr = Files.readAttributes(path, BasicFileAttributes.class)
         FileTime lastAccessTime = attr.lastAccessTime()
         lastAccessDate = new Date(lastAccessTime.toMillis())
         FileTime lastModifyTime = attr.lastModifiedTime()
-        lastModifyDate = new Date(lastModifyTime.toMillis())
+        lastModifiedDate = new Date(lastModifyTime.toMillis())
         createdDate = new Date(attr.creationTime().toMillis())
-        FileOwnerAttributeView ownerAttributeView = Files.getFileAttributeView(path, FileOwnerAttributeView.class);
-        owner = ownerAttributeView.getOwner();
+        FileOwnerAttributeView ownerAttributeView = Files.getFileAttributeView(path, FileOwnerAttributeView.class)
+        owner = ownerAttributeView.getOwner()
 
         log.debug "File(${this.toString()})"
     }
@@ -107,37 +122,44 @@ class FSFile extends SavableObject {
     }
 */
 
-    String toString() {
-        String s = null
-        if (labels) {
-            s = "${type}: ${name} :: (${labels[0]})"
-        } else {
-            s = "${type}: ${name}" + (ignore ? "[ignore:$ignore]" : '')
-        }
-        return s
-    }
 
+    /**
+     * create an index-ready solr input doc from this FSFile object
+     * @return SolrInputDocument
+     */
+    @Override
     SolrInputDocument toSolrInputDocument() {
-//        File f = thing
         SolrInputDocument sid = super.toSolrInputDocument()
-//        sid.addField(SolrSaver.FLD_SIZE, size)
         if(crawlName){
             sid.setField(SolrSaver.FLD_CRAWL_NAME, crawlName)
+        }
+
+        if(owner){
+            sid.setField(SolrSaver.FLD_OWNER, owner)
         }
 
         if (extension) {
             sid.addField(SolrSaver.FLD_EXTENSION_SS, extension)
         }
-        sid.addField(SolrSaver.FLD_NAME_SIZE_S, "${this.name}:${this.size}")
-//        sid.addField(SolrSaver.FLD_DEPTH, depth)
+
+        if(!sid.getFieldValue(SolrSaver.FLD_DEDUP)) {
+            if (dedup) {
+                sid.addField(SolrSaver.FLD_DEDUP, dedup)
+            } else {
+                log.warn "No dedup value available!!!"
+                sid.addField(SolrSaver.FLD_DEDUP, "${this.name}:${this.size}")
+            }
+        } else {
+            log.debug("have a dedup value: $dedup -- $this")
+        }
         return sid
     }
 
     boolean isArchive() {
-        int fileSignature = 0;
+        int fileSignature = 0
         File f = this.thing
         try (RandomAccessFile raf = new RandomAccessFile(f, "r")) {
-            fileSignature = raf.readInt();
+            fileSignature = raf.readInt()
         } catch (IOException e) {
             log.warn "File ($ffs) io exception checking if we have an archive: $e"
         }
@@ -153,6 +175,89 @@ class FSFile extends SavableObject {
 
     }
 
+    List<SavableObject> gatherArchiveEntries() {
+        ArchiveInputStream aiszip = ArchiveUtils.getArchiveInputStream(this.thing)
+        List<SavableObject> archiveEntries = gatherArchiveEntries(aiszip)
+        aiszip.close()
+        return archiveEntries
+    }
 
+
+    /**
+     * helper util to get archive entries for any of the 'handled' archive types (e.g. zip, tar,...)
+     * @param ais
+     * @return List of various Archive entries
+     */
+     List<SavableObject> gatherArchiveEntries(ArchiveInputStream ais) {
+         if(ais) {
+             if (!children) {
+                 log.debug "Create children list... ($this)"
+                 children = []
+             }
+//             ArchiveEntry entry = null
+             while ((entry = ais.getNextEntry()) != null) {
+                 if (entry.isDirectory()) {
+                     ArchFolder archFolder = new ArchFolder(entry, this, locationName, crawlName)
+                     children << archFolder
+                     log.info "Dir: ${archFolder.toString()})"
+                 } else {
+//                log.debug "\t\tarchive entry file (${entry.name}) -- type:(${entry.class.simpleName})"
+                     ArchFile archFile = new ArchFile(entry, this, locationName, crawlName)
+                     children << archFile
+                     log.debug "\t\tFile: ${archFile.toString()})"
+
+                 }
+             }
+         } else {
+             log.warn "Invalid archive input stream: $ais, how did this happen??"
+         }
+         return children
+    }
+
+
+     List<SolrInputDocument> gatherSolrInputDocs(FSFile fsfile, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN, Integer depth = null) {
+        ArchiveInputStream aiszip = ArchiveUtils.getArchiveInputStream(fsfile)
+        List<SolrInputDocument> sidList = gatherSolrInputDocs(aiszip, locationName, crawlName, depth)
+        return sidList
+    }
+
+     List<SolrInputDocument> gatherSolrInputDocs(ArchiveInputStream ais, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN, Integer depth = null) {
+        List<SolrInputDocument> sidList = []
+         // todo -- get parent file object, change constructor sig below
+         ArchiveEntry entry = null
+        while ((entry = ais.getNextEntry()) != null) {
+            if (entry.isDirectory()) {
+                ArchFolder folder = new ArchFolder(entry, depth, locationName, crawlName)
+                SolrInputDocument sid = folder.toSolrInputDocument()
+                sidList << sid
+                log.debug "Archive folder (solr doc): ${sid})"
+            } else {
+                log.warn "REFACTOR: \t\tarchive entry file (${entry.name}) -- type:(${entry.class.simpleName}) --- move to constructor with FSFile object (to get parent file path)"
+                ArchFile file = new ArchFile(entry, locationName, crawlName)
+                SolrInputDocument sid = file.toSolrInputDocument()
+                sidList << sid
+//                Long size = entry.size
+//                sidList << entry
+                log.debug "\t\tArchive File (solr doc): ${sid})"
+
+            }
+        }
+        return sidList
+    }
+
+
+    /**
+     * custom string return value for this
+     * @return string/label
+     */
+    String toString() {
+        String s = null
+        if (labels) {
+            s = "${type}: ${name} :: (${labels[0]})"
+        } else {
+            s = "${type}: ${name}" + (ignore ? "[ignore:$ignore]" : '')
+        }
+        return s
+    }
 
 }
