@@ -8,6 +8,7 @@ import org.apache.log4j.Logger
 
 import java.nio.file.Path
 import java.util.regex.Pattern
+
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -15,24 +16,30 @@ import java.util.regex.Pattern
  * @description: class to crawl local filesystems
  */
 
+/**
+ * Simple local fs crawler, intended to be created for each crawl name/startfolder in a given location
+ * review if there is a benefit to having a persistent crawler over multiple folders/names in a given location/source
+ */
 class LocalFileSystemCrawler {
     static log = Logger.getLogger(this.class.name);
-    String crawlName = 'n.a.'
-    String locationName = 'n.a.'
+    String crawlName
+    String locationName
+    String osName
     int statusDepth = 3
 
+
+
     LocalFileSystemCrawler(String locationName, String crawlName, int statusDepth = 3) {
-//        super(name, location, statusDepth)
-        log.info "${this.class.name} constructor with name: $crawlName, location:$locationName, statusDepth:$statusDepth..."
+        log.info "${this.class.simpleName} constructor with location:$locationName, name: $crawlName,  statusDepth:$statusDepth..."
         this.crawlName = crawlName
         this.locationName = locationName
+        osName = System.getProperty("os.name")      // moved this from config file to here in case we start supporting remote filesystems...? (or WSL...?)
         this.statusDepth = statusDepth
     }
 
 
-
     List<FSFolder> buildCrawlFolders(def source, Pattern ignorePattern) {
-        log.info "Start crawl with source path:($source) and name ignore pattern: $ignorePattern"
+        log.info "\t\tStart crawl with source path:($source) and name ignore pattern: $ignorePattern"
         File startFolder = getStartDirectory(source)
         List<FSFolder> results = visitFolders(startFolder, ignorePattern)
         return results
@@ -72,30 +79,63 @@ class LocalFileSystemCrawler {
      * and even check for updates to skip folders with no apparent changes
      */
     List<FSFolder> visitFolders(File startFolder, Pattern ignorePattern) {
-        List<FSFolder> foldersList = []
-//        List<FSFolder> ignoredFolders = []
+        HashMap<String, FSFolder> foldersMap = [:]
+
+        // track the starting Path so we can 'relativize` and get relative depth of this crawl
         Path startPath = startFolder.toPath()
+
+        FSFolder lastFolder
 
         Map options = [type     : FileType.DIRECTORIES,
                        preDir   : {
                            File f = (File) it
+                           boolean accessible = f.exists() && f.canRead() && f.canExecute()
+
                            Path thisPath = f.toPath()
                            Path reletivePath = startPath.relativize(thisPath)
 //                           List parts = reletivePath.
                            int pathElements = reletivePath.getNameCount();
                            FSFolder fsFolder = new FSFolder(it, this.locationName, this.crawlName, pathElements)
-                           if (it ==~ ignorePattern) {
-                               fsFolder.ignore = true
-                               log.info "\t\t\tINGOREing folder: $it -- matches ignorePattern: $ignorePattern"
-                               foldersList << fsFolder
-                               return FileVisitResult.SKIP_SUBTREE
+                           if (lastFolder) {
+                               if (f.parentFile.path == lastFolder.path) {
+                                   if (fsFolder.parent) {
+                                       log.info "\t\t____ already have parent: ${fsFolder.parent}"
+                                   } else {
+                                       log.debug "\t\t____ setting FSFolder (${fsFolder.toString()}) parent to last folder: $lastFolder"
+                                       fsFolder.parent = lastFolder
+                                   }
+                               } else {
+                                   FSFolder parentFolder = foldersMap.get(f.parentFile.path)
+                                   if (parentFolder) {
+                                       log.debug "\t\t____ found parent folder: $parentFolder in map, setting $fsFolder parent to it"
+                                       fsFolder.parent = parentFolder
+                                   } else {
+                                       log.info "\t\t____ Parent folder ($lastFolder) is not the right parent for $fsFolder!!"
+                                   }
+                               }
 
                            } else {
-                               fsFolder.ignore = false
-                               log.info "\t\tADDING Crawl folder: $it"
-                               foldersList << fsFolder
+                               log.debug "\t\tFirst folder? no parentFolder set yet... $fsFolder"
                            }
+                           // todo -- is this helpful? premature optimization? does this save enough for the extra code/maintenance???
+                           lastFolder = fsFolder      // attempting to track parent/child (cheaply??)
 
+                           if(accessible) {
+                               if (it.name ==~ ignorePattern) {
+                                   fsFolder.ignore = true
+                                   log.info "\t\t---- INGOREing folder: $it -- matches ignorePattern: $ignorePattern"
+                                   foldersMap.put(f.path, fsFolder)
+                                   return FileVisitResult.SKIP_SUBTREE
+
+                               } else {
+                                   fsFolder.ignore = false
+                                   log.debug "\t\tADDING Crawl folder: $it"
+                                   foldersMap.put(f.path, fsFolder)
+                               }
+                           } else {
+                               log.warn "Got a bad/inaccessible folder? $it"
+                               return FileVisitResult.SKIP_SUBTREE
+                           }
                        },
 /*
                        postDir  : {
@@ -111,17 +151,11 @@ class LocalFileSystemCrawler {
         log.debug "Starting crawl of folder: ($startFolder)  ..."
 
         startFolder.traverse(options) { def folder ->
-            log.debug "\t\ttraverse folder $folder"
+            log.debug "\t\ttraverse folder $folder"     // should there be action here?
         }
 
-        return foldersList
+        return foldersMap?.values()?.toList()
     }
-
-//    def getFolderFiles(FSFolder fsFolder, Pattern ignoreFiles) {
-//        def results = getFolderFiles(fsFolder.thing, ignoreFiles)
-//        return results
-//    }
-
 
 
     /**
@@ -130,23 +164,22 @@ class LocalFileSystemCrawler {
      * param ignoredFolders - ignore pattern
      * return list of files
      */
-//    def getFolderFiles(File folder, Pattern ignoreFiles) {        // todo -- check and delete this line
-    def getFolderFiles(FSFolder fSFolder, Pattern ignoreFilesPattern) {
-        List<File> filesList = []
+    List<FSFile> getFolderFsFiles(FSFolder fSFolder, Pattern ignoreFilesPattern) {
+        List<FSFile> fSFilesList = []
         File folder = fSFolder.thing
         if (folder?.exists()) {
             if (folder.canRead()) {
                 folder.eachFile(FileType.FILES) { File file ->
-                    FSFile fsFile = new FSFile(file,fSFolder, locationName, crawlName)
-                    filesList << fsFile
+                    FSFile fsFile = new FSFile(file, fSFolder, locationName, crawlName)
                     def ignore = fsFile.matchIgnorePattern(ignoreFilesPattern)
                     if (ignore) {
                         log.debug "\t\tIGNORING file: $file"
-//                        fsFile.ignore=true
+                        fsFile.ignore=true
                     } else {
                         log.debug "\t\tNOT ignoring file: $file"
 //                        fsFile.ignore= false //redundant??
                     }
+                    fSFilesList << fsFile
                 }
             } else {
                 log.warn "\t\tCannot read folder: ${fSFolder.absolutePath}"
@@ -154,8 +187,13 @@ class LocalFileSystemCrawler {
         } else {
             log.warn "\t\tFolder (${fSFolder.absolutePath}) does not exist!!"
         }
-        fSFolder.children = filesList
-        return filesList
+        if (fSFolder.children) {
+            log.warn "FSFolder ($fSFolder) already has 'children' list initiated (is this bad code??): $fSFolder.children"
+        } else {
+            log.debug "\t\tinitiating fsFolder.children with collected filesList (size:${fSFilesList.size()}"
+        }
+        fSFolder.children = fSFilesList
+        return fSFilesList
     }
 
 //    boolean shouldIgnore(File file, Pattern ignoreFiles) {
@@ -172,4 +210,8 @@ class LocalFileSystemCrawler {
 //        log.info "Folder to consider: $folder -- Saved info: $savedFolderDoc"
 //        return true
 //    }
+    @Override
+    public String toString() {
+        return "LocalFileSystemCrawler{" + "crawlName='" + crawlName + '\'' + ", locationName='" + locationName + '\'' + '}';
+    }
 }
