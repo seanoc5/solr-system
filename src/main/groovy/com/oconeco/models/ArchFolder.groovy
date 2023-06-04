@@ -3,10 +3,12 @@ package com.oconeco.models
 import com.oconeco.helpers.Constants
 import com.oconeco.persistence.SolrSaver
 import org.apache.commons.compress.archivers.ArchiveEntry
+import org.apache.commons.io.FilenameUtils
 import org.apache.log4j.Logger
 import org.apache.solr.common.SolrInputDocument
 
 import java.nio.file.attribute.FileTime
+
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -23,27 +25,51 @@ class ArchFolder extends SavableObject {
     public static final String TYPE = 'ArchFolder'
     String owner
 //    List<String> permissions
-    Date lastAccessDate
-    Date lastModifyDate
-    Boolean archive = true
-    Boolean compressed = true
+//    Date lastAccessDate
+//    Date lastModifyDate
+//    Boolean archive = true
+//    Boolean compressed = true
 
     ArchFolder(ArchiveEntry ae, SavableObject parent, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN) {
-        super(ae,locationName, parent)
-        id = locationName + ':' + ae.name
+        super(ae, parent, locationName)
         type = TYPE
+        archive = true
+        compressed=true     // todo -- add more logic here to check for archive without compression
+        String parentId = parent.id
+        if (ae.name) {
+            path = FilenameUtils.getFullPathNoEndSeparator(ae.name)
+            String fname = FilenameUtils.getBaseName(path)
+            if(fname) {
+                name = fname
+            } else {
+                log.warn "could not get folder name for arch entry: $ae"
+            }
 
-        if(!this.thing) {
+            if (parentId) {
+                this.id = parentId + "::" + ae.name
+            } else {
+                id = locationName + ':' + ae.name
+                log.warn "Missing parent id ($parentId) or ae.name (${ae.name}), using fallback id ($id)"
+            }
+        } else {
+            log.warn "Missing archive entry name?? $ae"
+            name = ae.toString()
+            path = ae.toString()
+        }
+
+        if (!this.thing) {
             this.thing = f
         }
-        name = ae.name
-        size = ae.size
-
-        if(parent) {
-            this.depth = parent
+        if(ae.size) {
+            size = ae.size
+        } else {
+            log.debug "No size for archive entry folder: $ae"
+        }
+        if (parent?.depth) {
+            this.depth = parent.depth + 1
         }
 
-        if(crawlName==Constants.LBL_UNKNOWN || crawlName == null) {
+        if (crawlName == Constants.LBL_UNKNOWN || crawlName == null) {
             log.debug "\t\t you likely want to add crawl name...."
         } else {
             this.crawlName = crawlName
@@ -60,9 +86,9 @@ class ArchFolder extends SavableObject {
 //        FileTime lastAccessTime = attr.lastAccessTime()
 //        lastAccessDate = new Date(lastAccessTime.toMillis())
         FileTime ftime
-        if(ae.mTime){
+        if (ae.mTime) {
             ftime = ae.mTime
-            this.lastModifyDate = new Date(ftime.toMillis())
+            this.lastModifiedDate = new Date(ftime.toMillis())
         } else {
             log.info "What does this archive type (${ae.class.simpleName} have for modify time??"
         }
@@ -74,7 +100,7 @@ class ArchFolder extends SavableObject {
     }
 
 /*
-    ArchFile(org.apache.commons.compress.archivers.ArchiveEntry archiveEntry, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN, Integer depth = null) {
+    ArchFileArchiveEntry archiveEntry, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN, Integer depth = null) {
         super(archiveEntry,locationName, depth)
         id = locationName + ':' + archiveEntry.name
         type = 'ArchiveEntry'
@@ -119,15 +145,19 @@ class ArchFolder extends SavableObject {
 //        File f = thing
         SolrInputDocument sid = super.toSolrInputDocument()
 //        sid.addField(SolrSaver.FLD_SIZE, size)
-        if(crawlName){
+        if (crawlName) {
             sid.setField(SolrSaver.FLD_CRAWL_NAME, crawlName)
         }
 
-        if(this.size) {
-            sid.addField(SolrSaver.FLD_NAME_SIZE_S, "${this.name}:${this.size}")
-        } else {
-            sid.addField(SolrSaver.FLD_NAME_SIZE_S, "${this.name}:unknown")
+//        if (this.size) {
+//            sid.addField(SolrSaver.FLD_NAME_SIZE_S, "${this.name}:${this.size}")
+//        } else {
+//            sid.addField(SolrSaver.FLD_NAME_SIZE_S, "${this.name}:unknown")
+//        }
+        if(dedup){
+            log.warn "ensure dedupe is saved, and replaces name-size field"
         }
+
 //        sid.addField(SolrSaver.FLD_DEPTH, depth)
         return sid
     }
@@ -140,9 +170,9 @@ class ArchFolder extends SavableObject {
         } catch (IOException e) {
             log.warn "File ($ffs) io exception checking if we have an archive: $e"
         }
-        boolean isArchive = fileSignature == 0x504B0304 || fileSignature == 0x504B0506 || fileSignature == 0x504B0708 || fileSignature== 529205248 || fileSignature== 529205268
-        if(labels?.contains(Constants.LBL_ARCHIVE)) {
-            if(!isArchive) {
+        boolean isArchive = fileSignature == 0x504B0304 || fileSignature == 0x504B0506 || fileSignature == 0x504B0708 || fileSignature == 529205248 || fileSignature == 529205268
+        if (labels?.contains(Constants.LBL_ARCHIVE)) {
+            if (!isArchive) {
                 log.info "Should be archive: $f -> ($fileSignature) -- $isArchive"
             } else {
                 log.debug "is archive: $f"
@@ -151,7 +181,6 @@ class ArchFolder extends SavableObject {
         return isArchive
 
     }
-
 
 
 }
