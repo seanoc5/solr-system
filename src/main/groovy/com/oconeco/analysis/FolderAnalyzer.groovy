@@ -50,6 +50,9 @@ class FolderAnalyzer extends BaseAnalyzer {
         this.config = config
         if (config.namePatterns?.folders) {
             namePatternsMap = config.namePatterns.folders
+            log.info "\t\tAnalyzer (${this.class.simpleName}) setting namePatternsMap: $namePatternsMap"
+        } else {
+            log.warn "No namePatternsMap found in config file... no analysis of Folders?"
         }
     }
 
@@ -60,10 +63,16 @@ class FolderAnalyzer extends BaseAnalyzer {
 
     List<String> analyze(SavableObject object) {
         List<String> labels = []
-        if(object) {
-            if(!object.labels) object.labels = []
-//            if(!object.labels) object.labels = []
+        if (object) {
             FSFolder ffs = (FSFolder) object
+
+            if (ffs.labels) {
+                log.info "Found existing labels (${ffs.labels}), chosing to NOT re-initialize, use existing... (ffs:$ffs)"
+            } else {
+                log.debug "no labels found, initializing with blank List (ffs: $ffs)"
+                ffs.labels = []
+            }
+
             namePatternsMap.each { String label, Pattern pattern ->
                 if (ffs.name ==~ pattern) {
                     log.info "\t\tASSIGNING label: $label -- $ffs"
@@ -72,17 +81,17 @@ class FolderAnalyzer extends BaseAnalyzer {
                     log.debug "\\t\t ($label) no match on pattern: $pattern -- $ffs"
                 }
             }
-            labels = object.labels
+            labels = ffs.labels
             if (labels) {
                 if (labels.size() > 1) {
-                    log.debug " \t\t........ More that one label?? $labels -- $ffs"
+                    log.info " \t\t........ More that one label?? $labels -- $ffs"
                 }
             } else {
                 log.debug "\t\tNO LABEL folderType assigned?? $ffs  --> ${((FSFolder) ffs).thing.absolutePath}"
                 ffs.labels << Constants.LBL_UNKNOWN
             }
         } else {
-            log.warn "Not a valid object: $object -- nothing to analyze"
+            log.warn "Not a valid ffs: $ffs -- nothing to analyze"
         }
         return labels
     }
