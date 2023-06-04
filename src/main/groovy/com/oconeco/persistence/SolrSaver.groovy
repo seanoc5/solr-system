@@ -19,12 +19,6 @@ class SolrSaver {
     public static final Logger log = Logger.getLogger(this.class.name)
 
     // todo -- move this to (BASE) Object hierarchy, leave solrsaver to do the actual saving, not building?
-    public static final String FOLDER = 'Folder'
-    public static final String FILE = 'File'
-
-    public static final String TRACK = 'track'
-    public static final String ANALYZE = 'analyze'
-
     public static final String FLD_ID = 'id'
     public static final String FLD_CRAWL_NAME = "crawlName_s"
     public static final String FLD_LOCATION_NAME = "locationName_s"
@@ -36,30 +30,39 @@ class SolrSaver {
     public static final String FLD_NAME_S = 'name_s'
     public static final String FLD_NAME_T = 'name_t'
     public static final String FLD_CONTENT_BODY = 'content_txt_en'
-    public static final String FLD_PARENT_PATH = 'parentPath_s'
-    public static final String FLD_LASTMODIFIED = 'lastModified_dt'
-    public static final String FLD_FILENAME_SS = "fileName_ss"
-    public static final String FLD_DIRNAME_SS = "dirName_ss"
+    public static final String FLD_SIZE = "size_i"
+    public static String FLD_DEDUP = 'dedup_s'
+
+    public static final String FLD_INDEX_DATETIME = "indexedTime_dt"        // pdate dynamic field
+    public static final String FLD_CREATED_DATE = "createdDate_dt"          // pdate dynamic field
+    public static final String FLD_LAST_MODIFIED = "lastModified_dt"        // pdate dynamic field
+    // todo - improve owner name extraction/ETL
+    public static final String FLD_OWNER = "owner_s"                        // varies by operating system...
+
+
+    public static final String FLD_CHILD_FILENAMES = "childFileName_ss"
+    public static final String FLD_CHILD_DIRNAMES = "childDirName_ss"
     public static final String FLD_HIDDENNAME_SS = "hiddenName_ss"
+    public static final String FLD_HIDDEN_B = "hidden_b"
     public static final String FLD_EXTENSION_SS = "extension_ss"
 
     public static final String FLD_SUBDIR_COUNT = 'subdirCount_i'
     public static final String FLD_FILE_COUNT = "fileCount_i"
     public static final String FLD_DIR_COUNT = "dirCount_i"
-    public static final String FLD_SIZE = "size_i"
+
     public static final String FLD_TAG_SS = "tag_ss"
-    public static final String FLD_ASSIGNED_TYPES = "assignedTypes_ss"
-    public static final String FLD_CHILDASSIGNED_TYPES = "childAssignedTypes_ss"
-    public static final String FLD_SAME_NAME_COUNT = "sameNameCount_i"
-    public static final String FLD_NAME_SIZE_S = "nameSize_s"
-    public static final String FLD_HOSTNAME = "hostName_s"
-    public static final String FLD_INDEX_DATETIME = "indexedTime_dt"            // pdate dynamic field
+    public static final String FLD_LABELS = "label_ss"
+//    public static final String FLD_CHILDASSIGNED_TYPES = "childAssignedTypes_ss"
+//    public static final String FLD_SAME_NAME_COUNT = "sameNameCount_i"
+//    public static final String FLD_NAME_SIZE_S = "nameSize_s"
+//    public static final String FLD_HOSTNAME = "hostName_s"
+    public static final String FLD_OS_NAME = "operatingSystem_s"
+
 
     public static String FLD_IGNORED_FILES_COUNT = 'ignoredFilesCount_i'
     public static String FLD_IGNORED_FILES = 'ignoredFileNames_ss'
     public static String FLD_IGNORED_FOLDERS_COUNT = 'ignoredFoldersCount_i'
     public static String FLD_IGNORED_FOLDERS = 'ignoredFolders_ss'
-    public static String FLD_UNIQUE = 'unique_s'
 
     final Integer SOLR_BATCH_SIZE = 5000
     final Integer MIN_FILE_SIZE = 10
@@ -70,8 +73,6 @@ class SolrSaver {
     Parser parser = null
     BodyContentHandler handler = null
     TikaConfig tikaConfig
-//    String dataSourceName = 'undefined'
-    String hostName = 'unknown host'
 
     /**
      * Create helper with a (non-thread safe???) solrClient that is configured for the solr server AND collection
@@ -79,21 +80,21 @@ class SolrSaver {
      * @param baseSolrUrl
      */
     SolrSaver(String baseSolrUrl) {
-        log.info "Constructor baseSolrUrl:$baseSolrUrl"
+        log.debug "Constructor baseSolrUrl:$baseSolrUrl"
         buildSolrClient(baseSolrUrl)
     }
 
     SolrSaver(String baseSolrUrl, String hostName) {
 //        this(baseSolrUrl)
-        log.info "\t\tConstructor baseSolrUrl:$baseSolrUrl --- Host/machine name:$hostName --- WITHOUT tika"
-        this.hostName = hostName
+        log.debug "\t\tConstructor baseSolrUrl:$baseSolrUrl --- Host/machine name:$hostName --- WITHOUT tika"
+//        this.hostName = hostName
         buildSolrClient(baseSolrUrl)
     }
 
     SolrSaver(String baseSolrUrl, String hostName, TikaConfig tikaConfig) {
 //        this(baseSolrUrl, dataSourceName)
         log.info "\t\tConstructor baseSolrUrl:$baseSolrUrl --- CrawlName:$hostName --- with TIKA config: $tikaConfig"
-        this.hostName = hostName
+//        this.hostName = hostName
         buildSolrClient(baseSolrUrl)
         this.tikaConfig = tikaConfig
         detector = tikaConfig.getDetector()
@@ -105,7 +106,7 @@ class SolrSaver {
         log.info "\t\tBuild solr client with baseSolrUrl: $baseSolrUrl"
 //        solrClient = new HttpSolrClient.Builder(baseSolrUrl).build()
         solrClient = new Http2SolrClient.Builder(baseSolrUrl).build()
-        log.info "\t\tBuilt Solr Client: $solrClient"
+        log.debug "\t\tBuilt Solr Client: ${solrClient.baseURL}"
     }
 
     public void closeClient(String msg = 'general close call'){
@@ -375,11 +376,12 @@ class SolrSaver {
     /**
      * wrapper to send collection of solrInputDocs to solr for processing
      * @param solrInputDocuments
+     * @param commitWithinMS time to allow before solr autocommit (solr performance tuning/batching)
      * @return UpdateResponse
      */
-    def saveDocs(ArrayList<SolrInputDocument> solrInputDocuments) {
-        log.info "Adding solrInputDocuments, size: ${solrInputDocuments.size()}"
-        UpdateResponse resp = solrClient.add(solrInputDocuments, 1000)
+    def saveDocs(ArrayList<SolrInputDocument> solrInputDocuments, int commitWithinMS = 1000) {
+        log.debug "Adding solrInputDocuments, size: ${solrInputDocuments.size()}"
+        UpdateResponse resp = solrClient.add(solrInputDocuments, commitWithinMS)
         return resp
     }
 
