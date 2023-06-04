@@ -1,8 +1,9 @@
 import com.oconeco.helpers.Constants
 import spock.lang.Specification
 
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.regex.Pattern
-
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -66,21 +67,60 @@ skip = ~/(te?mp|cache|delete)/
         passed.size() == 4
     }
 
-    def "test regex vs lots of string matches"() {
+    def "test regex FOLDER names"() {
         given:
         Pattern ignoreFolders = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]
-        List folderNames = ['/a/one/.csv/foo', 'bin/foo', 'c:\\fonts\\', '/home/sean/passme', 'c:\\goodwindows.doc', 'test/.m2', '/opt/test/pkgs']
+        List folderNames = ['/a/one/.csv/', 'bin/foo', 'c:\\fonts\\', '/home/sean/.gradle', 'c:\\Program Files', 'test/.m2', '/opt/test/pkgs']
 
         when:
-        List ignored = folderNames.findAll { it ==~ ignoreFolders }
-        List notIgnored = folderNames.findAll { !(it ==~ ignoreFolders) }
+        List ignored = []
+        List notIgnored = []
+        folderNames.each { String path ->
+            Path foo = Paths.get(path)
+            String name = foo.getFileName()
+            boolean match = (name ==~ ignoreFolders)
+            if(match) {
+                ignored << path
+            } else {
+                notIgnored << path
+            }
+        }
 
         then:
-        ignored.size() == 2
-        notIgnored.size() == 5
+        ignored.size() == 4
+        notIgnored.size() == 3
 
-        ignored[0] == 'test/.m2'
-        ignored[1] == '/opt/test/pkgs'
+        ignored[2] == 'test/.m2'
+        ignored[3] == '/opt/test/pkgs'
+
+
+    }
+
+    def "test regex FILENAMES"() {
+        given:
+        Pattern ignoreFiles = Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE]
+        List filenames = ['/a/one/~temp', 'bin/foo', 'c:\\fonts\\', '/home/sean/.ssh/key.pem', 'c:\\goodwindows.doc', 'test/foo.temp', '/test/bar.tmp']
+
+        when:
+        List ignored = []
+        List notIgnored = []
+        filenames.each { String path ->
+            Path foo = Paths.get(path)
+            String name = foo.getFileName()
+            boolean match = (name ==~ ignoreFiles)
+            if(match) {
+                ignored << path
+            } else {
+                notIgnored << path
+            }
+        }
+
+        then:
+        ignored.size() == 4
+        notIgnored.size() == 3
+
+        ignored[0] == '/a/one/~temp'
+        ignored[1] == '/home/sean/.ssh/key.pem'
 
 
     }
