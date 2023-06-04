@@ -33,7 +33,8 @@ class SavableObject {
     Long size
     /** name of 'source', where this came from, e.g.: hostname, browser profile, email account,.... */
     String locationName
-    /** name of 'crawl', useful for segmenting the source into various logical sub-sections, e.g. email folders, or filesystem start folders with different content contexts */
+    /** name of 'crawl', useful for segmenting the source into various logical sub-sections,
+     * e.g. email folders, or filesystem start folders with different content contexts */
     String crawlName
 
     /** date created  (i.e. how <em>old</em> is it?) */
@@ -41,10 +42,12 @@ class SavableObject {
     /** track updated/lastmodified date */
     Date lastModifiedDate
 
+    boolean hidden = false
+
     /** link to parent (if any) */
     def parent
     /** links to children (if any) */
-    List children
+    List<SavableObject> children
     /** rough metric for how recent this is (remove?) */
     def recency
     /** rough metric for how popular or well-used this dir is */
@@ -60,8 +63,8 @@ class SavableObject {
     /** machine learning classifics (supervised) */
     List<String> mlClassificationType
 
-    /** a string that should uniquely identify this thing, and hence, expose duplicate items */
-    String uniquifier = null
+    /** a string that should catch duplicate entries this thing, and hence */
+    String dedup = null
 
     // these may not be applicable for all, but perhaps enough to move into this base object
     String mimeType
@@ -70,15 +73,15 @@ class SavableObject {
 //    List<String> permissions
     Date lastAccessDate
 //    Date lastModifyDate
-    Boolean archive = true
-    Boolean compressed = true
+    Boolean archive = false
+    Boolean compressed = false
     /** general flag on should the system ignore this object.
      * Note: crawler may still include object (and maybe even content) and save it,
      * but this flag can mean it should be filtered out of search & analysis
      */
     Boolean ignore = false
     /** debug/tracking information on what (if any) string matched the ignore regex pattern */
-    String matchIgnore = null
+    String matchedIgnoreText = null
 
 
     /**
@@ -119,8 +122,9 @@ class SavableObject {
      * @param locationName - name source, e.g. hostname for filesystem crawls, profile for browser history/bookmarks, email account...
      * @param parent - depth of thing relative to start (calling code will provide this)
      */
-    SavableObject(def thing, String locationName, SavableObject parent) {
+    SavableObject(def thing, SavableObject parent, String locationName) {
         this(thing, locationName)
+        this.parent = parent
         this.depth = parent.depth + 1
         log.debug "Creating savable object thing: $thing"
     }
@@ -134,37 +138,58 @@ class SavableObject {
         SolrInputDocument sid = new SolrInputDocument()
         sid.setField(SolrSaver.FLD_ID, id)
         sid.setField(SolrSaver.FLD_TYPE, type)
+
         sid.setField(SolrSaver.FLD_NAME_S, name)
         sid.setField(SolrSaver.FLD_NAME_T, name)
-        if(size)
-            sid.setField(SolrSaver.FLD_SIZE, size)
-        if(depth)
-            sid.setField(SolrSaver.FLD_DEPTH, depth)
-        if(labels)
-            sid.setField(SolrSaver.FLD_ASSIGNED_TYPES, labels)
+        sid.setField(SolrSaver.FLD_PATH_S, path)
+        sid.setField(SolrSaver.FLD_PATH_T, path)
+        sid.setField(SolrSaver.FLD_SIZE, size)
+        sid.setField(SolrSaver.FLD_DEPTH, depth)
+
+        sid.setField(SolrSaver.FLD_LOCATION_NAME, locationName )
+        if(this.crawlName) {
+            sid.addField(SolrSaver.FLD_CRAWL_NAME, this.crawlName)
+        } else {
+            log.warn "No crawl name given: ${this}"
+        }
+
+        sid.setField(SolrSaver.FLD_CREATED_DATE, createdDate)
+
         // todo -- consider switching to a batch time, rather than creating a new timestamp for each doc
         sid.setField(SolrSaver.FLD_INDEX_DATETIME, new Date())
         if(lastModifiedDate) {
-            sid.setField(SolrSaver.FLD_LASTMODIFIED, lastModifiedDate)
+            sid.setField(SolrSaver.FLD_LAST_MODIFIED, lastModifiedDate)
         } else {
             log.warn "No modified date for savableObject: $this"
         }
 
-        if(uniquifier)
-            sid.setField(SolrSaver.FLD_UNIQUE, uniquifier)
+        if(hidden)
+            sid.setField(SolrSaver.FLD_HIDDEN_B, hidden)
+
+//        sid.setField(SolrSaver.FLD_LAST_MODIFIED, lastModifiedDate)
+//        if(labels)
+            sid.setField(SolrSaver.FLD_LABELS, labels)
 
         if(tags)
             sid.setField(SolrSaver.FLD_TAG_SS, tags)
 
-        if(this.crawlName) {
-            sid.addField(SolrSaver.FLD_CRAWL_NAME, this.crawlName)
+        if(dedup) {
+            sid.setField(SolrSaver.FLD_DEDUP, dedup)
         } else {
-            log.info "No crawl name given: ${this}"
+            log.info "\t\tno dedup value set??? $this"
         }
+
+//        sid.setField(SolrSaver.FLD_, )
+
         return sid
     }
 
-    String buildUniqueString(){
+
+    /** base/default combination to signal duplicate savable objects
+     * override as needed to get better duplicate detection
+     * @return string with groupable values that should flag duplicates (ala solr facet counts)
+     */
+    String buildDedupString(){
         String uniq = type + ':' + name + '::' + size
         return uniq
     }
@@ -180,12 +205,12 @@ class SavableObject {
         Matcher matcher = name =~ ignoreFiles
         if(matcher.matches()){
             String firstGroupMatch = matcher.group(1)
-            matchIgnore = firstGroupMatch        // todo - consider more complicated patterns, get all matches/groups??
-            log.info "LocalFileSystemCrawler ignoring file (${this.class.simpleName}: $name) -- matched on: '$matchIgnore' -- pattern ($ignoreFiles)"       // todo change back to debug
+            matchedIgnoreText = firstGroupMatch        // todo - consider more complicated patterns, get all matches/groups??
+            log.info "\t\tIGNORE: LocalFileSystemCrawler ignoring file (${this.class.simpleName}: $name) -- matched on: '$matchedIgnoreText' -- pattern ($ignoreFiles)"       // todo change back to debug
         } else {
             log.debug "\t\tnot ignoring: $name"
         }
-        return matchIgnore
+        return matchedIgnoreText
     }
 
 }
