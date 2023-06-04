@@ -1,10 +1,6 @@
 package com.oconeco.helpers
 
 
-import com.oconeco.models.ArchFile
-import com.oconeco.models.ArchFolder
-import com.oconeco.models.FSFile
-import org.apache.commons.compress.archivers.ArchiveEntry
 import org.apache.commons.compress.archivers.ArchiveInputStream
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream
@@ -12,11 +8,9 @@ import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.apache.commons.io.FilenameUtils
 import org.apache.log4j.Logger
-import org.apache.solr.common.SolrInputDocument
 
 import java.nio.file.Files
 import java.util.regex.Pattern
-
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -47,67 +41,6 @@ class ArchiveUtils {
             log.warn "Unknown archive type: $archiveFile"
         }
         return ais
-    }
-
-    static gatherArchiveEntries(File f) {
-        ArchiveInputStream aiszip = ArchiveUtils.getArchiveInputStream(f)
-        List<ArchiveEntry> archiveEntries = gatherArchiveEntries(aiszip)
-        return archiveEntries
-    }
-
-
-    /**
-     * helper util to get archive entries for any of the 'handled' archive types (e.g. zip, tar,...)
-     * @param ais
-     * @return List of various Archive entries
-     */
-    static List<ArchiveEntry> gatherArchiveEntries(ArchiveInputStream ais) {
-        List<ArchiveEntry> entries = []
-        ArchiveEntry entry = null
-        while ((entry = ais.getNextEntry()) != null) {
-            if (entry.isDirectory()) {
-                entries << entry
-                log.info "Dir: ${entry.name} (${entry.size})"
-            } else {
-                log.debug "\t\tarchive entry file (${entry.name}) -- type:(${entry.class.simpleName})"
-//                Long rsize = entry.getRealSize()
-                Long size = entry.size
-                entries << entry
-                log.debug "\t\tFile: ${entry.name} (${entry.size})"
-
-            }
-        }
-        return entries
-    }
-
-
-    static List<SolrInputDocument> gatherSolrInputDocs(FSFile fsfile, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN, Integer depth = null) {
-        ArchiveInputStream aiszip = ArchiveUtils.getArchiveInputStream(fsfile)
-        List<SolrInputDocument> sidList = gatherSolrInputDocs(aiszip, locationName, crawlName, depth)
-        return sidList
-    }
-
-    static List<SolrInputDocument> gatherSolrInputDocs(ArchiveInputStream ais, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN, Integer depth = null) {
-        List<SolrInputDocument> sidList = []
-        ArchiveEntry entry = null
-        while ((entry = ais.getNextEntry()) != null) {
-            if (entry.isDirectory()) {
-                ArchFolder folder = new ArchFolder(entry, depth, locationName, crawlName)
-                SolrInputDocument sid = folder.toSolrInputDocument()
-                sidList << sid
-                log.debug "Archive folder (solr doc): ${sid})"
-            } else {
-                log.warn "REFACTOR: \t\tarchive entry file (${entry.name}) -- type:(${entry.class.simpleName}) --- move to constructor with FSFile object (to get parent file path)"
-                ArchFile file = new ArchFile(entry, locationName, crawlName)
-                SolrInputDocument sid = file.toSolrInputDocument()
-                sidList << sid
-//                Long size = entry.size
-//                sidList << entry
-                log.debug "\t\tArchive File (solr doc): ${sid})"
-
-            }
-        }
-        return sidList
     }
 
 
