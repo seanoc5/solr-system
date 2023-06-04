@@ -1,28 +1,56 @@
 package configs
+import com.oconeco.helpers.Constants
+import java.nio.file.LinkOption
+
+/**
+ * this is a starter template that I (SoC) find useful.
+ * hopefully there are some helpful examples and ideas here, but please customize to suit your interests (dear reader)
+ * some of these options have code to override these config FILE defaults, with more explicit program arguments (e.g.  'wipeContent')
+ */
 
 solrUrl = "http://oldie:8983/solr/solr_system"
 sourceName = Inet4Address.localHost.getHostName()
+// can be overriden b
 wipeContent = false
+userHome = System.getProperty("user.home")
+// helpful to build default crawl lists for personal crawling across variety of personal machines/os-es
+osName = System.getProperty("os.name")
+// be default don't follow links, just focus on the 'original'
+linkOption = LinkOption.NOFOLLOW_LINKS
+
 
 // todo -- these name: path entries are not yet used, still reading path and name from cli args
 dataSources {
     localFolders {
-        MyDesktop = '/home/sean/Desktop'
-        MyDocuments = '/home/sean/Documents'
-        Downloads = '/home/sean/Downloads'
-        MyPictures = '/home/sean/Pictures'
+        // todo -- check if this maps across the 3 main OSes: Linux, Mac, windoze
+        MyDesktop = "${userHome}/Desktop"
+        MyDocuments = "${userHome}/Documents"
+        Downloads = "${userHome}/Downloads"
+        MyPictures = "${userHome}/Pictures"
 
-        SeanConfig = '/home/sean/.config'
-        SeanLocal = '/home/sean/.local'
-        Work = '/home/sean/work'
-        Backups = '/home/sean/bkup'
-//        SeanHome = '/home/sean'
-        Etc = '/etc'
-        Opt = '/opt'
-        Var = '/var'
+        String bkupFolder = "${userHome}/bkup"
+        if(new File(bkupFolder).exists()) {
+            Backups = bkupFolder
+        }
+//        Home = "${userHome}"
+
+        if(osName.containsIgnoreCase('linux')) {
+            Work = "${userHome}/work"
+            HomeConfig = "${userHome}/.config"
+            HomeLocal = "${userHome}/.local"
+            Etc = "/etc"
+            Opt = "/opt"
+            Var = "/var"
+
+        } else if(osName.containsIgnoreCase('windows')){
+            //  todo - this is barebones, most of my work is in linux, so this should be expanded for "normal" people/use
+            Work = "/work"
+            IdeaProjects = "${userHome}/IdeaProjects"
+            GoogleDriveLocal = "${userHome}/My Drive"
+        }
     }
     externalDrives {
-        wd4tb = '/media/sean/sean-data'
+        wd4tb = "/media/sean/sean-data"
     }
 }
 
@@ -30,7 +58,7 @@ dataSources {
 
 // edit and customize these entries. The namePattern name is the assigned tag, the regex pattern (`~` is the pattern operator) are the matching regexes for the label/tag
 namePatterns.files = [
-        ignore      : ~/(|[.~]*lock.*|_.*|.*\.te?mp$|.*\.class$|robots.txt)/,
+        ignore      : ~/(?i)([.~]*lock.*|_.*|.*\bte?mp|.*\.class|.*\.pem|skipme.*)/,
         index       : ~/(bash.*|csv|groovy|ics|ipynb|java|lst|md|php|py|rdf|rss|scala|sh|tab|te?xt|tsv)/,
         analyze     : ~/(aspx\?|cfm|docx\?|html|od.|pptx\?|pdf|ps|pub|rss|xlsx|zhtml\?)/,
         office      : ~/.*(accdb|docx?|ods|odp|odt|pdf|pptx?|rtf|txt|vsdx?|xmind|xlsx?)/,
@@ -49,7 +77,9 @@ namePatterns.files = [
 
 // folder names can be matches to assign tags for a given folder (name matching)
 namePatterns.folders = [
-        ignore : ~/(@angular|__snapshots__|\.bsp|\.?cache|\.csv|\.gradle|\.git|\.github|\.idea|\.settings|\.svn|\.vscode|_global|ignore.*|lib|node.modules|runtime)/,
+        ignore : Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE],
+//        ignore : ~/(@angular|__snapshots__|\.bsp|\.?cache|\.csv|\.gradle|\.?git|\.github|\.idea|\.settings|\.svn|site-packages|\.vscode|_global|ignore.*|lib|node.modules|runtime)/,
+//        ignore : ~/.*(\.gradle|\.m2|\b*snapshots?\b*|\b*caches?\b*|git|github|ignore.*|node_modules|packages?|pkgs?|plugins?|repository|skins?|skipme.*|svn|target|tmp|vscode)/,
         content: ~/(content)/,
         office : ~/(?i).*(documents)/,
         techDev: ~/.*(groovy|gradle|classes)/,
