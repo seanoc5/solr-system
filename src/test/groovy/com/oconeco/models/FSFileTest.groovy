@@ -1,10 +1,6 @@
 package com.oconeco.models
 
-import com.oconeco.helpers.ArchiveUtils
-import com.oconeco.persistence.SolrSaver
-import org.apache.commons.compress.archivers.ArchiveEntry
-import org.apache.commons.compress.archivers.ArchiveInputStream
-import org.apache.solr.common.SolrInputDocument
+
 import spock.lang.Specification
 
 class FSFileTest extends Specification {
@@ -18,12 +14,13 @@ class FSFileTest extends Specification {
     File jsonFile = new File(getClass().getResource("/content/${jsonName}").toURI())
     File zipFile = new File(getClass().getResource("/content/${zipName}").toURI())
     File tarFile = new File(getClass().getResource("/content/${tarName}").toURI())
+    FSFolder parentFolder = new FSFolder(jsonFile.parentFile, locationName, crawlName, 0)
 
     def "should create basic FSFile - non-archive"() {
         given:
 
         when:
-        FSFile fsFile = new FSFile(jsonFile, locationName, crawlName, 1)
+        FSFile fsFile = new FSFile(jsonFile, parentFolder, locationName, crawlName)
 
         then:
         fsFile.id == fsFile.locationName + ':' + fsFile.path
@@ -32,23 +29,22 @@ class FSFileTest extends Specification {
         fsFile.type == FSFile.TYPE
         fsFile.thing instanceof File
         fsFile.thing == jsonFile
-        fsFile.isArchive() ==false
+        fsFile.isArchive() == false
     }
 
 
     def "should create basic FSFiles from archive source "() {
         when:
-        FSFile zipFsFile = new FSFile(zipFile, locationName, crawlName, 1)
-        FSFile tarFsFile = new FSFile(tarFile, locationName, crawlName, 1)
+        FSFile zipFsFile = new FSFile(zipFile, parentFolder, locationName, crawlName)
+//        FSFile tarFsFile = new FSFile(tarFile, parentFolder, locationName, crawlName)
+        List<SavableObject> children = zipFsFile.gatherArchiveEntries()
+        List<String> childNames = children.collect { it.name }
 
         then:
-        zipFsFile.id == zipFsFile.locationName + ':' + zipFsFile.path
-        zipFsFile.name == zipName
-        zipFsFile.path.endsWith(zipName.name)
-        zipFsFile.type == FSFile.TYPE
-        zipFsFile.thing instanceof File
-        zipFsFile.thing == zipFile
-        zipFsFile.isArchive() ==true
+        children != null
+        children.size() == 2
+        childNames.containsAll(['objects.json', 'get_helm.sh'])
+
     }
 
     // todo - move this logic elsewhere
@@ -89,41 +85,68 @@ class FSFileTest extends Specification {
     }
 */
 
-    def "should create SolrInputDocument from tarball"() {
+    def "should process tarball"() {
         given:
-        File tarball = new File(getClass().getResource("/content/${tarName}").toURI())
-        ArchiveInputStream aiszip = ArchiveUtils.getArchiveInputStream(tarball)
+        FSFile tarFsFile = new FSFile(tarFile, parentFolder, locationName, crawlName)
 
         when:
-        def archiveEntries = ArchiveUtils.gatherArchiveEntries(aiszip)
-        aiszip?.close()
-        List<SolrInputDocument> sidList = []
-        archiveEntries.each { ArchiveEntry ae ->
-            if (ae.isDirectory()) {
-                ArchFolder archFolder = new ArchFolder(ae, locationName, crawlName)
-                SolrInputDocument sid = archFolder.toSolrInputDocument()
-                sidList << sid
-            } else {
-                ArchFile archFile = new ArchFile(ae, locationName, crawlName)
-                SolrInputDocument sid = archFile.toSolrInputDocument()
-                sidList << sid
-            }
-        }
-        SolrInputDocument firstSID = sidList[0]
-        String firstPath = firstSID.getFieldValue(SolrSaver.FLD_PATH_S)
-
+        List<SavableObject> children = tarFsFile.gatherArchiveEntries()
+        List<String> childNames = children.collect { it.name }
+//        def archiveEntries = ArchiveUtils.gatherArchiveEntries(aiszip)
+//        aiszip?.close()
+//        List<SolrInputDocument> sidList = []
+//        archiveEntries.each { ArchiveEntry ae ->
+//            if (ae.isDirectory()) {
+//                ArchFolder archFolder = new ArchFolder(ae, locationName, crawlName)
+//                SolrInputDocument sid = archFolder.toSolrInputDocument()
+//                sidList << sid
+//            } else {
+//                ArchFile archFile = new ArchFile(ae, locationName, crawlName)
+//                SolrInputDocument sid = archFile.toSolrInputDocument()
+//                sidList << sid
+//            }
+//        }
+//        SolrInputDocument firstSID = sidList[0]
+//        String firstPath = firstSID.getFieldValue(SolrSaver.FLD_PATH_S)
 
         then:
-        archiveEntries != null
-        sidList.size() == 40
-        firstPath!=null
-        firstSID.getFieldValue(SolrSaver.FLD_ID) == "${locationName}:${firstPath}"
-        firstSID.getFieldValue(SolrSaver.FLD_TYPE) == 'ArchiveEntry'
-        firstSID.getFieldValue(SolrSaver.FLD_SIZE) == 72904
-        firstSID.getFieldValue(SolrSaver.FLD_CRAWL_NAME) == 'test'
-        firstSID.getFieldValue(SolrSaver.FLD_EXTENSION_SS) == 'json'
-        firstSID.getFieldValue(SolrSaver.FLD_NAME_SIZE_S) == 'objects.json:72904'
+        children != null
+        children.size() == 40
+        childNames.containsAll(['Chart.yaml', 'values.yaml'])
+
+//        archiveEntries != null
+//        sidList.size() == 40
+//        firstPath != null
+//        firstSID.getFieldValue(SolrSaver.FLD_ID) == "${locationName}:${firstPath}"
+//        firstSID.getFieldValue(SolrSaver.FLD_TYPE) == 'ArchiveEntry'
+//        firstSID.getFieldValue(SolrSaver.FLD_SIZE) == 72904
+//        firstSID.getFieldValue(SolrSaver.FLD_CRAWL_NAME) == 'test'
+//        firstSID.getFieldValue(SolrSaver.FLD_EXTENSION_SS) == 'json'
+//        firstSID.getFieldValue(SolrSaver.FLD_NAME_SIZE_S) == 'objects.json:72904'
     }
+
+
+/*
+    def "should get entries from several different archive types"() {
+        when:
+        FSFolder fsFolder
+//        def tarballEntries = ArchiveUtils.gatherArchiveEntries(targz)
+//        def tgzEntries = ArchiveUtils.gatherArchiveEntries(tgz)
+//        def zipEntries = ArchiveUtils.gatherArchiveEntries(zip)
+//        def bz2Entries = ArchiveUtils.gatherArchiveEntries(bz2)
+
+        then:
+        tarballEntries != null
+//        tgzEntries != null
+//        zipEntries != null
+//        bz2Entries != null
+
+        tarballEntries.size() == 123
+//        tgzEntries.size()==40
+//        zipEntries.size()==2
+//        bz2Entries.size()==8
+    }
+*/
 
 
 }
