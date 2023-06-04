@@ -25,18 +25,48 @@ class ArchFile extends SavableObject {
     public static final String TYPE = 'ArchFile'
     String extension
 
-    ArchFile(SavableObject paren, ArchiveEntry ae, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN) {
-        this(ae, parent, locationName, crawlName)
-        String simpleId = this.id
-        String parentId = parentFile.id
-        this.id = parentId + "::" + simpleId
+    ArchFile(ArchiveEntry ae, SavableObject parent, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN) {
+        super(ae, parent, locationName)
+        String parentId = parent.id
+        if (ae.name) {
+            path = FilenameUtils.getFullPathNoEndSeparator(ae.name)
+            String fname = FilenameUtils.getName(ae.name)
+            if(fname) {
+                name = fname
+            } else {
+                log.warn "could not get folder name for arch entry: $ae"
+            }
+            String ext = FilenameUtils.getExtension(name)
+            if (ext) {
+                this.extension = ext
+            } else {
+                log.info "\t\tno extension found for name: ${ae.name} (ext:$ext)"
+            }
+
+            if (parentId) {
+                this.id = parentId + "::" + ae.name
+            } else {
+                id = locationName + ':' + ae.name
+                log.warn "Missing parent id ($parentId) or ae.name (${ae.name}), using fallback id ($id)"
+            }
+        } else {
+            log.warn "Missing archive entry name?? $ae"
+            name = ae.toString()
+            path = ae.toString()
+
+        }
+        type = TYPE
     }
 
     ArchFile(ArchiveEntry ae, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN, Integer depth = null) {
         super(ae, locationName, depth)
         path = ae.name
         name = ae.name
-        id = locationName + ':' + ae.name
+        if (id) {
+            log.debug "id already set: $id"
+        } else {
+            id = locationName + ':' + ae.name
+        }
         type = TYPE
 
         if (!this.thing) {
@@ -108,8 +138,8 @@ class ArchFile extends SavableObject {
 */
         } else if (ae instanceof TarArchiveEntry) {
             // todo -- check last modified date processing
-            def lmd = ((TarArchiveEntry)ae).getLastModifiedDate()
-            lastModifiedDate = ((TarArchiveEntry)ae).lastModifiedDate
+            def lmd = ((TarArchiveEntry) ae).getLastModifiedDate()
+            lastModifiedDate = ((TarArchiveEntry) ae).lastModifiedDate
 //            if (tstamp) {
 //                lastModifiedDate = new Date(tstamp)
 //                log.debug "Zip entry modified time field(s): $lastModifiedDate "
@@ -175,8 +205,11 @@ class ArchFile extends SavableObject {
         } else {
             log.info "\t\tno extention for archive file: $this"
         }
-        sid.addField(SolrSaver.FLD_NAME_SIZE_S, "${this.name}:${this.size}")
+//        sid.addField(SolrSaver.FLD_NAME_SIZE_S, "${this.name}:${this.size}")
 //        sid.addField(SolrSaver.FLD_DEPTH, depth)
+        if(dedup){
+            log.warn "ensure dedupe is saved, and replaces name-size field"
+        }
         return sid
     }
 
