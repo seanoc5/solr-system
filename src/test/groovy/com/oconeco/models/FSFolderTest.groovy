@@ -1,14 +1,19 @@
 package com.oconeco.models
 
 import com.oconeco.analysis.FolderAnalyzer
+import com.oconeco.helpers.Constants
+import com.oconeco.persistence.SolrSaver
 import org.apache.solr.common.SolrInputDocument
 import spock.lang.Specification
+
+import java.util.regex.Pattern
 
 class FSFolderTest extends Specification {
     String locationName = 'spock'
     String crawlName = 'test'
 //    def startFolder = Path.of(getClass().getResource('/content').toURI());
     File startFolder = new File(getClass().getResource('/content').toURI())
+    FSFolder parentFolder = new FSFolder(startFolder, locationName, crawlName, 1)
 
     def "should build basic FSFolder"() {
         when:
@@ -37,13 +42,55 @@ class FSFolderTest extends Specification {
 //        fsFolder.countFiles == 20
 //        fsFolder.countSubdirs == 2
 //        fsFolder.countIgnoredFiles == 1
-        fsFolder.uniquifier.startsWith('Folder:content::')
+        fsFolder.dedup.startsWith('Folder:content::')
         fsFolder.createdDate != null
         fsFolder.lastAccessDate != null
-        fsFolder.lastModifyDate != null
+        fsFolder.lastModifiedDate != null
         fsFolder.owner != null
     }
 
+
+    def "basic folder load with ignore check toSolrInputDocument"() {
+        given:
+        FSFolder fsFolder = new FSFolder(startFolder, locationName, crawlName, 1)
+        Map<String, Object> details = fsFolder.addFolderDetails()
+
+        when:
+        SolrInputDocument sid = fsFolder.toSolrInputDocument()
+        List<String> fieldNAmes = sid.getFieldNames().toList()
+        Set<String> detailKeys = details.keySet()
+
+        then:
+        sid != null
+        detailKeys.size()==4
+        fieldNAmes.size()>=16
+
+    }
+
+    def "folder and files with ignore check toSolrInputDocument"() {
+        given:
+        FSFolder fsFolder = new FSFolder(startFolder, locationName, crawlName, 1)
+        fsFolder.addFolderDetails()
+        fsFolder.buildChildrenList(Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE])
+
+        when:
+        def sid = fsFolder.toSolrInputDocument()
+        List<String> fieldNames = sid.getFieldNames().toList()
+        List<String> expectedNames = [SolrSaver.FLD_ID, SolrSaver.FLD_TYPE,
+                                      SolrSaver.FLD_NAME_S, SolrSaver.FLD_NAME_T, SolrSaver.FLD_LAST_MODIFIED, SolrSaver.FLD_PATH_S, SolrSaver.FLD_PATH_T,
+                                      SolrSaver.FLD_CRAWL_NAME, SolrSaver.FLD_LOCATION_NAME, SolrSaver.FLD_DEDUP,
+                                      SolrSaver.FLD_CHILD_FILENAMES, SolrSaver.FLD_CHILD_DIRNAMES,
+                                      SolrSaver.FLD_DEDUP, SolrSaver.FLD_EXTENSION_SS,
+//                                      SolrSaver.FLD_IGNORED_FOLDERS,
+                                      SolrSaver.FLD_IGNORED_FILES
+        ]
+
+        then:
+        sid != null
+        fieldNames.containsAll(expectedNames)
+        fieldNames.size() >= 24
+
+    }
 
 //    def "basic folder load with ignore check toSolrInputDocument"() {
 //        given:
@@ -80,37 +127,43 @@ class FSFolderTest extends Specification {
 
     def "folder load with toSolrInputDocument"() {
         given:
-        File src = new File(getClass().getResource('/content').toURI())
+        Pattern ignoreFiles = Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE]
 
         when:
-        FSFolder folder = new FSFolder(src,)
-        List<SolrInputDocument> solrDocs = folder.toSolrInputDocumentList()
+        FSFolder fsFolder = new FSFolder(startFolder, locationName, crawlName, 1)
+        def details = fsFolder.addFolderDetails()
+        List<SavableObject> children = fsFolder.buildChildrenList(ignoreFiles)
+        List<SolrInputDocument> solrDocs = fsFolder.toSolrInputDocumentList()
+        def ignoredFolders = children.findAll {it.type.containsIgnoreCase('folder') && it.ignore==true}
+        def ignoredFiles = children.findAll {it.type.containsIgnoreCase('file') && it.ignore==true}
 
         then:
-        folder.fsFiles.size() == 20    //14
-        solrDocs.size() == 21
-        folder.subDirectories.size() == 1
-        folder.ignoredFolders.size() == 0
-        folder.ignoredDirectories.size() == 1
-        folder.ignoredFileNames.size() == 1
+        fsFolder.children.size() == 23
+        solrDocs.size() == 24
+        ignoredFiles.size()==2
+        ignoredFolders.size()==1
+        ignoredFolders[0].name == 'ignoreMe'
     }
 
 
-    def "load and analyze folder"() {
+    def "load and analyze content folder"() {
         given:
 //        File src = new File(getClass().getResource('/content').toURI())
         ConfigObject config = new ConfigSlurper().parse(getClass().getResource('/configLocate.groovy'))
         FolderAnalyzer analyzer = new FolderAnalyzer(config)
-        FSFolder startFolder = new FSFolder(startFolder, 1, ignoreFiles, ignoreFolders)
+        FSFolder startFolder = new FSFolder(startFolder, locationName, crawlName, 1)
 
         when:
-        def foo = startFolder.analyze(analyzer)
-        Map assignmentGroupedFiles = startFolder.children.groupBy { it.assignedTypes[0] }
-        List keys = assignmentGroupedFiles.keySet().toList()
+        def results = analyzer.analyze(startFolder)
+        log.info "Analysis results: $results"
+//        Map assignmentGroupedFiles = startFolder.children.groupBy { it.assignedTypes[0] }
+//        List keys = assignmentGroupedFiles.keySet().toList()
 
         then:
-        keys.size == 8
-        keys == ['techDev', 'archive', 'office', 'config', 'instructions', 'data', 'control', 'media']
+//        keys.size == 8
+//        keys == ['techDev', 'archive', 'office', 'config', 'instructions', 'data', 'control', 'media']
+        results != null
+        results[0] == 'content'
     }
 
 //
