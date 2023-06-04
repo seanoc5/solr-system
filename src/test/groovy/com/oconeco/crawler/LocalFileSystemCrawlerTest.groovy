@@ -3,6 +3,7 @@ package com.oconeco.crawler
 
 import com.oconeco.helpers.Constants
 import com.oconeco.models.FSFolder
+import com.oconeco.models.SavableObject
 import org.apache.log4j.Logger
 import spock.lang.Specification
 
@@ -22,10 +23,11 @@ class LocalFileSystemCrawlerTest extends Specification {
     String crawlName = 'test'
     Pattern ignorePattern = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]
     def startFolder = Path.of(getClass().getResource('/content').toURI());
-    LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName)
 
 
-    def "basic localhost crawl of test folder inside code folder "() {
+    def "basic localhost crawl of 'content' resource folder"() {
+        given:
+        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, 'basic localhost')
 
         when:
         def results = crawler.buildCrawlFolders(startFolder, ignorePattern)
@@ -35,7 +37,7 @@ class LocalFileSystemCrawlerTest extends Specification {
         List<String> crawlNames = toCrawl?.collect { FSFolder fsFolder -> fsFolder.name }
         def ignoreNames = toIgnore?.collect { FSFolder fsFolder -> fsFolder.name }
 
-        List<String> cnames = ['content', 'testsub', 'subFolder2', 'subfolder3']
+        List<String> cnames = ['content', 'testsub', 'subfolder2', 'subfolder3']
         FSFolder firstFsFolderToCrawl = toCrawl[0]
 
         then:
@@ -51,26 +53,38 @@ class LocalFileSystemCrawlerTest extends Specification {
     }
 
 
-    def "crawl and process archive files to solr input docs"() {
+    def 'basic localhost with child folders'() {
         given:
-        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, 'testCrawl')
-//        Pattern ignoreNamePattern = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]
+        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, 'folder children')
+        Map<String, List<SavableObject>> folderFilesMap = [:]
+        List<String> ignoreList = []
 
         when:
         def results = crawler.buildCrawlFolders(startFolder, ignorePattern)
-        results.each {FSFolder fsFolder ->
-            if(fsFolder.ignore) {
+        results.each { FSFolder fsFolder ->
+            if (fsFolder.ignore) {
                 log.info "Skip crawling files in folder: $fsFolder"
-            } else{
+                ignoreList << fsFolder
+            } else {
                 log.info "crawl files in folder: $fsFolder"
-                def folderFiles = crawler.getFolderFiles(fsFolder, ignorePattern)
+                 def folderFiles= crawler.getFolderFsFiles(fsFolder, ignorePattern)
+                folderFilesMap[fsFolder.name] = folderFiles
                 log.info "Folder files: ${folderFiles.size()}"
             }
         }
+        List<SavableObject> contentChildren = folderFilesMap['content']
+        List<SavableObject> testsubChildren = folderFilesMap['testsub']
+        List<SavableObject> subfolder2Children = folderFilesMap['subfolder2']
+        List<SavableObject> subfolder3Children = folderFilesMap['subfolder3']
 
         then:
+        ignoreList[0].name == 'ignoreMe'
         results.size() == 5
-
+        folderFilesMap.keySet().containsAll(['content', 'testsub', 'subfolder2', 'subfolder3'])
+        contentChildren.size()==21
+        testsubChildren.size() == 1
+        subfolder2Children.size() == 3
+        subfolder3Children.size() == 1
     }
 
 
