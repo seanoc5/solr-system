@@ -8,6 +8,8 @@ import com.oconeco.models.FSFolder
 import com.oconeco.models.SavableObject
 import com.oconeco.persistence.SolrSaver
 import org.apache.log4j.Logger
+import org.apache.solr.client.solrj.SolrQuery
+import org.apache.solr.client.solrj.response.QueryResponse
 import org.apache.solr.client.solrj.response.UpdateResponse
 
 import java.util.regex.Pattern
@@ -30,6 +32,11 @@ Pattern folderIgnorePattern = config.namePatterns.folders.ignore
 
 SolrSaver solrSaver = new SolrSaver(solrUrl)
 log.info "\t\tSolr Saver created: $solrSaver"
+SolrQuery sq = new SolrQuery(q)
+QueryResponse resp = solrSaver.query('*:*')
+
+long numFound = resp.results.getNumFound()
+log.info "Before crawl NumFound: $numFound"
 
 FolderAnalyzer folderAnalyzer = new FolderAnalyzer(config)
 FileAnalyzer fileAnalyzer = new FileAnalyzer(config)
@@ -57,19 +64,12 @@ crawlMap.each { String crawlName, String startPath ->
     }
 }
 
-solrSaver.closeClient()
-
 long end = System.currentTimeMillis()
 long elapsed = end - start
 log.info "${this.class.name} Elapsed time: ${elapsed}ms (${elapsed / 1000} sec)"
 
-//crawlMap.each { String label, String startPath ->
-//    Path path = Paths.get(startPath)
-//    Map crawlFolders = null
-//    if(Files.exists(path, linkOption )) {
-//        crawlFolders = LocalFileSystemCrawlerSimple.processStartFolder(path, fileIgnorePattern)
-//    } else {
-//        log.warn "File '$startPath' either does not exist, or is a symbolic link"
-//    }
-//    return crawlFolders
-//}
+
+long numFound2 = resp.results.getNumFound()
+log.info "After crawl NumFound: $numFound2"
+
+solrSaver.closeClient(this.class.name)

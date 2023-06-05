@@ -2,9 +2,7 @@ package misc
 
 import com.oconeco.persistence.SolrSaver
 import org.apache.log4j.Logger
-import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.client.solrj.response.QueryResponse
-
 /**
  * simple script to perform delete query
  */
@@ -14,16 +12,19 @@ String solrUrl = "http://oldie:8983/solr/solr_system"
 SolrSaver solrSaver = new SolrSaver(solrUrl)
 
 String q = "*:*"
+//SolrQuery sq = new SolrQuery(q)
+QueryResponse resp = solrSaver.query(q)
+long numFound = resp.results.getNumFound()
+log.info "NumFound before clear: $numFound"
 
 def foo = solrSaver.deleteDocuments(q)
 log.info "Clear results: $foo"
+QueryResponse resp2 = solrSaver.query(q)
 
-SolrQuery sq = new SolrQuery(q)
-QueryResponse resp = solrSaver.query('*:*')
+long numFound2 = resp.results.getNumFound()
+log.info "NumFound after clear: $numFound2"
+
 solrSaver.closeClient(this.class.name)
-
-long numFound = resp.results.getNumFound()
-log.info "NumFound: $numFound"
-assert numFound==0
+assert numFound2==0
 
 log.info "done!?"

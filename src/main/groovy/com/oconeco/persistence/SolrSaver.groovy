@@ -3,15 +3,20 @@ package com.oconeco.persistence
 
 import org.apache.log4j.Logger
 import org.apache.solr.client.solrj.SolrQuery
+import org.apache.solr.client.solrj.SolrRequest
+import org.apache.solr.client.solrj.impl.BaseHttpSolrClient.RemoteSolrException
 import org.apache.solr.client.solrj.impl.Http2SolrClient
+import org.apache.solr.client.solrj.request.CollectionAdminRequest
 import org.apache.solr.client.solrj.response.QueryResponse
 import org.apache.solr.client.solrj.response.UpdateResponse
 import org.apache.solr.common.SolrInputDocument
+import org.apache.solr.common.util.NamedList
 import org.apache.tika.config.TikaConfig
 import org.apache.tika.detect.Detector
 import org.apache.tika.parser.AutoDetectParser
 import org.apache.tika.parser.Parser
 import org.apache.tika.sax.BodyContentHandler
+
 /**
  * Looking at helper class to save solr_system (file crawl to start with content to solr
  */
@@ -109,9 +114,33 @@ class SolrSaver {
         log.debug "\t\tBuilt Solr Client: ${solrClient.baseURL}"
     }
 
-    public void closeClient(String msg = 'general close call'){
+    public void closeClient(String msg = 'general close call') {
         log.info "Closing solr client with message '$msg' ---- ($solrClient)"
         solrClient.close()
+    }
+
+    def getClusterStatus() {
+        final SolrRequest request = new CollectionAdminRequest.ClusterStatus();
+
+        final NamedList<Object> response = solrClient.request(request);
+        final NamedList<Object> cluster = (NamedList<Object>) response.get("cluster");
+        final List<String> liveNodes = (List<String>) cluster.get("live_nodes");
+
+        log.info("Found " + liveNodes.size() + " live nodes");
+        return response
+    }
+
+    NamedList createCollection(String collectionName, Integer numShards, Integer replactionFactor, String configName = '_default') {
+        //http://localhost:8983/solr/admin/collections?action=CREATE&name=newCollection&numShards=2&replicationFactor=1
+        NamedList result = null
+        try {
+            CollectionAdminRequest.Create create = CollectionAdminRequest.createCollection(collectionName, numShards, replactionFactor);
+//        def request = new CollectionAdminRequest.create(collectionName, configName, numShards, replactionFactor);
+            result = solrClient.request(create)
+        } catch (RemoteSolrException rse){
+            log.error "Remote error: $rse"
+        }
+        return result
     }
 
     /**
@@ -138,8 +167,6 @@ class SolrSaver {
         }
         return ursp
     }
-
-
     /**
      * Create Solr Input doc
      *
@@ -165,7 +192,7 @@ class SolrSaver {
      * Take a list of file folders and save them to solr
      * todo -- revisit for better approach...
      * todo -- catch errors, general improvement
-     * @param folders  list of file folders to turn into solr input docs
+     * @param folders list of file folders to turn into solr input docs
      * @param dataSourceLabel name of group of files processed by this larger process
      * @param source name of machine, email account, browser account.... processed by this larger process
      * @return list of UpdateResponse objects from batched calls to solr
@@ -400,11 +427,15 @@ class SolrSaver {
         return docCount
     }
 
-    QueryResponse query(String query = '*:*') {
-        SolrQuery sq = new SolrQuery(query)
-//        sq.setFields('')
-//        sq.setRows(0)
+
+    QueryResponse query(SolrQuery sq) {
         QueryResponse resp = solrClient.query(sq)
+        return resp
+    }
+
+    QueryResponse query(String query) {
+        SolrQuery sq = new SolrQuery(query)
+        QueryResponse resp = this.query(sq)
         return resp
     }
 

@@ -10,7 +10,7 @@ class Constants {
     public static final String LBL_UNKNOWN = 'unknown'
 
     public static final Map<String, Pattern> DEFAULT_FOLDERNAME_PATTERNS = [
-            ignore       : ~/.*(?i)(csv|\.gradle|\.m2|\b*snapshots?\b*|\b*caches?\b*|deleteme.*|git|github|ignore.*|node_modules|packages?|pkgs?|plugins?|repository|skins?|skipme.*|svn|target|tmp|vscode)/,
+            ignore       : ~/.*(?i)(csv|\.gradle|\.m2|\b*snapshots?\b*|\b*caches?\b*|deleteme.*|git|github|ignore.*|never_index|node_modules|packages?|pkgs?|plugins?|repository|skins?|skipme.*|svn|target|tmp|vscode)/,
             backups      : ~/.*(?i)(backups?|bkups?|old|timeshift)/,
             configuration: ~/.*(?i)(configs)/,
             documents    : ~/.*([Dd]ocuments|[Dd]esktop)/,
