@@ -176,7 +176,7 @@ class SavableObject {
         if(dedup) {
             sid.setField(SolrSaver.FLD_DEDUP, dedup)
         } else {
-            log.info "\t\tno dedup value set??? $this"
+            log.warn "\t\tno dedup value set??? $this"
         }
 
 //        sid.setField(SolrSaver.FLD_, )

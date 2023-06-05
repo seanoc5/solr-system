@@ -45,7 +45,7 @@ class FSFolder extends SavableObject {
     FSFolder(File srcFolder, String locationName, String crawlName = Constants.LBL_UNKNOWN, Integer depth = null) {
         super(srcFolder, locationName, crawlName, depth)
         osName = System.getProperty("os.name")
-        if(srcFolder.isHidden()){
+        if (srcFolder.isHidden()) {
             log.info "\t\tprocessing hidden folder: $srcFolder"
             hidden = true
         }
@@ -163,7 +163,7 @@ class FSFolder extends SavableObject {
         // todo - add more FSFolder specific fields here
         SolrInputDocument sidFolder = super.toSolrInputDocument()
 //        sidFolder.addField(SolrSaver.FLD_NAME_SIZE_S, "${name}:${size}")
-        if(dedup){
+        if (dedup) {
             log.debug "ensure dedupe is saved, and replaces name-size field"
         } else {
             log.warn "ensure dedupe is saved, and replaces name-size field"
@@ -251,24 +251,33 @@ class FSFolder extends SavableObject {
             if (folder.canRead()) {
                 int cnt = 0
                 folder.eachFile { File file ->
-                    cnt++
-                    if (file.isDirectory()) {
-                        FSFolder fsFolder = new FSFolder(file, this, locationName, crawlName)
-                        if (fsFolder.name ==~ ignoreFoldersPattern) {
-                            log.info "\t\t$cnt) ----- IGNORE FOLDER ----- ${this} has ignorable subsolder: $fsFolder"
-                            fsFolder.ignore = true
-                        }
-                        children << fsFolder
-                    } else {
-                        FSFile fsFile = new FSFile(file, this, locationName, crawlName)
-                        if (file.name ==~ ignoreFilesPattern) {
-                            fsFile.ignore = true
-                            children << fsFile
-                            log.info "\t\t$cnt) ----- Ignoring ----- file: $file"
+                    if (file.exists()) {
+                        if (file.canRead()) {
+                            cnt++
+                            if (file.isDirectory()) {
+                                FSFolder fsFolder = new FSFolder(file, this, locationName, crawlName)
+                                if (fsFolder.name ==~ ignoreFoldersPattern) {
+                                    log.info "\t\t$cnt) ----- IGNORE FOLDER ----- ${this} has ignorable subsolder: $fsFolder"
+                                    fsFolder.ignore = true
+                                }
+                                children << fsFolder
+                            } else {
+                                FSFile fsFile = new FSFile(file, this, locationName, crawlName)
+                                if (file.name ==~ ignoreFilesPattern) {
+                                    fsFile.ignore = true
+                                    children << fsFile
+                                    log.info "\t\t$cnt) ----- Ignoring ----- file: $file"
+                                } else {
+                                    log.debug "\t\t$cnt) adding file: $file"
+                                    children << fsFile
+                                }
+                            }
                         } else {
-                            log.debug "\t\t$cnt) adding file: $file"
-                            children << fsFile
+                            log.warn "Cannot read file: $file"
                         }
+                    } else {
+                        log.warn "file: $file -- does not exist???"
+
                     }
                 }
             } else {

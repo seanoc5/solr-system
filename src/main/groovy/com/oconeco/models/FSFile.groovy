@@ -14,6 +14,7 @@ import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileOwnerAttributeView
 import java.nio.file.attribute.FileTime
+
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -46,10 +47,10 @@ class FSFile extends SavableObject {
         id = (locationName + ':' + path).replaceAll('\\\\', '/')
         type = TYPE
         hidden = f.isHidden()
-        if(hidden)
+        if (hidden)
             log.info "\t\tprocessing hidden file: $f"
 
-        if(!this.thing) {
+        if (!this.thing) {
             this.thing = f
         }
         name = f.name
@@ -58,11 +59,11 @@ class FSFile extends SavableObject {
         dedup = buildDedupString()
 
 
-        if(depth) {
+        if (depth) {
             this.depth = depth
         }
 
-        if(crawlName==Constants.LBL_UNKNOWN || crawlName == null) {
+        if (crawlName == Constants.LBL_UNKNOWN || crawlName == null) {
             log.debug "\t\t you likely want to add crawl name...."
         } else {
             this.crawlName = crawlName
@@ -76,16 +77,18 @@ class FSFile extends SavableObject {
 
         osName = System.getProperty("os.name")
 
-
-        BasicFileAttributes attr = Files.readAttributes(path, BasicFileAttributes.class)
-        FileTime lastAccessTime = attr.lastAccessTime()
-        lastAccessDate = new Date(lastAccessTime.toMillis())
-        FileTime lastModifyTime = attr.lastModifiedTime()
-        lastModifiedDate = new Date(lastModifyTime.toMillis())
-        createdDate = new Date(attr.creationTime().toMillis())
-        FileOwnerAttributeView ownerAttributeView = Files.getFileAttributeView(path, FileOwnerAttributeView.class)
-        owner = ownerAttributeView.getOwner()
-
+        if (f.exists()) {
+            BasicFileAttributes attr = Files.readAttributes(path, BasicFileAttributes.class)
+            FileTime lastAccessTime = attr.lastAccessTime()
+            lastAccessDate = new Date(lastAccessTime.toMillis())
+            FileTime lastModifyTime = attr.lastModifiedTime()
+            lastModifiedDate = new Date(lastModifyTime.toMillis())
+            createdDate = new Date(attr.creationTime().toMillis())
+            FileOwnerAttributeView ownerAttributeView = Files.getFileAttributeView(path, FileOwnerAttributeView.class)
+            owner = ownerAttributeView.getOwner()
+        } else {
+            log.warn "File: $f does not exist!! broken symlink??"
+        }
         log.debug "File(${this.toString()})"
     }
 
@@ -130,11 +133,11 @@ class FSFile extends SavableObject {
     @Override
     SolrInputDocument toSolrInputDocument() {
         SolrInputDocument sid = super.toSolrInputDocument()
-        if(crawlName){
+        if (crawlName) {
             sid.setField(SolrSaver.FLD_CRAWL_NAME, crawlName)
         }
 
-        if(owner){
+        if (owner) {
             sid.setField(SolrSaver.FLD_OWNER, owner)
         }
 
@@ -142,7 +145,7 @@ class FSFile extends SavableObject {
             sid.addField(SolrSaver.FLD_EXTENSION_SS, extension)
         }
 
-        if(!sid.getFieldValue(SolrSaver.FLD_DEDUP)) {
+        if (!sid.getFieldValue(SolrSaver.FLD_DEDUP)) {
             if (dedup) {
                 sid.addField(SolrSaver.FLD_DEDUP, dedup)
             } else {
@@ -163,9 +166,9 @@ class FSFile extends SavableObject {
         } catch (IOException e) {
             log.warn "File ($ffs) io exception checking if we have an archive: $e"
         }
-        boolean isArchive = fileSignature == 0x504B0304 || fileSignature == 0x504B0506 || fileSignature == 0x504B0708 || fileSignature== 529205248 || fileSignature== 529205268
-        if(labels?.contains(Constants.LBL_ARCHIVE)) {
-            if(!isArchive) {
+        boolean isArchive = fileSignature == 0x504B0304 || fileSignature == 0x504B0506 || fileSignature == 0x504B0708 || fileSignature == 529205248 || fileSignature == 529205268
+        if (labels?.contains(Constants.LBL_ARCHIVE)) {
+            if (!isArchive) {
                 log.info "Should be archive: $f -> ($fileSignature) -- $isArchive"
             } else {
                 log.debug "is archive: $f"
@@ -188,43 +191,43 @@ class FSFile extends SavableObject {
      * @param ais
      * @return List of various Archive entries
      */
-     List<SavableObject> gatherArchiveEntries(ArchiveInputStream ais) {
-         if(ais) {
-             if (!children) {
-                 log.debug "Create children list... ($this)"
-                 children = []
-             }
+    List<SavableObject> gatherArchiveEntries(ArchiveInputStream ais) {
+        if (ais) {
+            if (!children) {
+                log.debug "Create children list... ($this)"
+                children = []
+            }
 //             ArchiveEntry entry = null
-             while ((entry = ais.getNextEntry()) != null) {
-                 if (entry.isDirectory()) {
-                     ArchFolder archFolder = new ArchFolder(entry, this, locationName, crawlName)
-                     children << archFolder
-                     log.info "Dir: ${archFolder.toString()})"
-                 } else {
+            while ((entry = ais.getNextEntry()) != null) {
+                if (entry.isDirectory()) {
+                    ArchFolder archFolder = new ArchFolder(entry, this, locationName, crawlName)
+                    children << archFolder
+                    log.info "Dir: ${archFolder.toString()})"
+                } else {
 //                log.debug "\t\tarchive entry file (${entry.name}) -- type:(${entry.class.simpleName})"
-                     ArchFile archFile = new ArchFile(entry, this, locationName, crawlName)
-                     children << archFile
-                     log.debug "\t\tFile: ${archFile.toString()})"
+                    ArchFile archFile = new ArchFile(entry, this, locationName, crawlName)
+                    children << archFile
+                    log.debug "\t\tFile: ${archFile.toString()})"
 
-                 }
-             }
-         } else {
-             log.warn "Invalid archive input stream: $ais, how did this happen??"
-         }
-         return children
+                }
+            }
+        } else {
+            log.warn "Invalid archive input stream: $ais, how did this happen??"
+        }
+        return children
     }
 
 
-     List<SolrInputDocument> gatherSolrInputDocs(FSFile fsfile, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN, Integer depth = null) {
+    List<SolrInputDocument> gatherSolrInputDocs(FSFile fsfile, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN, Integer depth = null) {
         ArchiveInputStream aiszip = ArchiveUtils.getArchiveInputStream(fsfile)
         List<SolrInputDocument> sidList = gatherSolrInputDocs(aiszip, locationName, crawlName, depth)
         return sidList
     }
 
-     List<SolrInputDocument> gatherSolrInputDocs(ArchiveInputStream ais, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN, Integer depth = null) {
+    List<SolrInputDocument> gatherSolrInputDocs(ArchiveInputStream ais, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN, Integer depth = null) {
         List<SolrInputDocument> sidList = []
-         // todo -- get parent file object, change constructor sig below
-         ArchiveEntry entry = null
+        // todo -- get parent file object, change constructor sig below
+        ArchiveEntry entry = null
         while ((entry = ais.getNextEntry()) != null) {
             if (entry.isDirectory()) {
                 ArchFolder folder = new ArchFolder(entry, depth, locationName, crawlName)
