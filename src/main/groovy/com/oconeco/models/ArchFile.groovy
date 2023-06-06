@@ -1,7 +1,7 @@
 package com.oconeco.models
 
 import com.oconeco.helpers.Constants
-import com.oconeco.persistence.SolrSaver
+import com.oconeco.persistence.SolrSystemClient
 import org.apache.commons.compress.archivers.ArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
@@ -196,17 +196,17 @@ class ArchFile extends SavableObject {
     SolrInputDocument toSolrInputDocument() {
         SolrInputDocument sid = super.toSolrInputDocument()
         if (crawlName) {
-            sid.setField(SolrSaver.FLD_CRAWL_NAME, crawlName)
+            sid.setField(SolrSystemClient.FLD_CRAWL_NAME, crawlName)
         }
-//        sid.addField(SolrSaver.FLD_SIZE, size)
+//        sid.addField(SolrSystemClient.FLD_SIZE, size)
 
         if (extension) {
-            sid.addField(SolrSaver.FLD_EXTENSION_SS, extension)
+            sid.addField(SolrSystemClient.FLD_EXTENSION_SS, extension)
         } else {
             log.info "\t\tno extention for archive file: $this"
         }
-//        sid.addField(SolrSaver.FLD_NAME_SIZE_S, "${this.name}:${this.size}")
-//        sid.addField(SolrSaver.FLD_DEPTH, depth)
+//        sid.addField(SolrSystemClient.FLD_NAME_SIZE_S, "${this.name}:${this.size}")
+//        sid.addField(SolrSystemClient.FLD_DEPTH, depth)
         if(dedup){
             log.warn "ensure dedupe is saved, and replaces name-size field"
         }

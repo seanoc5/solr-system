@@ -1,7 +1,7 @@
 package com.oconeco.models
 
 import com.oconeco.helpers.Constants
-import com.oconeco.persistence.SolrSaver
+import com.oconeco.persistence.SolrSystemClient
 import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
 import org.apache.solr.common.SolrInputDocument
@@ -121,35 +121,35 @@ class FSFolder extends SavableObject {
             if (it.ignore) {
                 if (it.type.containsIgnoreCase('file')) {
                     ignoreFiles++
-                    sid.addField(SolrSaver.FLD_IGNORED_FILES, it.name)
+                    sid.addField(SolrSystemClient.FLD_IGNORED_FILES, it.name)
                 } else if (it.type.containsIgnoreCase('folder')) {
                     ignoreFolders++
-                    sid.addField(SolrSaver.FLD_IGNORED_FOLDERS, it.name)
+                    sid.addField(SolrSystemClient.FLD_IGNORED_FOLDERS, it.name)
                 } else {
                     log.warn "\t\tunknown savable object type: ${it.type}, processing it like a file"
                     ignoreFiles++
-                    sid.addField(SolrSaver.FLD_IGNORED_FILES, it.name)
+                    sid.addField(SolrSystemClient.FLD_IGNORED_FILES, it.name)
                 }
             } else {
                 if (it.type.containsIgnoreCase('file')) {
                     indexFiles++
-                    sid.addField(SolrSaver.FLD_CHILD_FILENAMES, it.name)
-                    sid.addField(SolrSaver.FLD_EXTENSION_SS, ((FSFile) it).extension)
+                    sid.addField(SolrSystemClient.FLD_CHILD_FILENAMES, it.name)
+                    sid.addField(SolrSystemClient.FLD_EXTENSION_SS, ((FSFile) it).extension)
                 } else if (it.type.containsIgnoreCase('folder')) {
                     indexFiles++
-                    sid.addField(SolrSaver.FLD_CHILD_DIRNAMES, it.name)
+                    sid.addField(SolrSystemClient.FLD_CHILD_DIRNAMES, it.name)
                 } else {
                     log.warn "\t\tunknown savable object type: ${it.type}, processing it like a file"
                     ignoreFiles++
-                    sid.addField(SolrSaver.FLD_IGNORED_FILES, it.name)
+                    sid.addField(SolrSystemClient.FLD_IGNORED_FILES, it.name)
                 }
 
             }
         }
-        sid.addField(SolrSaver.FLD_IGNORED_FILES_COUNT, ignoreFiles)
-        sid.addField(SolrSaver.FLD_IGNORED_FOLDERS_COUNT, ignoreFolders)
-        sid.addField(SolrSaver.FLD_FILE_COUNT, indexFiles)
-        sid.addField(SolrSaver.FLD_DIR_COUNT, indexFolders)
+        sid.addField(SolrSystemClient.FLD_IGNORED_FILES_COUNT, ignoreFiles)
+        sid.addField(SolrSystemClient.FLD_IGNORED_FOLDERS_COUNT, ignoreFolders)
+        sid.addField(SolrSystemClient.FLD_FILE_COUNT, indexFiles)
+        sid.addField(SolrSystemClient.FLD_DIR_COUNT, indexFolders)
         return children.size()
     }
 
@@ -162,35 +162,35 @@ class FSFolder extends SavableObject {
         List<SolrInputDocument> sidList = []
         // todo - add more FSFolder specific fields here
         SolrInputDocument sidFolder = super.toSolrInputDocument()
-//        sidFolder.addField(SolrSaver.FLD_NAME_SIZE_S, "${name}:${size}")
+//        sidFolder.addField(SolrSystemClient.FLD_NAME_SIZE_S, "${name}:${size}")
         if (dedup) {
             log.debug "ensure dedupe is saved, and replaces name-size field"
         } else {
             log.warn "ensure dedupe is saved, and replaces name-size field"
         }
 
-//        sidFolder.setField(SolrSaver.FLD_SUBDIR_COUNT, countSubdirs)
-//        sidFolder.setField(SolrSaver.FLD_FILE_COUNT, countFiles)
+//        sidFolder.setField(SolrSystemClient.FLD_SUBDIR_COUNT, countSubdirs)
+//        sidFolder.setField(SolrSystemClient.FLD_FILE_COUNT, countFiles)
 
         if (crawlName) {
-            sidFolder.setField(SolrSaver.FLD_CRAWL_NAME, crawlName)
+            sidFolder.setField(SolrSystemClient.FLD_CRAWL_NAME, crawlName)
         }
 
 //        if (ignoredFileNames) {
-//            sidFolder.setField(SolrSaver.FLD_IGNORED_FILES + '_ss', ignoredFileNames.collect { it.name })
-//            sidFolder.setField(SolrSaver.FLD_IGNORED_FILES + '_txt', ignoredFileNames.collect { it.name })
-//            sidFolder.setField(SolrSaver.FLD_IGNORED_FILES_COUNT, ignoredFileNames.size())
+//            sidFolder.setField(SolrSystemClient.FLD_IGNORED_FILES + '_ss', ignoredFileNames.collect { it.name })
+//            sidFolder.setField(SolrSystemClient.FLD_IGNORED_FILES + '_txt', ignoredFileNames.collect { it.name })
+//            sidFolder.setField(SolrSystemClient.FLD_IGNORED_FILES_COUNT, ignoredFileNames.size())
 //        }
 //        if (ignoredDirectories) {
-//            sidFolder.setField(SolrSaver.FLD_IGNORED_FOLDERS + '_ss', ignoredDirectories.collect { it.crawlName })
-//            sidFolder.setField(SolrSaver.FLD_IGNORED_FOLDERS + '_txt', ignoredDirectories.collect { it.crawlName })
-//            sidFolder.setField(SolrSaver.FLD_IGNORED_FOLDERS_COUNT, ignoredDirectories.size())
+//            sidFolder.setField(SolrSystemClient.FLD_IGNORED_FOLDERS + '_ss', ignoredDirectories.collect { it.crawlName })
+//            sidFolder.setField(SolrSystemClient.FLD_IGNORED_FOLDERS + '_txt', ignoredDirectories.collect { it.crawlName })
+//            sidFolder.setField(SolrSystemClient.FLD_IGNORED_FOLDERS_COUNT, ignoredDirectories.size())
 //        }
 //        if (sameNameCount > 1) {
-//            sidFolder.setField(SolrSaver.FLD_SAME_NAME_COUNT, sameNameCount)
+//            sidFolder.setField(SolrSystemClient.FLD_SAME_NAME_COUNT, sameNameCount)
 //        }
 //        if (childAssignedTypes) {
-//            sidFolder.setField(SolrSaver.FLD_CHILDASSIGNED_TYPES, childAssignedTypes)
+//            sidFolder.setField(SolrSystemClient.FLD_CHILDASSIGNED_TYPES, childAssignedTypes)
 //        }
 
         sidList << sidFolder

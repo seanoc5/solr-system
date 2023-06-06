@@ -2,7 +2,7 @@ package com.oconeco.models
 
 import com.oconeco.helpers.ArchiveUtils
 import com.oconeco.helpers.Constants
-import com.oconeco.persistence.SolrSaver
+import com.oconeco.persistence.SolrSystemClient
 import org.apache.commons.compress.archivers.ArchiveEntry
 import org.apache.commons.compress.archivers.ArchiveInputStream
 import org.apache.commons.io.FilenameUtils
@@ -134,23 +134,23 @@ class FSFile extends SavableObject {
     SolrInputDocument toSolrInputDocument() {
         SolrInputDocument sid = super.toSolrInputDocument()
         if (crawlName) {
-            sid.setField(SolrSaver.FLD_CRAWL_NAME, crawlName)
+            sid.setField(SolrSystemClient.FLD_CRAWL_NAME, crawlName)
         }
 
         if (owner) {
-            sid.setField(SolrSaver.FLD_OWNER, owner)
+            sid.setField(SolrSystemClient.FLD_OWNER, owner)
         }
 
         if (extension) {
-            sid.addField(SolrSaver.FLD_EXTENSION_SS, extension)
+            sid.addField(SolrSystemClient.FLD_EXTENSION_SS, extension)
         }
 
-        if (!sid.getFieldValue(SolrSaver.FLD_DEDUP)) {
+        if (!sid.getFieldValue(SolrSystemClient.FLD_DEDUP)) {
             if (dedup) {
-                sid.addField(SolrSaver.FLD_DEDUP, dedup)
+                sid.addField(SolrSystemClient.FLD_DEDUP, dedup)
             } else {
                 log.warn "No dedup value available!!!"
-                sid.addField(SolrSaver.FLD_DEDUP, "${this.name}:${this.size}")
+                sid.addField(SolrSystemClient.FLD_DEDUP, "${this.name}:${this.size}")
             }
         } else {
             log.debug("have a dedup value: $dedup -- $this")

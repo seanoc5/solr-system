@@ -1,7 +1,7 @@
 package com.oconeco.models
 
 import com.oconeco.helpers.Constants
-import com.oconeco.persistence.SolrSaver
+import com.oconeco.persistence.SolrSystemClient
 import org.apache.commons.compress.archivers.ArchiveEntry
 import org.apache.commons.io.FilenameUtils
 import org.apache.log4j.Logger
@@ -144,21 +144,21 @@ class ArchFolder extends SavableObject {
     SolrInputDocument toSolrInputDocument() {
 //        File f = thing
         SolrInputDocument sid = super.toSolrInputDocument()
-//        sid.addField(SolrSaver.FLD_SIZE, size)
+//        sid.addField(SolrSystemClient.FLD_SIZE, size)
         if (crawlName) {
-            sid.setField(SolrSaver.FLD_CRAWL_NAME, crawlName)
+            sid.setField(SolrSystemClient.FLD_CRAWL_NAME, crawlName)
         }
 
 //        if (this.size) {
-//            sid.addField(SolrSaver.FLD_NAME_SIZE_S, "${this.name}:${this.size}")
+//            sid.addField(SolrSystemClient.FLD_NAME_SIZE_S, "${this.name}:${this.size}")
 //        } else {
-//            sid.addField(SolrSaver.FLD_NAME_SIZE_S, "${this.name}:unknown")
+//            sid.addField(SolrSystemClient.FLD_NAME_SIZE_S, "${this.name}:unknown")
 //        }
         if(dedup){
             log.warn "ensure dedupe is saved, and replaces name-size field"
         }
 
-//        sid.addField(SolrSaver.FLD_DEPTH, depth)
+//        sid.addField(SolrSystemClient.FLD_DEPTH, depth)
         return sid
     }
 

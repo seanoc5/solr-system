@@ -1,7 +1,7 @@
 package com.oconeco.models
 
 import com.oconeco.helpers.Constants
-import com.oconeco.persistence.SolrSaver
+import com.oconeco.persistence.SolrSystemClient
 import org.apache.log4j.Logger
 import org.apache.solr.common.SolrInputDocument
 
@@ -136,50 +136,50 @@ class SavableObject {
      */
     SolrInputDocument toSolrInputDocument(){
         SolrInputDocument sid = new SolrInputDocument()
-        sid.setField(SolrSaver.FLD_ID, id)
-        sid.setField(SolrSaver.FLD_TYPE, type)
+        sid.setField(SolrSystemClient.FLD_ID, id)
+        sid.setField(SolrSystemClient.FLD_TYPE, type)
 
-        sid.setField(SolrSaver.FLD_NAME_S, name)
-        sid.setField(SolrSaver.FLD_NAME_T, name)
-        sid.setField(SolrSaver.FLD_PATH_S, path)
-        sid.setField(SolrSaver.FLD_PATH_T, path)
-        sid.setField(SolrSaver.FLD_SIZE, size)
-        sid.setField(SolrSaver.FLD_DEPTH, depth)
+        sid.setField(SolrSystemClient.FLD_NAME_S, name)
+        sid.setField(SolrSystemClient.FLD_NAME_T, name)
+        sid.setField(SolrSystemClient.FLD_PATH_S, path)
+        sid.setField(SolrSystemClient.FLD_PATH_T, path)
+        sid.setField(SolrSystemClient.FLD_SIZE, size)
+        sid.setField(SolrSystemClient.FLD_DEPTH, depth)
 
-        sid.setField(SolrSaver.FLD_LOCATION_NAME, locationName )
+        sid.setField(SolrSystemClient.FLD_LOCATION_NAME, locationName )
         if(this.crawlName) {
-            sid.addField(SolrSaver.FLD_CRAWL_NAME, this.crawlName)
+            sid.addField(SolrSystemClient.FLD_CRAWL_NAME, this.crawlName)
         } else {
             log.warn "No crawl name given: ${this}"
         }
 
-        sid.setField(SolrSaver.FLD_CREATED_DATE, createdDate)
+        sid.setField(SolrSystemClient.FLD_CREATED_DATE, createdDate)
 
         // todo -- consider switching to a batch time, rather than creating a new timestamp for each doc
-        sid.setField(SolrSaver.FLD_INDEX_DATETIME, new Date())
+        sid.setField(SolrSystemClient.FLD_INDEX_DATETIME, new Date())
         if(lastModifiedDate) {
-            sid.setField(SolrSaver.FLD_LAST_MODIFIED, lastModifiedDate)
+            sid.setField(SolrSystemClient.FLD_LAST_MODIFIED, lastModifiedDate)
         } else {
             log.warn "No modified date for savableObject: $this"
         }
 
         if(hidden)
-            sid.setField(SolrSaver.FLD_HIDDEN_B, hidden)
+            sid.setField(SolrSystemClient.FLD_HIDDEN_B, hidden)
 
-//        sid.setField(SolrSaver.FLD_LAST_MODIFIED, lastModifiedDate)
+//        sid.setField(SolrSystemClient.FLD_LAST_MODIFIED, lastModifiedDate)
 //        if(labels)
-            sid.setField(SolrSaver.FLD_LABELS, labels)
+            sid.setField(SolrSystemClient.FLD_LABELS, labels)
 
         if(tags)
-            sid.setField(SolrSaver.FLD_TAG_SS, tags)
+            sid.setField(SolrSystemClient.FLD_TAG_SS, tags)
 
         if(dedup) {
-            sid.setField(SolrSaver.FLD_DEDUP, dedup)
+            sid.setField(SolrSystemClient.FLD_DEDUP, dedup)
         } else {
             log.warn "\t\tno dedup value set??? $this"
         }
 
-//        sid.setField(SolrSaver.FLD_, )
+//        sid.setField(SolrSystemClient.FLD_, )
 
         return sid
     }
