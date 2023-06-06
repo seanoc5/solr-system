@@ -76,12 +76,12 @@ class FSFileTest extends Specification {
         archiveFile==true
         zipEntries != null
         sidList.size() == 2
-        firstSID.getFieldValue(SolrSaver.FLD_ID) == "${locationName}:objects.json"
-        firstSID.getFieldValue(SolrSaver.FLD_TYPE) == 'ArchiveEntry'
-        firstSID.getFieldValue(SolrSaver.FLD_SIZE) == 72904
-        firstSID.getFieldValue(SolrSaver.FLD_CRAWL_NAME) == 'test'
-        firstSID.getFieldValue(SolrSaver.FLD_EXTENSION_SS) == 'json'
-        firstSID.getFieldValue(SolrSaver.FLD_NAME_SIZE_S) == 'objects.json:72904'
+        firstSID.getFieldValue(SolrSystemClient.FLD_ID) == "${locationName}:objects.json"
+        firstSID.getFieldValue(SolrSystemClient.FLD_TYPE) == 'ArchiveEntry'
+        firstSID.getFieldValue(SolrSystemClient.FLD_SIZE) == 72904
+        firstSID.getFieldValue(SolrSystemClient.FLD_CRAWL_NAME) == 'test'
+        firstSID.getFieldValue(SolrSystemClient.FLD_EXTENSION_SS) == 'json'
+        firstSID.getFieldValue(SolrSystemClient.FLD_NAME_SIZE_S) == 'objects.json:72904'
     }
 */
 
@@ -107,7 +107,7 @@ class FSFileTest extends Specification {
 //            }
 //        }
 //        SolrInputDocument firstSID = sidList[0]
-//        String firstPath = firstSID.getFieldValue(SolrSaver.FLD_PATH_S)
+//        String firstPath = firstSID.getFieldValue(SolrSystemClient.FLD_PATH_S)
 
         then:
         children != null
@@ -117,12 +117,12 @@ class FSFileTest extends Specification {
 //        archiveEntries != null
 //        sidList.size() == 40
 //        firstPath != null
-//        firstSID.getFieldValue(SolrSaver.FLD_ID) == "${locationName}:${firstPath}"
-//        firstSID.getFieldValue(SolrSaver.FLD_TYPE) == 'ArchiveEntry'
-//        firstSID.getFieldValue(SolrSaver.FLD_SIZE) == 72904
-//        firstSID.getFieldValue(SolrSaver.FLD_CRAWL_NAME) == 'test'
-//        firstSID.getFieldValue(SolrSaver.FLD_EXTENSION_SS) == 'json'
-//        firstSID.getFieldValue(SolrSaver.FLD_NAME_SIZE_S) == 'objects.json:72904'
+//        firstSID.getFieldValue(SolrSystemClient.FLD_ID) == "${locationName}:${firstPath}"
+//        firstSID.getFieldValue(SolrSystemClient.FLD_TYPE) == 'ArchiveEntry'
+//        firstSID.getFieldValue(SolrSystemClient.FLD_SIZE) == 72904
+//        firstSID.getFieldValue(SolrSystemClient.FLD_CRAWL_NAME) == 'test'
+//        firstSID.getFieldValue(SolrSystemClient.FLD_EXTENSION_SS) == 'json'
+//        firstSID.getFieldValue(SolrSystemClient.FLD_NAME_SIZE_S) == 'objects.json:72904'
     }
 
 

@@ -2,7 +2,7 @@ package com.oconeco.models
 
 import com.oconeco.analysis.FolderAnalyzer
 import com.oconeco.helpers.Constants
-import com.oconeco.persistence.SolrSaver
+import com.oconeco.persistence.SolrSystemClient
 import org.apache.solr.common.SolrInputDocument
 import spock.lang.Specification
 
@@ -76,13 +76,13 @@ class FSFolderTest extends Specification {
         when:
         def sid = fsFolder.toSolrInputDocument()
         List<String> fieldNames = sid.getFieldNames().toList()
-        List<String> expectedNames = [SolrSaver.FLD_ID, SolrSaver.FLD_TYPE,
-                                      SolrSaver.FLD_NAME_S, SolrSaver.FLD_NAME_T, SolrSaver.FLD_LAST_MODIFIED, SolrSaver.FLD_PATH_S, SolrSaver.FLD_PATH_T,
-                                      SolrSaver.FLD_CRAWL_NAME, SolrSaver.FLD_LOCATION_NAME, SolrSaver.FLD_DEDUP,
-                                      SolrSaver.FLD_CHILD_FILENAMES, SolrSaver.FLD_CHILD_DIRNAMES,
-                                      SolrSaver.FLD_DEDUP, SolrSaver.FLD_EXTENSION_SS,
-//                                      SolrSaver.FLD_IGNORED_FOLDERS,
-                                      SolrSaver.FLD_IGNORED_FILES
+        List<String> expectedNames = [SolrSystemClient.FLD_ID, SolrSystemClient.FLD_TYPE,
+                                      SolrSystemClient.FLD_NAME_S, SolrSystemClient.FLD_NAME_T, SolrSystemClient.FLD_LAST_MODIFIED, SolrSystemClient.FLD_PATH_S, SolrSystemClient.FLD_PATH_T,
+                                      SolrSystemClient.FLD_CRAWL_NAME, SolrSystemClient.FLD_LOCATION_NAME, SolrSystemClient.FLD_DEDUP,
+                                      SolrSystemClient.FLD_CHILD_FILENAMES, SolrSystemClient.FLD_CHILD_DIRNAMES,
+                                      SolrSystemClient.FLD_DEDUP, SolrSystemClient.FLD_EXTENSION_SS,
+//                                      SolrSystemClient.FLD_IGNORED_FOLDERS,
+                                      SolrSystemClient.FLD_IGNORED_FILES
         ]
 
         then:
@@ -115,11 +115,11 @@ class FSFolderTest extends Specification {
 //        sidList.size() == 21
 //        sidFolder.getFieldValues('type_s')[0] == 'Folder'
 //        // test 'uniqify' value
-//        sidFolder.getField(SolrSaver.FLD_NAME_SIZE_S).value == 'content:1305281'
+//        sidFolder.getField(SolrSystemClient.FLD_NAME_SIZE_S).value == 'content:1305281'
 //
 //
 //        sidSolrxml.getFieldValues('type_s')[0] == 'File'
-//        sidSolrxml.getField(SolrSaver.FLD_NAME_SIZE_S).value == 'solrconfig.xml:62263'
+//        sidSolrxml.getField(SolrSystemClient.FLD_NAME_SIZE_S).value == 'solrconfig.xml:62263'
 //
 //        xmlName == 'solrconfig.xml'
 //    }
