@@ -1,14 +1,19 @@
 package com.oconeco.persistence
 
 
+import com.oconeco.crawler.LocalFileSystemCrawler
+import com.oconeco.models.FSFolder
 import org.apache.log4j.Logger
 import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.client.solrj.SolrRequest
+import org.apache.solr.client.solrj.SolrServerException
 import org.apache.solr.client.solrj.impl.BaseHttpSolrClient.RemoteSolrException
 import org.apache.solr.client.solrj.impl.Http2SolrClient
 import org.apache.solr.client.solrj.request.CollectionAdminRequest
 import org.apache.solr.client.solrj.response.QueryResponse
 import org.apache.solr.client.solrj.response.UpdateResponse
+import org.apache.solr.common.SolrDocument
+import org.apache.solr.common.SolrDocumentList
 import org.apache.solr.common.SolrInputDocument
 import org.apache.solr.common.util.NamedList
 import org.apache.tika.config.TikaConfig
@@ -20,48 +25,51 @@ import org.apache.tika.sax.BodyContentHandler
 /**
  * Looking at helper class to save solr_system (file crawl to start with content to solr
  */
-class SolrSaver {
+class SolrSystemClient {
     public static final Logger log = Logger.getLogger(this.class.name)
 
-    // todo -- move this to (BASE) Object hierarchy, leave solrsaver to do the actual saving, not building?
-    public static final String FLD_ID = 'id'
-    public static final String FLD_CRAWL_NAME = "crawlName_s"
-    public static final String FLD_LOCATION_NAME = "locationName_s"
+    public static int MAX_ROWS_RETURNED = 100000
+    //upper limit of 'big' queries, e.g. folder lists for a gven crawl
 
-    public static final String FLD_DEPTH = 'depth_i'
-    public static final String FLD_TYPE = 'type_s'
-    public static final String FLD_PATH_S = 'path_s'
-    public static final String FLD_PATH_T = 'path_t'
-    public static final String FLD_NAME_S = 'name_s'
-    public static final String FLD_NAME_T = 'name_t'
-    public static final String FLD_CONTENT_BODY = 'content_txt_en'
-    public static final String FLD_SIZE = "size_i"
+    // todo -- move this to (BASE) Object hierarchy, leave solrsaver to do the actual saving, not building?
+    public static String FLD_ID = 'id'
+    public static String FLD_CRAWL_NAME = "crawlName_s"
+    public static String FLD_LOCATION_NAME = "locationName_s"
+
+    public static String FLD_DEPTH = 'depth_i'
+    public static String FLD_TYPE = 'type_s'
+    public static String FLD_PATH_S = 'path_s'
+    public static String FLD_PATH_T = 'path_txt_en'
+    public static String FLD_NAME_S = 'name_s'
+    public static String FLD_NAME_T = 'name_txt_en'
+    public static String FLD_CONTENT_BODY = 'content_txt_en'
+    public static String FLD_SIZE = "size_i"
     public static String FLD_DEDUP = 'dedup_s'
 
-    public static final String FLD_INDEX_DATETIME = "indexedTime_dt"        // pdate dynamic field
-    public static final String FLD_CREATED_DATE = "createdDate_dt"          // pdate dynamic field
-    public static final String FLD_LAST_MODIFIED = "lastModified_dt"        // pdate dynamic field
+    public static String FLD_INDEX_DATETIME = "indexedTime_dt"        // pdate dynamic field
+    public static String FLD_CREATED_DATE = "createdDate_dt"          // pdate dynamic field
+    public static String FLD_LAST_MODIFIED = "lastModified_dt"        // pdate dynamic field
     // todo - improve owner name extraction/ETL
-    public static final String FLD_OWNER = "owner_s"                        // varies by operating system...
+    public static String FLD_OWNER = "owner_s"                        // varies by operating system...
 
 
-    public static final String FLD_CHILD_FILENAMES = "childFileName_ss"
-    public static final String FLD_CHILD_DIRNAMES = "childDirName_ss"
-    public static final String FLD_HIDDENNAME_SS = "hiddenName_ss"
-    public static final String FLD_HIDDEN_B = "hidden_b"
-    public static final String FLD_EXTENSION_SS = "extension_ss"
+    public static String FLD_CHILD_FILENAMES = "childFileName_ss"
+    public static String FLD_CHILD_DIRNAMES = "childDirName_ss"
+    public static String FLD_HIDDENNAME_SS = "hiddenName_ss"
+    public static String FLD_HIDDEN_B = "hidden_b"
+    public static String FLD_EXTENSION_SS = "extension_ss"
 
-    public static final String FLD_SUBDIR_COUNT = 'subdirCount_i'
-    public static final String FLD_FILE_COUNT = "fileCount_i"
-    public static final String FLD_DIR_COUNT = "dirCount_i"
+    public static String FLD_SUBDIR_COUNT = 'subdirCount_i'
+    public static String FLD_FILE_COUNT = "fileCount_i"
+    public static String FLD_DIR_COUNT = "dirCount_i"
 
-    public static final String FLD_TAG_SS = "tag_ss"
-    public static final String FLD_LABELS = "label_ss"
-//    public static final String FLD_CHILDASSIGNED_TYPES = "childAssignedTypes_ss"
-//    public static final String FLD_SAME_NAME_COUNT = "sameNameCount_i"
-//    public static final String FLD_NAME_SIZE_S = "nameSize_s"
-//    public static final String FLD_HOSTNAME = "hostName_s"
-    public static final String FLD_OS_NAME = "operatingSystem_s"
+    public static String FLD_TAG_SS = "tag_ss"
+    public static String FLD_LABELS = "label_ss"
+//    public static  String FLD_CHILDASSIGNED_TYPES = "childAssignedTypes_ss"
+//    public static  String FLD_SAME_NAME_COUNT = "sameNameCount_i"
+//    public static  String FLD_NAME_SIZE_S = "nameSize_s"
+//    public static  String FLD_HOSTNAME = "hostName_s"
+    public static String FLD_OS_NAME = "operatingSystem_s"
 
 
     public static String FLD_IGNORED_FILES_COUNT = 'ignoredFilesCount_i'
@@ -69,8 +77,20 @@ class SolrSaver {
     public static String FLD_IGNORED_FOLDERS_COUNT = 'ignoredFoldersCount_i'
     public static String FLD_IGNORED_FOLDERS = 'ignoredFolders_ss'
 
-    final Integer SOLR_BATCH_SIZE = 5000
-    final Integer MIN_FILE_SIZE = 10
+    public static List<String> FIELDS_TO_CHECK = [
+            FLD_ID,
+            FLD_LAST_MODIFIED,
+            FLD_SIZE,
+            FLD_DEDUP,
+            FLD_PATH_S,
+            FLD_LOCATION_NAME,
+            FLD_INDEX_DATETIME,
+//            SolrSystemClient.FLD_,
+    ]
+
+
+    Integer SOLR_BATCH_SIZE = 5000
+    Integer MIN_FILE_SIZE = 10
     Long MAX_CONTENT_SIZE = 1024 * 1000 * 10 // (10 MB of text?)
     Http2SolrClient solrClient
 
@@ -84,22 +104,20 @@ class SolrSaver {
      * todo -- revisit for better approach...
      * @param baseSolrUrl
      */
-    SolrSaver(String baseSolrUrl) {
+    SolrSystemClient(String baseSolrUrl) {
         log.debug "Constructor baseSolrUrl:$baseSolrUrl"
         buildSolrClient(baseSolrUrl)
     }
 
-    SolrSaver(String baseSolrUrl, String hostName) {
+    SolrSystemClient(String baseSolrUrl, String hostName) {
 //        this(baseSolrUrl)
         log.debug "\t\tConstructor baseSolrUrl:$baseSolrUrl --- Host/machine name:$hostName --- WITHOUT tika"
-//        this.hostName = hostName
         buildSolrClient(baseSolrUrl)
     }
 
-    SolrSaver(String baseSolrUrl, String hostName, TikaConfig tikaConfig) {
+    SolrSystemClient(String baseSolrUrl, String hostName, TikaConfig tikaConfig) {
 //        this(baseSolrUrl, dataSourceName)
         log.info "\t\tConstructor baseSolrUrl:$baseSolrUrl --- CrawlName:$hostName --- with TIKA config: $tikaConfig"
-//        this.hostName = hostName
         buildSolrClient(baseSolrUrl)
         this.tikaConfig = tikaConfig
         detector = tikaConfig.getDetector()
@@ -109,7 +127,6 @@ class SolrSaver {
 
     public void buildSolrClient(String baseSolrUrl) {
         log.info "\t\tBuild solr client with baseSolrUrl: $baseSolrUrl"
-//        solrClient = new HttpSolrClient.Builder(baseSolrUrl).build()
         solrClient = new Http2SolrClient.Builder(baseSolrUrl).build()
         log.debug "\t\tBuilt Solr Client: ${solrClient.baseURL}"
     }
@@ -130,6 +147,14 @@ class SolrSaver {
         return response
     }
 
+    /**
+     * helper/wrapper function to create a new solr collection (i.e. solr_system)
+     * @param collectionName
+     * @param numShards
+     * @param replactionFactor
+     * @param configName - defaults to _default
+     * @return named list of results
+     */
     NamedList createCollection(String collectionName, Integer numShards, Integer replactionFactor, String configName = '_default') {
         //http://localhost:8983/solr/admin/collections?action=CREATE&name=newCollection&numShards=2&replicationFactor=1
         NamedList result = null
@@ -137,11 +162,12 @@ class SolrSaver {
             CollectionAdminRequest.Create create = CollectionAdminRequest.createCollection(collectionName, numShards, replactionFactor);
 //        def request = new CollectionAdminRequest.create(collectionName, configName, numShards, replactionFactor);
             result = solrClient.request(create)
-        } catch (RemoteSolrException rse){
+        } catch (RemoteSolrException rse) {
             log.error "Remote error: $rse"
         }
         return result
     }
+
 
     /**
      * Clear the collection of current data -- BEWARE
@@ -156,7 +182,7 @@ class SolrSaver {
      *
      * todo -- add logic to handle "complex" clear paths -- sym links etc....
      */
-    UpdateResponse deleteDocuments(String deleteQuery, int commitWithinMS = 10) {
+    UpdateResponse deleteDocuments(String deleteQuery, int commitWithinMS = 0) {
         log.warn "Clearing collection: ${this.solrClient.baseURL} -- deleteQuery: $deleteQuery (commit within: $commitWithinMS)"
         UpdateResponse ursp = solrClient.deleteByQuery(deleteQuery, commitWithinMS)
         int status = ursp.getStatus()
@@ -167,25 +193,6 @@ class SolrSaver {
         }
         return ursp
     }
-    /**
-     * Create Solr Input doc
-     *
-     */
-//    SolrInputDocument createSolrInputFolderDocument(File folder) {
-//        FSFolder folderFS = new FSFolder(folder)
-//        return folderFS.toSolrInputDocument()
-//    }
-
-
-    /**
-     * Create Solr Input doc from archive entry
-     *
-     */
-//    SolrInputDocument createSolrInputFolderDocument(ArchiveEntry) {
-//        SolrInputDocument sid = new SolrInputDocument()
-//
-//        return sid
-//    }
 
 
     /**
@@ -364,39 +371,9 @@ class SolrSaver {
 */
 
 
-/*
-    static void addSolrAnalyzeFields(File file, SolrInputDocument sid) {
-        sid.setField(FLD_TAG_SS, ANALYZE)
-        log.debug "\t\tsetting file: $file to tag: $ANALYZE"
-    }
-*/
-
-
-    /**
-     * quick little wrapper in case we get fancy later
-     * @param fileDocs
-     * @return
-     */
-/*
-    UpdateResponse saveFilesCollection(Collection<SolrInputDocument> fileDocs, int msToCommit = 1000) {
-        UpdateResponse ursp = null
-        if (fileDocs) {
-            try {
-                ursp = solrClient.add(fileDocs, msToCommit)
-                log.debug "Update response: $ursp"
-            } catch (Exception e) {
-                log.error "Exception: $e"
-            }
-        } else {
-            log.warn "No docs to commit... $fileDocs (don't call thing if you don't need thing...)"
-        }
-        return ursp
-    }
-*/
-
-
-    def commitUpdates() {
-        solrClient.commit()
+    def commitUpdates(boolean waitFlush = false, boolean  waitSearcher = false) {
+        log.info "Explicit call to solr 'commit' (consider allowing autocommit settings to do this for you...)"
+        solrClient.commit(waitFlush,waitSearcher)
     }
 
 
@@ -408,7 +385,12 @@ class SolrSaver {
      */
     def saveDocs(ArrayList<SolrInputDocument> solrInputDocuments, int commitWithinMS = 1000) {
         log.debug "Adding solrInputDocuments, size: ${solrInputDocuments.size()}"
-        UpdateResponse resp = solrClient.add(solrInputDocuments, commitWithinMS)
+        UpdateResponse resp
+        try {
+            resp = solrClient.add(solrInputDocuments, commitWithinMS)
+        } catch (SolrServerException sse) {
+            log.error "Solr server exception: $sse"
+        }
         return resp
     }
 
@@ -442,7 +424,7 @@ class SolrSaver {
 
     @Override
     public String toString() {
-        return "SolrSaver{" +
+        return "SolrSystemClient{" +
                 "SOLR_BATCH_SIZE=" + SOLR_BATCH_SIZE +
                 ", MIN_FILE_SIZE=" + MIN_FILE_SIZE +
                 ", MAX_CONTENT_SIZE=" + MAX_CONTENT_SIZE +
@@ -452,5 +434,28 @@ class SolrSaver {
                 ", handler=" + handler +
                 ", tikaConfig=" + tikaConfig +
                 '}';
+    }
+
+    SolrDocumentList getSolrFolderDocs(LocalFileSystemCrawler crawler, String q = '*:*', String fq = "type_s:${FSFolder.TYPE}", String fl = SolrSystemClient.FIELDS_TO_CHECK.join(' ')) {
+        SolrQuery sq = new SolrQuery('*:*')
+        sq.setRows(MAX_ROWS_RETURNED)
+        sq.setFilterQueries(fq)
+        // add filter queries to further limit
+        String filterLocation =SolrSystemClient.FLD_LOCATION_NAME + ':' + crawler.locationName
+        sq.addFilterQuery(filterLocation)
+        String filterCrawl =SolrSystemClient.FLD_CRAWL_NAME + ':' + crawler.crawlName
+        sq.addFilterQuery(filterCrawl)
+
+        sq.setFields(fl)
+
+        QueryResponse response = query(sq)
+        SolrDocumentList docs = response.results
+        if (docs.size() == MAX_ROWS_RETURNED) {
+            log.warn "getExistingFolders returned lots of rows (${docs.size()}) which equals our upper limit: ${MAX_ROWS_RETURNED}, this is almost certainly a problem.... ${sq}}"
+        } else {
+            log.info "Get existing solr folder docs map, size: ${docs.size()} -- Filters: ${sq.getFilterQueries()}"
+        }
+        Map<String, SolrDocument> docsMap = docs.groupBy {it.getFirstValue('id')}
+        return docsMap
     }
 }
