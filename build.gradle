@@ -14,7 +14,7 @@ repositories {
 
 dependencies {
     // https://mvnrepository.com/artifact/org.apache.groovy/groovy-all
-    testImplementation group: 'org.apache.groovy', name: 'groovy-all', version: '4.0.11', ext: 'pom'
+    implementation group: 'org.apache.groovy', name: 'groovy-all', version: '4.0.11', ext: 'pom'
     // https://mvnrepository.com/artifact/org.apache.groovy/groovy-cli-picocli
     implementation 'org.apache.groovy:groovy-cli-picocli:4.0.11'
 
