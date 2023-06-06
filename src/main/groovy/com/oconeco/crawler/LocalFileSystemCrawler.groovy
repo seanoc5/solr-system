@@ -8,7 +8,6 @@ import org.apache.log4j.Logger
 
 import java.nio.file.Path
 import java.util.regex.Pattern
-
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -38,7 +37,7 @@ class LocalFileSystemCrawler {
     }
 
 
-    List<FSFolder> buildCrawlFolders(def source, Pattern ignorePattern) {
+    List<FSFolder> buildCrawlFolders(def source, Pattern ignorePattern, def existingSolrDocs = [:]) {
         log.info "\t\tStart crawl with source path:($source) and name ignore pattern: $ignorePattern"
         File startFolder = getStartDirectory(source)
         List<FSFolder> results = visitFolders(startFolder, ignorePattern)
