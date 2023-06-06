@@ -19,7 +19,7 @@ log.info "Start folders: $startFolders -- solr url: $solrUrl"
 String source = config.sourceName ?: 'undefined'
 
 // todo - replace 'Documents Locate' with param
-SolrSaver solrSaver = new SolrSaver(solrUrl, source)
+SolrSystemClient solrSaver = new SolrSystemClient(solrUrl, source)
 log.info "Solr Saver created: $solrSaver"
 
 boolean wipeContent = config.wipeContent
@@ -81,7 +81,7 @@ startFolders.each { String dsLabel, String sf ->
 
 }
 
-public void wipeSavedContent(String source, String dsLabel, SolrSaver solrSaver) {
+public void wipeSavedContent(String source, String dsLabel, SolrSystemClient solrSaver) {
     String query = "${Constants.FLD_CRAWL_NAME}:\"${dsLabel}\""
     String sourceFilter = ""
     long existingCount = solrSaver.getDocumentCount(query)

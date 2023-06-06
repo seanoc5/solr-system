@@ -5,7 +5,7 @@ import com.oconeco.analysis.FolderAnalyzer
 import com.oconeco.crawler.LocalFileSystemCrawler
 import com.oconeco.helpers.SolrCrawlArgParser
 import com.oconeco.models.FSFolder
-import com.oconeco.persistence.SolrSaver
+import com.oconeco.persistence.SolrSystemClient
 import org.apache.log4j.Logger
 
 import java.nio.file.LinkOption
@@ -28,8 +28,8 @@ String crawlName = config.ccrawlName ?: 'undefined'
 //Map folderNamePatterns = config.namePatterns.folders
 Pattern fileIgnorePattern = config.namePatterns.folders.ignore
 
-//SolrSaver solrSaver = new SolrSaver(solrUrl, locationName)
-SolrSaver solrSaver = new SolrSaver(solrUrl)
+//SolrSystemClient solrSaver = new SolrSystemClient(solrUrl, locationName)
+SolrSystemClient solrSaver = new SolrSystemClient(solrUrl)
 log.debug "\t\tSolr Saver created: $solrSaver"
 
 FolderAnalyzer folderAnalyzer = new FolderAnalyzer(config)

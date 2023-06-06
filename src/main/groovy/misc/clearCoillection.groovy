@@ -1,6 +1,6 @@
 package misc
 
-import com.oconeco.persistence.SolrSaver
+import com.oconeco.persistence.SolrSystemClient
 import org.apache.log4j.Logger
 import org.apache.solr.client.solrj.response.QueryResponse
 /**
@@ -9,7 +9,7 @@ import org.apache.solr.client.solrj.response.QueryResponse
 Logger log = Logger.getLogger(this.class.name);
 log.info "${this.class.name} -- Delete documents...."
 String solrUrl = "http://oldie:8983/solr/solr_system"
-SolrSaver solrSaver = new SolrSaver(solrUrl)
+SolrSystemClient solrSaver = new SolrSystemClient(solrUrl)
 
 String q = "*:*"
 //SolrQuery sq = new SolrQuery(q)
