@@ -436,7 +436,7 @@ class SolrSystemClient {
                 '}';
     }
 
-    SolrDocumentList getSolrFolderDocs(LocalFileSystemCrawler crawler, String q = '*:*', String fq = "type_s:${FSFolder.TYPE}", String fl = SolrSystemClient.FIELDS_TO_CHECK.join(' ')) {
+    Map<String, SolrDocument> getSolrFolderDocs(LocalFileSystemCrawler crawler, String q = '*:*', String fq = "type_s:${FSFolder.TYPE}", String fl = SolrSystemClient.FIELDS_TO_CHECK.join(' ')) {
         SolrQuery sq = new SolrQuery('*:*')
         sq.setRows(MAX_ROWS_RETURNED)
         sq.setFilterQueries(fq)
@@ -453,7 +453,7 @@ class SolrSystemClient {
         if (docs.size() == MAX_ROWS_RETURNED) {
             log.warn "getExistingFolders returned lots of rows (${docs.size()}) which equals our upper limit: ${MAX_ROWS_RETURNED}, this is almost certainly a problem.... ${sq}}"
         } else {
-            log.info "Get existing solr folder docs map, size: ${docs.size()} -- Filters: ${sq.getFilterQueries()}"
+            log.info "\t\tGet existing solr folder docs map, size: ${docs.size()} -- Filters: ${sq.getFilterQueries()}"
         }
         Map<String, SolrDocument> docsMap = docs.groupBy {it.getFirstValue('id')}
         return docsMap
