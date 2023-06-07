@@ -5,6 +5,7 @@ import com.oconeco.models.FSFolder
 import groovy.io.FileType
 import groovy.io.FileVisitResult
 import org.apache.log4j.Logger
+import org.apache.solr.common.SolrDocument
 
 import java.nio.file.Path
 import java.util.regex.Pattern
@@ -21,26 +22,30 @@ import java.util.regex.Pattern
  */
 class LocalFileSystemCrawler {
     static log = Logger.getLogger(this.class.name);
-    String crawlName
+    String crawlName        // todo -- remove this from class, leave as arg in methods wher appropriate
     String locationName
     String osName
     int statusDepth = 3
+    DifferenceChecker differenceChecker
 
 
 
-    LocalFileSystemCrawler(String locationName, String crawlName, int statusDepth = 3) {
+    LocalFileSystemCrawler(String locationName, String crawlName, int statusDepth = 3, DifferenceChecker diffChecker = new DifferenceChecker()) {
         log.info "${this.class.simpleName} constructor with location:$locationName, name: $crawlName,  statusDepth:$statusDepth..."
         this.crawlName = crawlName
         this.locationName = locationName
         osName = System.getProperty("os.name")      // moved this from config file to here in case we start supporting remote filesystems...? (or WSL...?)
         this.statusDepth = statusDepth
+        this.differenceChecker = diffChecker
     }
 
 
-    List<FSFolder> buildCrawlFolders(def source, Pattern ignorePattern, def existingSolrDocs = [:]) {
+    List<FSFolder> buildCrawlFolders(String crawlName, def source, Pattern ignorePattern, Map<String, SolrDocument> existingSolrFolderDocs) {
         log.info "\t\tStart crawl with source path:($source) and name ignore pattern: $ignorePattern"
+        // todo -- fix me
+        this.crawlName = crawlName
         File startFolder = getStartDirectory(source)
-        List<FSFolder> results = visitFolders(startFolder, ignorePattern)
+        List<FSFolder> results = visitFolders(crawlName, startFolder, ignorePattern, existingSolrFolderDocs)
         return results
     }
 
@@ -77,7 +82,7 @@ class LocalFileSystemCrawler {
      * this is a quick/light scan of folders, assumes following processing will order crawl of folders by priority,
      * and even check for updates to skip folders with no apparent changes
      */
-    List<FSFolder> visitFolders(File startFolder, Pattern ignorePattern) {
+    List<FSFolder> visitFolders(String crawlName, File startFolder, Pattern ignorePattern, Map<String, SolrDocument> existingSolrFolderDocs) {
         HashMap<String, FSFolder> foldersMap = [:]
 
         // track the starting Path so we can 'relativize` and get relative depth of this crawl
@@ -109,7 +114,7 @@ class LocalFileSystemCrawler {
                                        log.debug "\t\t____ found parent folder: $parentFolder in map, setting $fsFolder parent to it"
                                        fsFolder.parent = parentFolder
                                    } else {
-                                       log.info "\t\t____ Parent folder ($lastFolder) is not the right parent for $fsFolder!!"
+                                       log.debug "\t\t____ Parent folder ($lastFolder) is not the right parent for $fsFolder!!"
                                    }
                                }
 
@@ -119,17 +124,40 @@ class LocalFileSystemCrawler {
                            // todo -- is this helpful? premature optimization? does this save enough for the extra code/maintenance???
                            lastFolder = fsFolder      // attempting to track parent/child (cheaply??)
 
+                           boolean shouldUpdate = true
+                           DifferenceStatus status
+                           SolrDocument solrDocument
+                           if(existingSolrFolderDocs) {
+                               solrDocument = existingSolrFolderDocs.get(fsFolder.id)
+                               if(solrDocument) {
+                                   status = differenceChecker.compareFSFolderToSavedDoc(fsFolder, solrDocument)
+                                   shouldUpdate = differenceChecker.shouldUpdate(status)
+                                   if(shouldUpdate) {
+                                       log.debug "\t\tFolder($fsFolder) needs update: $shouldUpdate"
+                                   } else {
+                                       log.debug "\t\tFolder($fsFolder) DO NOT need update: $shouldUpdate"
+                                   }
+                               } else {
+                                   log.info "\t\tNo matching solr doc, defaulting to FSFolder ($fsFolder) DOES NEED to be processed"
+                               }
+                           }
                            if(accessible) {
                                if (it.name ==~ ignorePattern) {
                                    fsFolder.ignore = true
-                                   log.info "\t\t---- INGOREing folder: $it -- matches ignorePattern: $ignorePattern"
+                                   // todo -- add should update status for ignored folders??
+
+                                   log.info "\t\t---- INGOREing folder: $it -- matches ignorePattern: $ignorePattern (should update: $shouldUpdate)"
                                    foldersMap.put(f.path, fsFolder)
                                    return FileVisitResult.SKIP_SUBTREE
 
                                } else {
-                                   fsFolder.ignore = false
-                                   log.debug "\t\tADDING Crawl folder: $it"
-                                   foldersMap.put(f.path, fsFolder)
+                                   if(shouldUpdate) {
+                                       fsFolder.ignore = false
+                                       log.debug "\t\t++++ ADDING Crawl folder: $it"
+                                       foldersMap.put(f.path, fsFolder)
+                                   } else {
+                                       log.info "\t\t---- DOES NOT need updating -- FSFolder ($fsFolder) in sync with solr folder doc ($solrDocument)"
+                                   }
                                }
                            } else {
                                log.warn "Got a bad/inaccessible folder? $it"
@@ -163,7 +191,7 @@ class LocalFileSystemCrawler {
      * param ignoredFolders - ignore pattern
      * return list of files
      */
-    List<FSFile> getFolderFsFiles(FSFolder fSFolder, Pattern ignoreFilesPattern) {
+    List<FSFile> populateFolderFsFiles(FSFolder fSFolder, Pattern ignoreFilesPattern) {
         List<FSFile> fSFilesList = []
         File folder = fSFolder.thing
         if (folder?.exists()) {
@@ -195,8 +223,6 @@ class LocalFileSystemCrawler {
         return fSFilesList
     }
 
-//    boolean shouldIgnore(File file, Pattern ignoreFiles) {
-//    }
 
 
     /**
