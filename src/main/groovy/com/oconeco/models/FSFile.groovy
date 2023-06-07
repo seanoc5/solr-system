@@ -197,7 +197,7 @@ class FSFile extends SavableObject {
                 log.debug "Create children list... ($this)"
                 children = []
             }
-//             ArchiveEntry entry = null
+             ArchiveEntry entry = null
             while ((entry = ais.getNextEntry()) != null) {
                 if (entry.isDirectory()) {
                     ArchFolder archFolder = new ArchFolder(entry, this, locationName, crawlName)
