@@ -1,5 +1,6 @@
 package misc
 
+import com.oconeco.crawler.DifferenceChecker
 import com.oconeco.crawler.LocalFileSystemCrawler
 import com.oconeco.helpers.SolrCrawlArgParser
 import com.oconeco.models.FSFolder
@@ -42,16 +43,24 @@ log.info "Before crawl NumFound: $numFound"
 long start = System.currentTimeMillis()
 
 crawlMap.each { String crawlName, String startPath ->
-    LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName)
+    log.info "Crawl name: $crawlName -- start path: $startPath -- location: $locationName "
+    DifferenceChecker differenceChecker = new DifferenceChecker()
+    LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName, 2, differenceChecker)
     Map<String, SolrDocument> existingSolrFolderDocs
     if(config.wipeContent==true) {
         log.warn "Config/args indicates we whould wipe content for crawl: $crawler"
     } else {
         existingSolrFolderDocs = client.getSolrFolderDocs(crawler)
+        if(existingSolrFolderDocs) {
+            log.info "Existing Solr Folder docs (to check incremental) size: ${existingSolrFolderDocs.size()}"
+        } else {
+            log.warn "No existing solr folder docs found for $crawlName : $startPath -- first crawl??"
+        }
     }
     log.info "\t\tcrawl map item with label:'$crawlName' --- and --- startpath:'$startPath'..."
-    def crawlFolders = crawler.buildCrawlFolders(startPath, folderIgnorePattern)
+    def crawlFolders = crawler.buildCrawlFolders(crawlName, startPath, folderIgnorePattern, existingSolrFolderDocs)
     crawlFolders.each { FSFolder fsfolder ->
+
         def details = fsfolder.addFolderDetails()
         log.debug "\t\t$fsfolder: added folder details: $details"
 
