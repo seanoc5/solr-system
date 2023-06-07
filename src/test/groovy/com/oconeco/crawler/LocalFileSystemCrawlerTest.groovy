@@ -27,10 +27,10 @@ class LocalFileSystemCrawlerTest extends Specification {
 
     def "basic localhost crawl of 'content' resource folder"() {
         given:
-        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, 'basic localhost')
+        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName)
 
         when:
-        def results = crawler.buildCrawlFolders(startFolder, ignorePattern)
+        def results = crawler.buildCrawlFolders(crawlName, startFolder, ignorePattern, existingSolrFolderDocs)
         def toCrawl = results.findAll { !it.ignore }
         def toIgnore = results.findAll { it.ignore }
 
@@ -55,19 +55,19 @@ class LocalFileSystemCrawlerTest extends Specification {
 
     def 'basic localhost with child folders'() {
         given:
-        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, 'folder children')
+        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName)
         Map<String, List<SavableObject>> folderFilesMap = [:]
         List<String> ignoreList = []
 
         when:
-        def results = crawler.buildCrawlFolders(startFolder, ignorePattern)
+        def results = crawler.buildCrawlFolders(crawlName, startFolder, ignorePattern, existingSolrFolderDocs)
         results.each { FSFolder fsFolder ->
             if (fsFolder.ignore) {
                 log.info "Skip crawling files in folder: $fsFolder"
                 ignoreList << fsFolder
             } else {
                 log.info "crawl files in folder: $fsFolder"
-                 def folderFiles= crawler.getFolderFsFiles(fsFolder, ignorePattern)
+                 def folderFiles= crawler.populateFolderFsFiles(fsFolder, ignorePattern)
                 folderFilesMap[fsFolder.name] = folderFiles
                 log.info "Folder files: ${folderFiles.size()}"
             }

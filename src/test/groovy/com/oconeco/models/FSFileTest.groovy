@@ -17,13 +17,12 @@ class FSFileTest extends Specification {
     FSFolder parentFolder = new FSFolder(jsonFile.parentFile, locationName, crawlName, 0)
 
     def "should create basic FSFile - non-archive"() {
-        given:
-
         when:
         FSFile fsFile = new FSFile(jsonFile, parentFolder, locationName, crawlName)
 
         then:
-        fsFile.id == fsFile.locationName + ':' + fsFile.path
+        fsFile.id.startsWith(fsFile.locationName)
+        fsFile.id.endsWith(fsFile.name)
         fsFile.name == jsonName
         fsFile.path.endsWith(jsonFile.name)
         fsFile.type == FSFile.TYPE

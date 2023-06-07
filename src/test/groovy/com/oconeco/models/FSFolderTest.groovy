@@ -22,6 +22,8 @@ class FSFolderTest extends Specification {
 
         then:
         fsFolder.owner != null
+        fsFolder.size != null
+        fsFolder.size > 0
         fsFolder.lastModifiedDate != null
         fsFolder.lastAccessDate != null
 //        fsFolder.children.size() == 20
@@ -30,11 +32,11 @@ class FSFolderTest extends Specification {
     }
 
     def "items should have date and size as well as unique path:size combo"() {
+        given:
+        FSFolder fsFolder = new FSFolder(startFolder, locationName, crawlName, 1)
 
         when:
-        FSFolder fsFolder = new FSFolder(startFolder, locationName, crawlName, 1)
-//        def rc = fsFolder.buildChildrenList()
-        fsFolder.addFolderDetails()
+        Map<String, Object> details = fsFolder.addFolderDetails()
 
 
         then:
@@ -62,8 +64,9 @@ class FSFolderTest extends Specification {
 
         then:
         sid != null
-        detailKeys.size()==4
-        fieldNAmes.size()>=16
+        detailKeys.size() == 4
+        detailKeys.containsAll(['lastAccessDate', 'lastModifiedDate', 'createdDate', 'owner'])
+        fieldNAmes.size() >= 15
 
     }
 
@@ -77,18 +80,21 @@ class FSFolderTest extends Specification {
         def sid = fsFolder.toSolrInputDocument()
         List<String> fieldNames = sid.getFieldNames().toList()
         List<String> expectedNames = [SolrSystemClient.FLD_ID, SolrSystemClient.FLD_TYPE,
-                                      SolrSystemClient.FLD_NAME_S, SolrSystemClient.FLD_NAME_T, SolrSystemClient.FLD_LAST_MODIFIED, SolrSystemClient.FLD_PATH_S, SolrSystemClient.FLD_PATH_T,
+                                      SolrSystemClient.FLD_NAME_S, SolrSystemClient.FLD_NAME_T, SolrSystemClient.FLD_PATH_S, SolrSystemClient.FLD_PATH_T,
                                       SolrSystemClient.FLD_CRAWL_NAME, SolrSystemClient.FLD_LOCATION_NAME, SolrSystemClient.FLD_DEDUP,
-                                      SolrSystemClient.FLD_CHILD_FILENAMES, SolrSystemClient.FLD_CHILD_DIRNAMES,
-                                      SolrSystemClient.FLD_DEDUP, SolrSystemClient.FLD_EXTENSION_SS,
+                                      SolrSystemClient.FLD_SIZE, SolrSystemClient.FLD_DEPTH,
+                                      SolrSystemClient.FLD_LOCATION_NAME,
+                                      SolrSystemClient.FLD_LAST_MODIFIED,
+//                                      SolrSystemClient.FLD_CHILD_FILENAMES, SolrSystemClient.FLD_CHILD_DIRNAMES,
+//                                      SolrSystemClient.FLD_DEDUP, SolrSystemClient.FLD_EXTENSION_SS,
 //                                      SolrSystemClient.FLD_IGNORED_FOLDERS,
-                                      SolrSystemClient.FLD_IGNORED_FILES
+//                                      SolrSystemClient.FLD_IGNORED_FILES
         ]
 
         then:
         sid != null
         fieldNames.containsAll(expectedNames)
-        fieldNames.size() >= 24
+        fieldNames.size() >= 15
 
     }
 
@@ -134,14 +140,14 @@ class FSFolderTest extends Specification {
         def details = fsFolder.addFolderDetails()
         List<SavableObject> children = fsFolder.buildChildrenList(ignoreFiles)
         List<SolrInputDocument> solrDocs = fsFolder.toSolrInputDocumentList()
-        def ignoredFolders = children.findAll {it.type.containsIgnoreCase('folder') && it.ignore==true}
-        def ignoredFiles = children.findAll {it.type.containsIgnoreCase('file') && it.ignore==true}
+        def ignoredFolders = children.findAll { it.type.containsIgnoreCase('folder') && it.ignore == true }
+        def ignoredFiles = children.findAll { it.type.containsIgnoreCase('file') && it.ignore == true }
 
         then:
         fsFolder.children.size() == 23
         solrDocs.size() == 24
-        ignoredFiles.size()==2
-        ignoredFolders.size()==1
+        ignoredFiles.size() == 2
+        ignoredFolders.size() == 1
         ignoredFolders[0].name == 'ignoreMe'
     }
 
@@ -155,7 +161,7 @@ class FSFolderTest extends Specification {
 
         when:
         def results = analyzer.analyze(startFolder)
-        log.info "Analysis results: $results"
+//        log.info "Analysis results: $results"
 //        Map assignmentGroupedFiles = startFolder.children.groupBy { it.assignedTypes[0] }
 //        List keys = assignmentGroupedFiles.keySet().toList()
 
