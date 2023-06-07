@@ -133,7 +133,7 @@ class LocalFileSystemCrawler {
                                    status = differenceChecker.compareFSFolderToSavedDoc(fsFolder, solrDocument)
                                    shouldUpdate = differenceChecker.shouldUpdate(status)
                                    if(shouldUpdate) {
-                                       log.debug "\t\tFolder($fsFolder) needs update: $shouldUpdate"
+                                       log.info "\t\tFolder($fsFolder) needs update: $shouldUpdate"
                                    } else {
                                        log.debug "\t\tFolder($fsFolder) DO NOT need update: $shouldUpdate"
                                    }

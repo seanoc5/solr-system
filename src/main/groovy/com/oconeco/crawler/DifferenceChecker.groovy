@@ -58,7 +58,8 @@ class DifferenceChecker {
 
         Long solrSize = existingSolrDoc.getFirstValue(SolrSystemClient.FLD_SIZE)
         if (fsfolder.size == solrSize) {
-            String msg =
+            String msg ="Same sizes, fsfolder: ${fsfolder.size} != solr: $solrSize"
+            similarities << msg
             status.differentSizes = false
         } else {
             status.differentSizes = true
@@ -67,6 +68,8 @@ class DifferenceChecker {
 
         String solrDedup = existingSolrDoc.getFirstValue(SolrSystemClient.FLD_DEDUP)
         if (fsfolder.dedup == solrDedup) {
+            String msg = "Same dedup: ${fsfolder.dedup}"
+            similarities << msg
             status.differentDedups = false
         } else {
             status.differentDedups = true
