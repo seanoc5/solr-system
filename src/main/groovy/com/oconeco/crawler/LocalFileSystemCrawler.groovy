@@ -9,6 +9,7 @@ import org.apache.solr.common.SolrDocument
 
 import java.nio.file.Path
 import java.util.regex.Pattern
+
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -29,21 +30,24 @@ class LocalFileSystemCrawler {
     DifferenceChecker differenceChecker
 
 
-
     LocalFileSystemCrawler(String locationName, String crawlName, int statusDepth = 3, DifferenceChecker diffChecker = new DifferenceChecker()) {
-        log.info "${this.class.simpleName} constructor with location:$locationName, name: $crawlName,  statusDepth:$statusDepth..."
+        log.debug "${this.class.simpleName} constructor with location:$locationName, name: $crawlName,  statusDepth:$statusDepth..."
         this.crawlName = crawlName
         this.locationName = locationName
-        osName = System.getProperty("os.name")      // moved this from config file to here in case we start supporting remote filesystems...? (or WSL...?)
+        osName = System.getProperty("os.name")
+        // moved this from config file to here in case we start supporting remote filesystems...? (or WSL...?)
         this.statusDepth = statusDepth
         this.differenceChecker = diffChecker
     }
 
 
     List<FSFolder> buildCrawlFolders(String crawlName, def source, Pattern ignorePattern, Map<String, SolrDocument> existingSolrFolderDocs) {
-        log.info "\t\tStart crawl with source path:($source) and name ignore pattern: $ignorePattern"
-        // todo -- fix me
+        // todo -- fix depth tracking, currently everything is '1'
+        log.debug "\t\t....buildCrawlFolders ($crawlName) with source path:($source) and name ignore pattern: $ignorePattern -- existing folder doc count: ${existingSolrFolderDocs?.size()} (for checking if solr is in sync/updated)"
+
+        // todo -- fix me -- possibly find a more elegant approach to the crawlName processing/remembering
         this.crawlName = crawlName
+
         File startFolder = getStartDirectory(source)
         List<FSFolder> results = visitFolders(crawlName, startFolder, ignorePattern, existingSolrFolderDocs)
         return results
@@ -88,75 +92,56 @@ class LocalFileSystemCrawler {
         // track the starting Path so we can 'relativize` and get relative depth of this crawl
         Path startPath = startFolder.toPath()
 
-        FSFolder lastFolder
-
+        // visit folders - build FSObject
+        // check for existing solr doc
+        // if present && in sync: skip update
+        // else save new or updated
         Map options = [type     : FileType.DIRECTORIES,
                        preDir   : {
                            File f = (File) it
                            boolean accessible = f.exists() && f.canRead() && f.canExecute()
 
-                           Path thisPath = f.toPath()
-                           Path reletivePath = startPath.relativize(thisPath)
-//                           List parts = reletivePath.
-                           int pathElements = reletivePath.getNameCount();
-                           FSFolder fsFolder = new FSFolder(it, this.locationName, this.crawlName, pathElements)
-                           if (lastFolder) {
-                               if (f.parentFile.path == lastFolder.path) {
-                                   if (fsFolder.parent) {
-                                       log.info "\t\t____ already have parent: ${fsFolder.parent}"
-                                   } else {
-                                       log.debug "\t\t____ setting FSFolder (${fsFolder.toString()}) parent to last folder: $lastFolder"
-                                       fsFolder.parent = lastFolder
-                                   }
-                               } else {
-                                   FSFolder parentFolder = foldersMap.get(f.parentFile.path)
-                                   if (parentFolder) {
-                                       log.debug "\t\t____ found parent folder: $parentFolder in map, setting $fsFolder parent to it"
-                                       fsFolder.parent = parentFolder
-                                   } else {
-                                       log.debug "\t\t____ Parent folder ($lastFolder) is not the right parent for $fsFolder!!"
-                                   }
-                               }
+                           Path reletivePath = startPath.relativize(f.toPath())
+                           String relPath = reletivePath.toString()
+                           int depth = relPath > '' ? reletivePath.getNameCount() : 0
+                           FSFolder fsFolder = new FSFolder(f, this.locationName, this.crawlName, depth)
 
-                           } else {
-                               log.debug "\t\tFirst folder? no parentFolder set yet... $fsFolder"
-                           }
-                           // todo -- is this helpful? premature optimization? does this save enough for the extra code/maintenance???
-                           lastFolder = fsFolder      // attempting to track parent/child (cheaply??)
-
-                           boolean shouldUpdate = true
-                           DifferenceStatus status
-                           SolrDocument solrDocument
-                           if(existingSolrFolderDocs) {
-                               solrDocument = existingSolrFolderDocs.get(fsFolder.id)
-                               if(solrDocument) {
-                                   status = differenceChecker.compareFSFolderToSavedDoc(fsFolder, solrDocument)
-                                   shouldUpdate = differenceChecker.shouldUpdate(status)
-                                   if(shouldUpdate) {
-                                       log.info "\t\tFolder($fsFolder) needs update: $shouldUpdate"
-                                   } else {
-                                       log.debug "\t\tFolder($fsFolder) DO NOT need update: $shouldUpdate"
-                                   }
-                               } else {
-                                   log.info "\t\tNo matching solr doc, defaulting to FSFolder ($fsFolder) DOES NEED to be processed"
-                               }
-                           }
-                           if(accessible) {
+                           if (accessible) {
                                if (it.name ==~ ignorePattern) {
                                    fsFolder.ignore = true
                                    // todo -- add should update status for ignored folders??
-
-                                   log.info "\t\t---- INGOREing folder: $it -- matches ignorePattern: $ignorePattern (should update: $shouldUpdate)"
-                                   foldersMap.put(f.path, fsFolder)
+                                   log.info "\t\t----Ignorable folder, AND does not need updating: $fsFolder"
                                    return FileVisitResult.SKIP_SUBTREE
 
                                } else {
-                                   if(shouldUpdate) {
-                                       fsFolder.ignore = false
-                                       log.debug "\t\t++++ ADDING Crawl folder: $it"
+                                   boolean shouldUpdate = true
+                                   // default to true, make check unset if all conditions are met
+                                   DifferenceStatus status
+                                   SolrDocument solrDocument
+                                   // solr doc to compare "saved" info and freshness with this file object
+
+                                   if (existingSolrFolderDocs) {
+                                       solrDocument = existingSolrFolderDocs.get(fsFolder.id)
+                                       if (solrDocument) {
+                                           // found an existing 'saved' record, check if it looks like we need to update or not
+                                           status = differenceChecker.compareFSFolderToSavedDoc(fsFolder, solrDocument)
+                                           shouldUpdate = differenceChecker.shouldUpdate(status)
+                                           if (shouldUpdate) {
+                                               log.info "\t\tFolder($fsFolder) needs update: $shouldUpdate"
+                                           } else {
+                                               log.debug "\t\tFolder($fsFolder) DO NOT need update: $shouldUpdate"
+                                           }
+                                       } else {
+                                           log.info "\t\tNo matching solr doc, defaulting to FSFolder ($fsFolder) DOES NEED to be processed"
+                                       }
+                                   }
+
+                                   if (shouldUpdate) {
+//                                       fsFolder.ignore = false
+                                       log.info "\t\t++++ ADDING Crawl folder: $fsFolder"
                                        foldersMap.put(f.path, fsFolder)
                                    } else {
-                                       log.info "\t\t---- DOES NOT need updating -- FSFolder ($fsFolder) in sync with solr folder doc ($solrDocument)"
+                                       log.info "\t\t===='${fsFolder.name}' is current (path:'${fsFolder.path}') no update needed"
                                    }
                                }
                            } else {
@@ -201,7 +186,7 @@ class LocalFileSystemCrawler {
                     def ignore = fsFile.matchIgnorePattern(ignoreFilesPattern)
                     if (ignore) {
                         log.debug "\t\tIGNORING file: $file"
-                        fsFile.ignore=true
+                        fsFile.ignore = true
                     } else {
                         log.debug "\t\tNOT ignoring file: $file"
 //                        fsFile.ignore= false //redundant??
@@ -222,7 +207,6 @@ class LocalFileSystemCrawler {
         fSFolder.children = fSFilesList
         return fSFilesList
     }
-
 
 
     /**
