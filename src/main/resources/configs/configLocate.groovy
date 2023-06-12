@@ -1,7 +1,8 @@
 package configs
-import com.oconeco.helpers.Constants
-import java.nio.file.LinkOption
 
+import com.oconeco.helpers.Constants
+
+import java.nio.file.LinkOption
 /**
  * this is a starter template that I (SoC) find useful.
  * hopefully there are some helpful examples and ideas here, but please customize to suit your interests (dear reader)
@@ -10,6 +11,7 @@ import java.nio.file.LinkOption
 
 solrUrl = "http://oldie:8983/solr/solr_system"
 sourceName = Inet4Address.localHost.getHostName()
+
 // can be overriden b
 wipeContent = false
 userHome = System.getProperty("user.home")
@@ -17,15 +19,16 @@ userHome = System.getProperty("user.home")
 osName = System.getProperty("os.name")
 // be default don't follow links, just focus on the 'original'
 linkOption = LinkOption.NOFOLLOW_LINKS
+ignoreArchivesPattern = ~/.*[jw]ar/
 
 
 // todo -- these name: path entries are not yet used, still reading path and name from cli args
 dataSources {
     localFolders {
         // todo -- check if this maps across the 3 main OSes: Linux, Mac, windoze
-        MyDesktop = "${userHome}/Desktop"
         MyDocuments = "${userHome}/Documents"
         Downloads = "${userHome}/Downloads"
+        MyDesktop = "${userHome}/Desktop"
         MyPictures = "${userHome}/Pictures"
 
         String bkupFolder = "${userHome}/bkup"
@@ -49,12 +52,27 @@ dataSources {
             GoogleDriveLocal = "${userHome}/My Drive"
         }
     }
+    // not implemented yet... use command line override of folders to get this
+/*
     externalDrives {
         wd4tb = "/media/sean/sean-data"
     }
+*/
 }
 
 // note: all of the labels below are optional/customizable. You probably want to leave the `ignore`, `index`, and `analyze` labels as is, they have special meaning
+
+// folder names can be matches to assign tags for a given folder (name matching)
+namePatterns.folders = [
+        ignore : Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE],
+        content: ~/(content)/,
+        office : ~/(?i).*(documents)/,
+        techDev: ~/.*(groovy|gradle|classes)/,
+        system : ~/(_global)/,
+        techDev: ~/(.gradle|compile|groovy|java|main|scala|src|target|test|resources|wrapper)/,
+        test   : ~/(?i).*(test)/,
+        work   : ~/(?i).*(lucidworks|oconeco|work)/,
+]
 
 // edit and customize these entries. The namePattern name is the assigned tag, the regex pattern (`~` is the pattern operator) are the matching regexes for the label/tag
 namePatterns.files = [
@@ -75,16 +93,3 @@ namePatterns.files = [
         system      : ~/.*(_SUCCESS|bat|bin|bkup|cache|class|cookies|deb|gcc|lib|\.old|pkg|rpm|#$)/,
 ]
 
-// folder names can be matches to assign tags for a given folder (name matching)
-namePatterns.folders = [
-        ignore : Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE],
-//        ignore : ~/(@angular|__snapshots__|\.bsp|\.?cache|\.csv|\.gradle|\.?git|\.github|\.idea|\.settings|\.svn|site-packages|\.vscode|_global|ignore.*|lib|node.modules|runtime)/,
-//        ignore : ~/.*(\.gradle|\.m2|\b*snapshots?\b*|\b*caches?\b*|git|github|ignore.*|node_modules|packages?|pkgs?|plugins?|repository|skins?|skipme.*|svn|target|tmp|vscode)/,
-        content: ~/(content)/,
-        office : ~/(?i).*(documents)/,
-        techDev: ~/.*(groovy|gradle|classes)/,
-        system : ~/(_global)/,
-        techDev: ~/(.gradle|compile|groovy|java|main|scala|src|target|test|resources|wrapper)/,
-        test   : ~/(?i).*(test)/,
-        work   : ~/(?i).*(lucidworks|oconeco|work)/,
-]
