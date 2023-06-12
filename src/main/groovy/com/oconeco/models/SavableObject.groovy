@@ -46,6 +46,8 @@ class SavableObject {
 
     /** link to parent (if any) */
     def parent
+    String parentId
+
     /** links to children (if any) */
     List<SavableObject> children
     /** rough metric for how recent this is (remove?) */
@@ -134,7 +136,7 @@ class SavableObject {
      * create a solr doc with the (most) common params, descendant object will add more details to @SolrInputDocument
      * @return SolrInputDocument
      */
-    SolrInputDocument toSolrInputDocument(){
+    SolrInputDocument toSolrInputDocument() {
         SolrInputDocument sid = new SolrInputDocument()
         sid.setField(SolrSystemClient.FLD_ID, id)
         sid.setField(SolrSystemClient.FLD_TYPE, type)
@@ -146,8 +148,8 @@ class SavableObject {
         sid.setField(SolrSystemClient.FLD_SIZE, size)
         sid.setField(SolrSystemClient.FLD_DEPTH, depth)
 
-        sid.setField(SolrSystemClient.FLD_LOCATION_NAME, locationName )
-        if(this.crawlName) {
+        sid.setField(SolrSystemClient.FLD_LOCATION_NAME, locationName)
+        if (this.crawlName) {
             sid.addField(SolrSystemClient.FLD_CRAWL_NAME, this.crawlName)
         } else {
             log.warn "No crawl name given: ${this}"
@@ -157,26 +159,38 @@ class SavableObject {
 
         // todo -- consider switching to a batch time, rather than creating a new timestamp for each doc
         sid.setField(SolrSystemClient.FLD_INDEX_DATETIME, new Date())
-        if(lastModifiedDate) {
+        if (lastModifiedDate) {
             sid.setField(SolrSystemClient.FLD_LAST_MODIFIED, lastModifiedDate)
         } else {
             log.warn "No modified date for savableObject: $this"
         }
 
-        if(hidden)
+        if (hidden)
             sid.setField(SolrSystemClient.FLD_HIDDEN_B, hidden)
 
 //        sid.setField(SolrSystemClient.FLD_LAST_MODIFIED, lastModifiedDate)
 //        if(labels)
-            sid.setField(SolrSystemClient.FLD_LABELS, labels)
+        sid.setField(SolrSystemClient.FLD_LABELS, labels)
 
-        if(tags)
+        if (tags)
             sid.setField(SolrSystemClient.FLD_TAG_SS, tags)
 
-        if(dedup) {
+        if (parentId)
+            sid.setField(SolrSystemClient.FLD_PARENT_ID, parentId)
+
+        if (dedup) {
+            log.debug "\t\tDedup already set: $dedup"
             sid.setField(SolrSystemClient.FLD_DEDUP, dedup)
+        } else if (type && name && size!=null) {
+            dedup = buildDedupString()
+            if (dedup) {
+                sid.setField(SolrSystemClient.FLD_DEDUP, dedup)
+                log.debug "\t\tDid not have a dedup ($dedup) -- now we do as we build solrInput doc: $this"
+            } else {
+                log.warn "\t\tno dedup value set??? $this"
+            }
         } else {
-            log.warn "\t\tno dedup value set??? $this"
+            log.warn "\t\t.....Cannot reliably build a dedup string, missing type:$type, or name:$name, or size:$size"
         }
 
 //        sid.setField(SolrSystemClient.FLD_, )
@@ -189,9 +203,21 @@ class SavableObject {
      * override as needed to get better duplicate detection
      * @return string with groupable values that should flag duplicates (ala solr facet counts)
      */
-    String buildDedupString(){
+    String buildDedupString() {
         String uniq = type + ':' + name + '::' + size
         return uniq
+    }
+
+
+    /**
+     * Build a basic id (solr uniqify)
+     * @param location name of source (hostname, external disk name, email account...)
+     * @param path that uniquely identifies a given item in the given 'location' name
+     * @return concatonated string uniquely identifying this item (duplicate ids overwrite/replace any previous Solr Doc item)
+     */
+    static String buildId(String location, String path) {
+        String s = location + ':' + path
+        return s
     }
 
 
@@ -201,16 +227,35 @@ class SavableObject {
      * @param ignoreFiles
      * @return
      */
-    String matchIgnorePattern(Pattern ignoreFiles){
+    String matchIgnorePattern(Pattern ignoreFiles) {
         Matcher matcher = name =~ ignoreFiles
-        if(matcher.matches()){
+        if (matcher.matches()) {
             String firstGroupMatch = matcher.group(1)
-            matchedIgnoreText = firstGroupMatch        // todo - consider more complicated patterns, get all matches/groups??
-            log.info "\t\tIGNORE: LocalFileSystemCrawler ignoring file (${this.class.simpleName}: $name) -- matched on: '$matchedIgnoreText' -- pattern ($ignoreFiles)"       // todo change back to debug
+            matchedIgnoreText = firstGroupMatch
+            // todo - consider more complicated patterns, get all matches/groups??
+            log.info "\t\t---- IGNORE: LocalFileSystemCrawler ignoring file (${this.class.simpleName}: $name) -- matched on: '$matchedIgnoreText' -- pattern ($ignoreFiles)"
+            // todo change back to debug
         } else {
             log.debug "\t\tnot ignoring: $name"
         }
         return matchedIgnoreText
     }
 
+
+    /**
+     * custom string return value for this
+     * @return string/label
+     */
+    String toString() {
+        String s = null
+        if (labels) {
+            s = "${type}[depth:$depth]: ${name} :: (${labels[0]})"
+        } else if (ignore) {
+            s = "${type}[depth:${depth}]:[IGNORE]: '$name'"
+        } else {
+            s = "${type}[depth:${depth}]: '$name'"
+        }
+
+        return s
+    }
 }
