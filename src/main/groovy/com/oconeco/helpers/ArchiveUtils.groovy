@@ -2,6 +2,7 @@ package com.oconeco.helpers
 
 
 import org.apache.commons.compress.archivers.ArchiveInputStream
+import org.apache.commons.compress.archivers.jar.JarArchiveInputStream
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream
@@ -21,24 +22,29 @@ import java.util.regex.Pattern
 class ArchiveUtils {
     static final Logger log = Logger.getLogger(this.class.name)
 
-    static ArchiveInputStream getArchiveInputStream(File archiveFile) {
-        log.info "Process archive file: $archiveFile"
+    static ArchiveInputStream getArchiveInputStream (File archiveFile) throws IOException {
+        log.debug "\t\tProcess archive file: $archiveFile"
         ArchiveInputStream ais = null
         InputStream inputStream = null
         String name = archiveFile.name
         String fileType = Files.probeContentType(archiveFile.toPath())
         String ext = FilenameUtils.getExtension(name)
-        log.info "\t\tFile type: ($fileType) and extension: $ext"
+        log.info "\t\tFile type: ($fileType) and extension: $ext -- file:${archiveFile.absolutePath}"
         if (name.endsWith('tar.gz') || name.endsWith('tgz')) {
             inputStream = new GzipCompressorInputStream(archiveFile.newInputStream());
             ais = new TarArchiveInputStream(inputStream)
-        } else if (fileType.equalsIgnoreCase('application/zip') || name.endsWith('zip')) {
+        } else if (fileType?.equalsIgnoreCase('application/java-archive') || name?.endsWith('jar') || name?.endsWith('war')) {
+            ais = new JarArchiveInputStream(archiveFile.newInputStream());
+        } else if (fileType?.equalsIgnoreCase('application/zip') || name?.endsWith('zip')) {
             ais = new ZipArchiveInputStream(archiveFile.newInputStream());
+//        } else if (name.endsWith('zip') || name.endsWith('xlsx') || name.endsWith('docx')) {
+//            log.warn "Check me!! assuming office *x extensions are zip files"
+//            ais = new ZipArchiveInputStream(archiveFile.newInputStream());
         } else if (name.endsWith('bz2')) {
             inputStream = new BZip2CompressorInputStream(archiveFile.newInputStream());
             ais = new TarArchiveInputStream(inputStream)
         } else {
-            log.warn "Unknown archive type: $archiveFile"
+            log.warn "Unknown archive type($fileType), archive file: $archiveFile"
         }
         return ais
     }
