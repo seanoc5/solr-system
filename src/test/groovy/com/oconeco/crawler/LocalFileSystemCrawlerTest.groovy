@@ -1,15 +1,16 @@
 package com.oconeco.crawler
 
-
 import com.oconeco.helpers.Constants
+import com.oconeco.models.FSFile
 import com.oconeco.models.FSFolder
 import com.oconeco.models.SavableObject
+import com.oconeco.persistence.SolrSystemClient
 import org.apache.log4j.Logger
+import org.apache.solr.common.SolrDocument
 import spock.lang.Specification
 
 import java.nio.file.Path
 import java.util.regex.Pattern
-
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -24,13 +25,12 @@ class LocalFileSystemCrawlerTest extends Specification {
     Pattern ignorePattern = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]
     def startFolder = Path.of(getClass().getResource('/content').toURI());
 
-
     def "basic localhost crawl of 'content' resource folder"() {
         given:
         LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName)
 
         when:
-        def results = crawler.buildCrawlFolders(crawlName, startFolder, ignorePattern, existingSolrFolderDocs)
+        List<FSFolder> results = crawler.buildCrawlFolders(crawlName, startFolder, ignorePattern, existingSolrFolderDocs)
         def toCrawl = results.findAll { !it.ignore }
         def toIgnore = results.findAll { it.ignore }
 
@@ -53,15 +53,17 @@ class LocalFileSystemCrawlerTest extends Specification {
     }
 
 
-    def 'basic localhost with child folders'() {
+    def 'basic localhost with child folders and folder FSFiles lists'() {
         given:
         LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName)
         Map<String, List<SavableObject>> folderFilesMap = [:]
         List<String> ignoreList = []
 
+
         when:
-        def results = crawler.buildCrawlFolders(crawlName, startFolder, ignorePattern, existingSolrFolderDocs)
-        results.each { FSFolder fsFolder ->
+        List<FSFolder> allFolders = crawler.buildCrawlFolders(crawlName, startFolder, ignorePattern, null)
+        Map<String, SolrDocument> existingSolrFolderDocs = mockSolrFolderDocs(allFolders)
+        allFolders.each { FSFolder fsFolder ->
             if (fsFolder.ignore) {
                 log.info "Skip crawling files in folder: $fsFolder"
                 ignoreList << fsFolder
@@ -79,7 +81,7 @@ class LocalFileSystemCrawlerTest extends Specification {
 
         then:
         ignoreList[0].name == 'ignoreMe'
-        results.size() == 5
+        allFolders.size() == 5
         folderFilesMap.keySet().containsAll(['content', 'testsub', 'subfolder2', 'subfolder3'])
         contentChildren.size()==21
         testsubChildren.size() == 1
@@ -88,4 +90,95 @@ class LocalFileSystemCrawlerTest extends Specification {
     }
 
 
+    def 'basic localhost with archives included'() {
+        given:
+        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName)
+        List<FSFolder> crawlFolders = crawler.buildCrawlFolders(crawlName, startFolder, ignorePattern, null)
+        List<FSFile> archiveFSFiles = []
+        List<SavableObject> archiveItems = []
+
+        when:
+        crawlFolders.each {FSFolder fsFolder ->
+            if(!fsFolder.ignore){
+                List<FSFile> folderFiles= crawler.populateFolderFsFiles(fsFolder, ignorePattern)
+                List<FSFile> archiveFiles = folderFiles.findAll {it.isArchive()}
+                if(archiveFiles?.size()) {
+                    archiveFSFiles.addAll(archiveFiles)
+                    archiveFiles.each { FSFile fsFile ->
+                        def archEntries = fsFile.gatherArchiveEntries()
+                        archiveItems.addAll(archEntries)
+                    }
+                } else {
+                    log.debug "\t\t not an archive file, so no archive entries in folder: $fsFolder "
+                }
+            } else {
+                log.debug "\t\t------ Ignore Folder: $fsFolder"
+            }
+        }
+
+        then:
+        archiveFSFiles?.size() == 5
+        archiveFSFiles[0].name == 'test.zip'
+
+        archiveItems.size()==174
+
+    }
+
+    def 'check folders that need updating'() {
+        given:
+        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName)
+        Map<String, List<SavableObject>> folderFilesMap = [:]
+        List<FSFolder> allFolders = crawler.buildCrawlFolders(crawlName, startFolder, ignorePattern, null)
+        Map<String, SolrDocument> existingSolrFolderDocs = mockSolrFolderDocs(allFolders)
+
+        when:
+        // hacked approach -- todo -- revisit
+        log.info "Re-build crawl Folders now that we have mocked existingSolrFolderDocs..."
+        def idKeys = existingSolrFolderDocs.keySet()
+
+        SolrDocument doc0 = existingSolrFolderDocs.get(idKeys[0])
+        // expecting first solr doc to be an hour older
+        Date date0 = doc0.getFirstValue(SolrSystemClient.FLD_LAST_MODIFIED)
+        doc0.setField(SolrSystemClient.FLD_LAST_MODIFIED, new Date(date0.getTime() - 3600*1000))
+
+        SolrDocument doc1 = existingSolrFolderDocs.get(idKeys[1])
+        Integer size1 = doc1.getFirstValue(SolrSystemClient.FLD_SIZE)
+        doc1.setField(SolrSystemClient.FLD_SIZE, size1 -1)
+
+        List<FSFolder> updatableFolders = crawler.buildCrawlFolders(crawlName, startFolder, ignorePattern, existingSolrFolderDocs)
+
+        then:
+        allFolders!= null
+        allFolders.size() == 5
+
+        updatableFolders!=null
+        updatableFolders.size() == 2
+    }
+
+
+    /**
+     * help call for testing only
+     * @param sourceFolders
+     * @return
+     */
+    Map<String, SolrDocument> mockSolrFolderDocs(List<FSFolder> sourceFolders ){
+        Map<String, SolrDocument> sdocMap = [:]
+        sourceFolders.each { FSFolder fsFolder ->
+            SolrDocument solrDocument = new SolrDocument()
+            solrDocument.setField('id', fsFolder.id)
+            solrDocument.setField(SolrSystemClient.FLD_LAST_MODIFIED, fsFolder.lastModifiedDate)
+            solrDocument.setField(SolrSystemClient.FLD_SIZE, fsFolder.size)
+            solrDocument.setField(SolrSystemClient.FLD_DEDUP, fsFolder.dedup)
+            solrDocument.setField(SolrSystemClient.FLD_PATH_S, fsFolder.path)
+            solrDocument.setField(SolrSystemClient.FLD_PATH_T, fsFolder.path)
+            solrDocument.setField(SolrSystemClient.FLD_NAME_S, fsFolder.name)
+            solrDocument.setField(SolrSystemClient.FLD_NAME_T, fsFolder.name)
+            solrDocument.setField(SolrSystemClient.FLD_LOCATION_NAME, fsFolder.locationName)
+            solrDocument.setField(SolrSystemClient.FLD_CRAWL_NAME, fsFolder.crawlName)
+//            solrDocument.setField(SolrSystemClient.FLD_, fsFolder.)
+//            solrDocument.setField(SolrSystemClient.FLD_, fsFolder.)
+            sdocMap.put(fsFolder.id, solrDocument)
+        }
+        return sdocMap
+    }
 }

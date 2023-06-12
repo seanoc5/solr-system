@@ -86,42 +86,22 @@ class FSFileTest extends Specification {
 
     def "should process tarball"() {
         given:
-        FSFile tarFsFile = new FSFile(tarFile, parentFolder, locationName, crawlName)
+        FSFile fSFile = new FSFile(tarFile, parentFolder, locationName, crawlName)
 
         when:
-        List<SavableObject> children = tarFsFile.gatherArchiveEntries()
-        List<String> childNames = children.collect { it.name }
-//        def archiveEntries = ArchiveUtils.gatherArchiveEntries(aiszip)
-//        aiszip?.close()
-//        List<SolrInputDocument> sidList = []
-//        archiveEntries.each { ArchiveEntry ae ->
-//            if (ae.isDirectory()) {
-//                ArchFolder archFolder = new ArchFolder(ae, locationName, crawlName)
-//                SolrInputDocument sid = archFolder.toSolrInputDocument()
-//                sidList << sid
-//            } else {
-//                ArchFile archFile = new ArchFile(ae, locationName, crawlName)
-//                SolrInputDocument sid = archFile.toSolrInputDocument()
-//                sidList << sid
-//            }
-//        }
-//        SolrInputDocument firstSID = sidList[0]
-//        String firstPath = firstSID.getFieldValue(SolrSystemClient.FLD_PATH_S)
+        List<SavableObject> children = fSFile.gatherArchiveEntries()
+        def groups  = children.groupBy { it.type }
+
 
         then:
         children != null
         children.size() == 40
-        childNames.containsAll(['Chart.yaml', 'values.yaml'])
 
-//        archiveEntries != null
-//        sidList.size() == 40
-//        firstPath != null
-//        firstSID.getFieldValue(SolrSystemClient.FLD_ID) == "${locationName}:${firstPath}"
-//        firstSID.getFieldValue(SolrSystemClient.FLD_TYPE) == 'ArchiveEntry'
-//        firstSID.getFieldValue(SolrSystemClient.FLD_SIZE) == 72904
-//        firstSID.getFieldValue(SolrSystemClient.FLD_CRAWL_NAME) == 'test'
-//        firstSID.getFieldValue(SolrSystemClient.FLD_EXTENSION_SS) == 'json'
-//        firstSID.getFieldValue(SolrSystemClient.FLD_NAME_SIZE_S) == 'objects.json:72904'
+        groups.keySet().toList().containsAll(['ArchFile', 'ArchFolder'])
+        groups['ArchFile'].size()==34
+        groups['ArchFile'].collect{it.name}.containsAll(['.helmignore', 'ADOPTERS.md'])
+        groups['ArchFolder'].size()==6
+        groups['ArchFolder'].collect{it.name}.containsAll(['subtestme', 'content'])
     }
 
 
