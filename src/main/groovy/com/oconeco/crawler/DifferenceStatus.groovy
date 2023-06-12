@@ -25,4 +25,8 @@ class DifferenceStatus {
         this.object = object
         this.solrDocument = solrDocument
     }
+
+    String toString() {
+        String s = "$object) "
+    }
 }
