@@ -5,6 +5,8 @@ import com.oconeco.helpers.Constants
 import com.oconeco.persistence.SolrSystemClient
 import org.apache.commons.compress.archivers.ArchiveEntry
 import org.apache.commons.compress.archivers.ArchiveInputStream
+import org.apache.commons.compress.archivers.jar.JarArchiveEntry
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.io.FilenameUtils
 import org.apache.log4j.Logger
 import org.apache.solr.common.SolrInputDocument
@@ -14,7 +16,7 @@ import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileOwnerAttributeView
 import java.nio.file.attribute.FileTime
-
+import java.util.regex.Pattern
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -35,6 +37,9 @@ class FSFile extends SavableObject {
 //    List<String> permissions
 
     String osName
+    Integer ARCHIVE_STATUS_SIZE = 10000
+    public Pattern FAKE_ARCHIVE_PATTERN = ~/.*(doc|xls|ppt)x/
+
 //    Date lastAccessDate
 //    Date lastModifyDate
 //    Boolean archive
@@ -44,7 +49,7 @@ class FSFile extends SavableObject {
         super(f, parent, locationName)
         path = f.absolutePath
         // todo -- revisit if this replacing backslashes with forward slashes helps, I had trouble querying for id with backslashes (SoC 20230603)
-        id = (locationName + ':' + path).replaceAll('\\\\', '/')
+        id = SavableObject.buildId(locationName, path.replaceAll('\\\\', '/'))
         type = TYPE
         hidden = f.isHidden()
         if (hidden)
@@ -55,8 +60,6 @@ class FSFile extends SavableObject {
         }
         name = f.name
         size = f.size()
-
-        dedup = buildDedupString()
 
 
         if (depth) {
@@ -158,30 +161,71 @@ class FSFile extends SavableObject {
         return sid
     }
 
-    boolean isArchive() {
-        int fileSignature = 0
+    Boolean isArchive() {
+        Boolean archive = null
+
         File f = this.thing
-        try (RandomAccessFile raf = new RandomAccessFile(f, "r")) {
-            fileSignature = raf.readInt()
-        } catch (IOException e) {
-            log.warn "File ($ffs) io exception checking if we have an archive: $e"
-        }
-        boolean isArchive = fileSignature == 0x504B0304 || fileSignature == 0x504B0506 || fileSignature == 0x504B0708 || fileSignature == 529205248 || fileSignature == 529205268
-        if (labels?.contains(Constants.LBL_ARCHIVE)) {
-            if (!isArchive) {
-                log.info "Should be archive: $f -> ($fileSignature) -- $isArchive"
+        if (f.exists() && f.canRead()) {
+            if (f.size() > 0) {
+                if(extension ==~ FAKE_ARCHIVE_PATTERN){
+                    log.debug "\t\t~~~~This($this) is a 'fake' archive, probably a single  composit (zipped) office doc"
+                    archive = false
+                } else {
+                    try (RandomAccessFile raf = new RandomAccessFile(f, "r")) {
+                        int fileSignature = raf.readInt()
+                        archive = fileSignature == 0x504B0304 || fileSignature == 0x504B0506 || fileSignature == 0x504B0708 || fileSignature == 529205248 || fileSignature == 529205268
+
+                        if (labels?.contains(Constants.LBL_ARCHIVE)) {      // todo -- wtf am I doing here....?
+                            if (!archive) {
+                                log.info "Should be archive: $f -> ($fileSignature) -- $archive"
+                            } else {
+                                log.debug "is archive: $f"
+                            }
+                        }
+                    } catch (IOException e) {
+                        log.warn "File ($f) io exception checking if we have an archive: $e"
+                    }
+                }
             } else {
-                log.debug "is archive: $f"
+                log.info "\t\t ------ File (${f.name}) has no size, not an archive: ${f.absolutePath}"
             }
+        } else {
+            log.warn "File ($f) does not exist, or cannot be read: ${f.absolutePath}"
         }
-        return isArchive
+        return archive
 
     }
 
+    /**
+     * helper function to build list of entries from archive
+     *
+     * @return list of Archive*.SavableObject s
+     * todo - revisit archive folder, and it's value/role (omitted currently?)
+     */
     List<SavableObject> gatherArchiveEntries() {
-        ArchiveInputStream aiszip = ArchiveUtils.getArchiveInputStream(this.thing)
-        List<SavableObject> archiveEntries = gatherArchiveEntries(aiszip)
-        aiszip.close()
+        List<SavableObject> archiveEntries = null
+        if (this.isArchive()) {
+            ArchiveInputStream aiszip
+            try {
+                aiszip = ArchiveUtils.getArchiveInputStream(this.thing)
+                if(aiszip) {
+                    archiveEntries = gatherArchiveEntries(aiszip)
+                } else {
+                    log.debug "no valid archive input stream available, skipping gatherArchiveEntries for this: $this"
+                }
+            } catch (IOException ioe) {
+                log.warn "IOException: $ioe"
+            } finally {
+                if(aiszip) {
+                    aiszip.close()
+                    log.debug "close Archive input steam: $this"
+                } else {
+                    log.debug "do not have a valid Archive input steam to close! this:$this"
+                }
+            }
+        } else {
+            log.debug "Not an archive, skipping..."
+        }
         return archiveEntries
     }
 
@@ -196,23 +240,47 @@ class FSFile extends SavableObject {
             if (!children) {
                 log.debug "Create children list... ($this)"
                 children = []
+            } else {
+                log.warn "\t\t$this) children prop already exists/defined?? $children"
             }
-             ArchiveEntry entry = null
+            int i = 0
+            SavableObject lastArchObject
+            ArchiveEntry entry = null
             while ((entry = ais.getNextEntry()) != null) {
+                i++
+                SavableObject archObj
                 if (entry.isDirectory()) {
-                    ArchFolder archFolder = new ArchFolder(entry, this, locationName, crawlName)
-                    children << archFolder
-                    log.info "Dir: ${archFolder.toString()})"
+                    archObj = new ArchFolder(entry, this, locationName, crawlName)
+                    children << archObj
+                    log.debug "\t\t+.+.+. ${archObj.toString()}"
                 } else {
 //                log.debug "\t\tarchive entry file (${entry.name}) -- type:(${entry.class.simpleName})"
-                    ArchFile archFile = new ArchFile(entry, this, locationName, crawlName)
-                    children << archFile
-                    log.debug "\t\tFile: ${archFile.toString()})"
-
+                    if(entry instanceof ZipArchiveEntry || entry instanceof JarArchiveEntry){
+                        // todo - fix me, this is an ugly hack to deal with zip files that don't provide size until 'next' entry is read
+                        // https://stackoverflow.com/questions/13228168/zipoutputstream-leaving-size-1
+                        // https://stackoverflow.com/questions/4169370/why-zipinputstream-cant-read-the-output-of-zipoutputstream
+                        if(lastArchObject) {
+                            ZipArchiveEntry zae = lastArchObject.thing
+                            long lastSize = zae.size
+                            if(lastSize>=0 && !lastArchObject.size) {
+                                log.debug "\t\tLast item size available now?? ${zae.size}"
+                                lastArchObject.size = lastSize
+                            }
+                        } else {
+                            log.debug "\t\tfirst item??"
+                        }
+                    }
+                    archObj = new ArchFile(entry, this, locationName, crawlName)
+                    children << archObj
+                    log.debug "\t\t+.+.+. File: ${archObj.toString()})"
                 }
+                if (i % ARCHIVE_STATUS_SIZE == 0) {
+                    log.info "\t\t$i) (still) gathering archive entries (e.g. ${archObj}) for file ($this) "
+                }
+                lastArchObject = archObj
             }
         } else {
-            log.warn "Invalid archive input stream: $ais, how did this happen??"
+            log.warn "Invalid archive input stream: $ais, how did this happen?? -- $this"
         }
         return children
     }
@@ -246,21 +314,6 @@ class FSFile extends SavableObject {
             }
         }
         return sidList
-    }
-
-
-    /**
-     * custom string return value for this
-     * @return string/label
-     */
-    String toString() {
-        String s = null
-        if (labels) {
-            s = "${type}: ${name} :: (${labels[0]})"
-        } else {
-            s = "${type}: ${name}" + (ignore ? "[ignore:$ignore]" : '')
-        }
-        return s
     }
 
 }
