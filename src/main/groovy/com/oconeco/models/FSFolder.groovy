@@ -32,8 +32,10 @@ class FSFolder extends SavableObject {
 
 
     FSFolder(File srcFolder, SavableObject parent, String locationName, String crawlName = Constants.LBL_UNKNOWN) {
-        this(srcFolder, locationName, crawlName, parent.depth + 1)
+        this(srcFolder, locationName, crawlName )
+        this.depth = parent ? parent.depth+1 : 1
         this.parent = parent
+        this.parentId = parent.id
     }
 
 
@@ -44,9 +46,9 @@ class FSFolder extends SavableObject {
      */
     FSFolder(File srcFolder, String locationName, String crawlName = Constants.LBL_UNKNOWN, Integer depth = null) {
         super(srcFolder, locationName, crawlName, depth)
-        osName = System.getProperty("os.name")
+        osName = System.getProperty("os.name")      // todo - time this call, is it significant overhead?
         if (srcFolder.isHidden()) {
-            log.info "\t\tprocessing hidden folder: $srcFolder"
+            log.info "\t\t~~~~processing hidden folder: $srcFolder"
             hidden = true
         }
         if (srcFolder.exists() && srcFolder.canRead() && srcFolder.canExecute()) {
@@ -55,11 +57,16 @@ class FSFolder extends SavableObject {
             size = srcFolder.size()
             path = srcFolder.absolutePath
 
-            // todo -- revisit if this replacing backslashes with forward slashes helps, I had trouble querying for id with backslashes (SoC 20230603)
-            id = (locationName + ':' + path).replaceAll('\\\\', '/')
+            // todo -- revisit replacing backslashes with forward slashes--just cosmetics? avoid double-backslashes in path fields for windows machines
+            id = SavableObject.buildId(locationName, path.replaceAll('\\\\', '/'))
+            if(srcFolder?.parentFile) {
+                // todo -- check if such a parent is (or will be) saved? currently just saving the id of a parent without caring if it does or will exist in solr
+                parentId = SavableObject.buildId(locationName, srcFolder.parent.replaceAll('\\\\', '/'))
+            }
 
             dedup = buildDedupString()
 
+            // todo -- revisit to cost of getting the dir size, for a large dir it is many seconds (a minute or two??)
             size = FileUtils.sizeOfDirectory(srcFolder)
 
             Path nioPath = srcFolder.toPath()
@@ -86,14 +93,6 @@ class FSFolder extends SavableObject {
         ((File) this.thing).canRead()
     }
 
-    String toString() {
-        if (ignore) {
-            return "${depth}] ($type):$name [IGNORE]"
-        } else {
-            return "${depth}] ($type):$name"
-        }
-
-    }
 
     SolrInputDocument toSolrInputDocument() {
         SolrInputDocument sid = super.toSolrInputDocument()
@@ -110,6 +109,7 @@ class FSFolder extends SavableObject {
      * @param sid
      * @return
      */
+/*
     public int populateChildren(SolrInputDocument sid) {
         int ignoreFiles = 0
         int indexFiles = 0
@@ -152,6 +152,7 @@ class FSFolder extends SavableObject {
         sid.addField(SolrSystemClient.FLD_DIR_COUNT, indexFolders)
         return children.size()
     }
+*/
 
 
     /**
@@ -266,7 +267,7 @@ class FSFolder extends SavableObject {
                                 if (file.name ==~ ignoreFilesPattern) {
                                     fsFile.ignore = true
                                     children << fsFile
-                                    log.info "\t\t$cnt) ----- Ignoring ----- file: $file"
+                                    log.info "\t\t[file:$cnt] ----- Ignoring ----- file: $file"
                                 } else {
                                     log.debug "\t\t$cnt) adding file: $file"
                                     children << fsFile
@@ -287,5 +288,36 @@ class FSFolder extends SavableObject {
             log.warn "\t\tFolder (${folder.absolutePath}) does not exist!!"
         }
         return children
+    }
+
+    List<FSFile> gatherArchiveFiles(def ignoreArchives){
+        List<FSFile> archFiles = []
+        if(this.children == null){
+            log.warn "Children of FSFolder ($this) is null, not initialized!!?!"
+        } else {
+            archFiles = children.findAll {
+                boolean gather = false
+                if(it.type==FSFile.TYPE && ((FSFile)it).isArchive() ){
+                    if(ignoreArchives){
+                         def matches = it.name ==~ ignoreArchives      // we have an ignore pattern, check to see if we should ignore
+                        gather = !matches
+                    } else {
+                        // no ignoreArchives pattern, so default true
+                        gather = true
+                    }
+                } else {
+                    log.debug "not archive file"
+                    gather = false
+                }
+                return gather
+            }
+            log.debug "${toString()}: arch files size: ${archFiles.size()}"
+        }
+        return archFiles
+    }
+
+
+    String buildId() {
+        buildId(locationName, path)
     }
 }
