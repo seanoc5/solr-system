@@ -33,6 +33,7 @@ class SolrSystemClient {
 
     // todo -- move this to (BASE) Object hierarchy, leave solrsaver to do the actual saving, not building?
     public static String FLD_ID = 'id'
+    public static String FLD_PARENT_ID = 'parentId_s'
     public static String FLD_CRAWL_NAME = "crawlName_s"
     public static String FLD_LOCATION_NAME = "locationName_s"
 
@@ -175,6 +176,8 @@ class SolrSystemClient {
      * i.e. get a job name/id based on the source paths
      */
 
+
+
     /**
      * Clear the solr collection, but using a path of folders (and children) to clear
      * @param pathToClear
@@ -182,197 +185,58 @@ class SolrSystemClient {
      *
      * todo -- add logic to handle "complex" clear paths -- sym links etc....
      */
-    UpdateResponse deleteDocuments(String deleteQuery, int commitWithinMS = 0) {
+    UpdateResponse deleteDocuments(String deleteQuery, int commitWithinMS = 0, boolean checkBeforeAfter = true) {
+        Long beforeCount
+        if(checkBeforeAfter){
+            beforeCount = getDocumentCount(deleteQuery)
+            log.info "\t\t$beforeCount count before query: $deleteQuery"
+        }
         log.warn "Clearing collection: ${this.solrClient.baseURL} -- deleteQuery: $deleteQuery (commit within: $commitWithinMS)"
         UpdateResponse ursp = solrClient.deleteByQuery(deleteQuery, commitWithinMS)
         int status = ursp.getStatus()
         if (status == 0) {
-            log.info "\t\tSuccess clearing collection with query: $deleteQuery"
+            log.debug "\t\tSuccess clearing collection with query: $deleteQuery"
         } else {
             log.warn "FAILED to delete docs with delete query: ($deleteQuery) -- solr problem/error?? $ursp"
         }
+        if(checkBeforeAfter){
+            Long afterCount = getDocumentCount(deleteQuery)
+            log.debug "\t\t$afterCount count AFTER query: $deleteQuery (diff: ${beforeCount - afterCount})"      // todo -- is this bad code? defaults somehow to not wait for commit? later call catches proper counter (0)???
+        }
+
         return ursp
     }
 
 
+
     /**
-     * Take a list of file folders and save them to solr
-     * todo -- revisit for better approach...
-     * todo -- catch errors, general improvement
-     * @param folders list of file folders to turn into solr input docs
-     * @param dataSourceLabel name of group of files processed by this larger process
-     * @param source name of machine, email account, browser account.... processed by this larger process
-     * @return list of UpdateResponse objects from batched calls to solr
+     * get solr delete query for 'current' crawler info: locationName and crawlName
+     * @param Specific crawler with locationName and crawlName
+     * @return difference between before delete and after delete
      */
-/*
-    List<UpdateResponse> saveFolderList(List<File> folders, String dataSourceLabel = 'unlabeled', String source='') {
-        log.info "$dataSourceLabel) Save folders list (${folders.size()})..."
-        List<UpdateResponse> updates = []
-        List<SolrInputDocument> sidList = new ArrayList<>(SOLR_BATCH_SIZE)
-        int i = 0
-        folders.each { File folder ->
-            i++
-//            SolrInputDocument sid = folder.
-            SolrInputDocument sid = createSolrInputFolderDocument(folder)
-            sid.setField(Constants.FLD_CRAWL_NAME, dataSourceLabel)
-
-            sidList << sid
-            if (sidList.size() >= SOLR_BATCH_SIZE) {
-                log.info "\t\t$i) Adding folder list batch (size: ${sidList.size()})..."
-                UpdateResponse uresp = solrClient.add(sidList, 1000)
-                log.debug "\t\t save folders Update resp: $uresp"
-                updates << uresp
-                sidList = new ArrayList<SolrInputDocument>(SOLR_BATCH_SIZE)
-            }
-        }
-
-        if (sidList.size() > 0) {
-            log.info "\t\t$i) ------ FINAL folder list batch added (size: ${sidList.size()}) ------"
-            UpdateResponse uresp = solrClient.add(sidList, 1000)
-            log.info "\t\t$i) update response: $uresp"
-            updates << uresp
-        }
-        return updates
+    Map<String, Object> deleteCrawledDocuments(LocalFileSystemCrawler crawler){
+        Map<String, Object> results = [:]
+        String deleteQuery = SolrSystemClient.FLD_LOCATION_NAME + ':"' + crawler.locationName + '" AND ' + com.oconeco.persistence.SolrSystemClient.FLD_CRAWL_NAME + ':"' + crawler.crawlName + '"'
+        long preDeleteCount = getDocumentCount(deleteQuery)
+        log.debug "\t\t------ DELETE query: $deleteQuery (pre-delete count: $preDeleteCount)"
+        UpdateResponse deleteResponse = deleteDocuments(deleteQuery, 0)
+        UpdateResponse commitResponse = commitUpdates(true, true)
+        long postDeleteCount = getDocumentCount(deleteQuery)
+        log.debug "\t\t------ POST-delete count:($postDeleteCount)"
+        results = [deleteQuery:deleteQuery, preDeleteCount:preDeleteCount, postDeleteCount:postDeleteCount, deleteResponse:deleteResponse, commitResponse:commitResponse]
+        return results
     }
-*/
-
-
-/*
-    List<SolrInputDocument> buildFilesToCrawlInputList(Map<File, Map> filesToCrawl, String dsLabel = 'n.a.', String source = 'n.a.') {
-        List<SolrInputDocument> inputDocuments = []
-        if (filesToCrawl?.size() > 0) {
-            filesToCrawl.each { File file, Map details ->
-                String status = details?.status
-                log.debug "File: $file -- Status: $status -- details: $details"
-                SolrInputDocument sid = buildBasicTrackSolrFields(file)
-                sid.setField(Constants.FLD_CRAWL_NAME, dsLabel)
-                if (tikaConfig) {
-                    if (details.status == Constants.STATUS_INDEX_CONTENT) {
-                        log.debug "content tagged as worthy of indexing, send to proc to extra and add content: $file"
-                        addSolrIndexFields(file, sid)
-
-                    } else if (details.status == Constants.STATUS_ANALYZE) {
-                        addSolrIndexFields(file, sid)
-                        addSolrAnalyzeFields(file, sid)
-
-                    } else {
-                        log.debug "falling through to default 'track'"
-                    }
-                } else {
-                    log.debug "No tika config, so skipping indexing the content"
-                }
-                inputDocuments << sid
-            }
-            if (inputDocuments.size() == 0) {
-                log.debug "no docs??"
-            }
-        } else {
-            log.debug "\t\tno files to crawl provided?? $filesToCrawl"
-        }
-        return inputDocuments
-    }
-*/
 
 
     /**
-     * build solr docs with basic file info, light and fast tracking of files (like slocate)
-     * @param filesToTrack
+     * force a commit.
+     * NOTE: read up on explicit/forced commits, often better to leave solr to handle with proper soft/auto commits
+     * @param waitFlush
+     * @param waitSearcher
      * @return
      */
-/*
-    static SolrInputDocument buildBasicTrackSolrFields(File file, String dsLabel = '') {
-        SolrInputDocument sid = new SolrInputDocument()
-        String id = "${file.canonicalPath}--${file.lastModified()}"
-        sid.setField(FLD_ID, id)
-        sid.setField(FLD_TYPE, FILE)
-        sid.setField(FLD_TAG_SS, TRACK)
-        sid.setField(FLD_PATH_T, file.canonicalPath)
-        sid.setField(FLD_PATH_S, file.canonicalPath)
-        sid.setField(FLD_PARENT_PATH, file.parentFile.canonicalPath)
-        sid.setField(FLD_NAME_S, file.name)
-        sid.setField(FLD_NAME_T, file.name)
-        if (dsLabel) {
-            sid.setField(Constants.FLD_CRAWL_NAME, dsLabel)
-        }
-
-        if (file.isDirectory()) {
-//            log.warn "Should not be a directory: $file"
-            // todo -- make this whole class static
-            sid.setField(FLD_DIRNAME_SS, file.name)
-        } else if (file.isFile()) {
-            sid.setField(FLD_FILENAME_SS, file.name)
-        }
-        String ext = FilenameUtils.getExtension(file.name)
-        sid.setField(FLD_EXTENSION_SS, ext?.toLowerCase())
-        sid.setField(FLD_SIZE, file.size())
-
-        Date lmDate = new Date(file.lastModified())
-        sid.setField(FLD_LASTMODIFIED, lmDate)
-
-//        sid.addField(FLD_CRAWL_NAME, this.dataSourceName)
-
-        return sid
-    }
-*/
-
-
-    /**
-     * add the 'index' fields to the input doc
-     * @param filesToIndex
-     * @return
-     */
-/*
-    def addSolrIndexFields(File file, SolrInputDocument sid) {
-        if (file.exists()) {
-            if (file.size() > MIN_FILE_SIZE) {
-
-                log.debug "\t\t\t add solr INDEX fields for file: ${file.absolutePath}"
-                sid.addField(FLD_TAG_SS, 'index')
-                // sid.setField('type_s', FILE)
-
-                BodyContentHandler handler = new BodyContentHandler(-1)
-                AutoDetectParser parser = new AutoDetectParser()
-                Metadata metadata = new Metadata()
-
-                metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, file.name)
-//        metadata.set(Metadata.CONTENT_TYPE, attributes.getValue(ATTRIBUTE_CONTENT_TYPE));
-
-                ParseContext context = new ParseContext()
-
-//        TikaConfig config = TikaConfig.getDefaultConfig();
-//        Detector detector = tikaConfig.getDetector()
-                TikaInputStream stream = TikaInputStream.get(file.toPath())
-//        MediaType mediaType = detector.detect(stream, metadata)
-
-                try {
-                    parser.parse(stream, handler, metadata, context)
-                    String content = handler.toString()
-                    if (content) {
-                        log.debug "got some content, size: ${content.size()}"
-                        if (content.size() > MAX_CONTENT_SIZE) {
-                            log.warn "Trunacating content size (${content.size()}) to MAX_CONTENT_SIZE: $MAX_CONTENT_SIZE"
-                        }
-                        sid.addField(FLD_CONTENT_BODY, content)
-
-                    } else {
-                        log.info "\t\t${file.absolutePath}: no content...?"
-                    }
-                } catch (TikaException te) {
-                    log.warn "Parsing error ($file): $te"
-                }
-            } else {
-                log.warn "($file) File size (${file.size()}) less than MIN_FILE_SIZE, no parsing..."
-            }
-        } else {
-            log.warn "($file) File does not exist! ${file.absolutePath}"
-        }
-
-    }
-*/
-
-
     def commitUpdates(boolean waitFlush = false, boolean  waitSearcher = false) {
-        log.info "Explicit call to solr 'commit' (consider allowing autocommit settings to do this for you...)"
+        log.debug "\t\t____explicit call to solr 'commit' (consider allowing autocommit settings to do this for you...)"
         solrClient.commit(waitFlush,waitSearcher)
     }
 
@@ -436,6 +300,15 @@ class SolrSystemClient {
                 '}';
     }
 
+
+    /**
+     * get the 'folder' documents for a given crawler (i.e. location name and crawl name)
+     * @param crawler
+     * @param q
+     * @param fq
+     * @param fl
+     * @return
+     */
     Map<String, SolrDocument> getSolrFolderDocs(LocalFileSystemCrawler crawler, String q = '*:*', String fq = "type_s:${FSFolder.TYPE}", String fl = SolrSystemClient.FIELDS_TO_CHECK.join(' ')) {
         SolrQuery sq = new SolrQuery('*:*')
         sq.setRows(MAX_ROWS_RETURNED)
@@ -453,7 +326,7 @@ class SolrSystemClient {
         if (docs.size() == MAX_ROWS_RETURNED) {
             log.warn "getExistingFolders returned lots of rows (${docs.size()}) which equals our upper limit: ${MAX_ROWS_RETURNED}, this is almost certainly a problem.... ${sq}}"
         } else {
-            log.info "\t\tGet existing solr folder docs map, size: ${docs.size()} -- Filters: ${sq.getFilterQueries()}"
+            log.debug "\t\tGet existing solr folder docs map, size: ${docs.size()} -- Filters: ${sq.getFilterQueries()}"
         }
         Map<String, SolrDocument> docsMap = docs.groupBy {it.getFirstValue('id')}
         return docsMap
