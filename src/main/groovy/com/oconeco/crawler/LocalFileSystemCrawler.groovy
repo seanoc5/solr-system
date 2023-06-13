@@ -23,7 +23,7 @@ import java.util.regex.Pattern
  */
 class LocalFileSystemCrawler {
     static log = Logger.getLogger(this.class.name);
-    String crawlName        // todo -- remove this from class, leave as arg in methods wher appropriate
+    String crawlName        // todo -- remove this from class, leave as arg in methods where appropriate
     String locationName
     String osName
     int statusDepth = 3
@@ -41,8 +41,16 @@ class LocalFileSystemCrawler {
     }
 
 
+    /**
+     * potentially useful approach of getting all crawlable folders before doing any real processing <br>
+     * NOTE: consider moving to actual 'crawlFolders'
+     * @param crawlName
+     * @param source
+     * @param ignorePattern
+     * @param existingSolrFolderDocs
+     * @return
+     */
     List<FSFolder> buildCrawlFolders(String crawlName, def source, Pattern ignorePattern, Map<String, SolrDocument> existingSolrFolderDocs) {
-        // todo -- fix depth tracking, currently everything is '1'
         log.debug "\t\t....buildCrawlFolders ($crawlName) with source path:($source) and name ignore pattern: $ignorePattern -- existing folder doc count: ${existingSolrFolderDocs?.size()} (for checking if solr is in sync/updated)"
 
         // todo -- fix me -- possibly find a more elegant approach to the crawlName processing/remembering
@@ -78,6 +86,57 @@ class LocalFileSystemCrawler {
 
 
     /**
+     * Basic crawl functionality here, with visitor pattern
+     * @param crawlName (subset of locationName/source)
+     * @param startFolder folder to start crawl
+     * @param ignorePattern regex to indicate we should save the current folder, mark as ignore, and not descend any further
+     * @param existingSolrFolderDocs - collection of pre-existing solr docs, for comparison of 'freshness' (need update?)
+     * @return map of status counts
+     */
+    Map<String, Object> crawlFolders(String crawlName, File startFolder, Pattern ignorePattern, Map<String, SolrDocument> existingSolrFolderDocs) {
+        Map<String, Object> resultsMap = [newFiles  : 0, updatedFiles: 0, ignoredFiles: 0, currentFiles: 0,
+                                          newFolders: 0, updatedFolders: 0, ignoredFolders: 0, currentFolders: 0,]
+
+        log.debug "Starting crawl of folder: ($startFolder)  ..."
+        Path startPath = startFolder.toPath()   // Path so we can 'relativize` to get relative depth of this crawl
+
+        def doPreDir = {
+            log.debug "\t\tPre dir:  $it"
+        }
+
+        def doPostDir = {
+            log.debug "\t\tPost dir: $it"
+        }
+
+
+        Map options = [
+                type     : FileType.DIRECTORIES,
+                preDir   : doPreDirectory(),
+                postDir  : doPostDir,
+                preRoot  : true,
+                postRoot : true,
+                visitRoot: true,
+        ]
+
+        startFolder.traverse(options) { File folder ->
+            log.debug "\t\ttraverse folder $folder"     // should there be action here?
+            int depth = getRelativeDepth(startPath, folder)
+            FSFolder fsFolder = new FSFolder(folder, locationName, crawlName, depth)
+            def details = fsFolder.addFolderDetails()
+            boolean shouldUpdate = checkShouldUpdate(existingSolrFolderDocs, fsFolder)
+            if (shouldUpdate) {
+                def children = fsFolder.buildChildrenList(ignorePattern)
+                log.info "Folder ($fsFolder) -- Children count: ${children.size()} -- Details($details)"
+            } else {
+                log.info "\t\tno updated needed "
+            }
+        }
+
+        return resultsMap
+    }
+
+
+    /**
      * user filevisitor pattern to get all the folders which are not explicitly ignored
      * @param startFolder
      * @param namePatterns
@@ -85,6 +144,7 @@ class LocalFileSystemCrawler {
      *
      * this is a quick/light scan of folders, assumes following processing will order crawl of folders by priority,
      * and even check for updates to skip folders with no apparent changes
+     * @deprecated - consider just using crawlFolders(....)
      */
     List<FSFolder> visitFolders(String crawlName, File startFolder, Pattern ignorePattern, Map<String, SolrDocument> existingSolrFolderDocs) {
         HashMap<String, FSFolder> foldersMap = [:]
@@ -98,56 +158,7 @@ class LocalFileSystemCrawler {
         // else save new or updated
         Map options = [type     : FileType.DIRECTORIES,
                        preDir   : {
-                           File f = (File) it
-                           boolean accessible = f.exists() && f.canRead() && f.canExecute()
-
-                           Path reletivePath = startPath.relativize(f.toPath())
-                           String relPath = reletivePath.toString()
-                           int depth = relPath > '' ? reletivePath.getNameCount() : 0
-                           FSFolder fsFolder = new FSFolder(f, this.locationName, this.crawlName, depth)
-
-                           if (accessible) {
-                               if (it.name ==~ ignorePattern) {
-                                   fsFolder.ignore = true
-                                   // todo -- add should update status for ignored folders??
-                                   log.info "\t\t----Ignorable folder, AND does not need updating: $fsFolder"
-                                   return FileVisitResult.SKIP_SUBTREE
-
-                               } else {
-                                   boolean shouldUpdate = true
-                                   // default to true, make check unset if all conditions are met
-                                   DifferenceStatus status
-                                   SolrDocument solrDocument
-                                   // solr doc to compare "saved" info and freshness with this file object
-
-                                   if (existingSolrFolderDocs) {
-                                       solrDocument = existingSolrFolderDocs.get(fsFolder.id)
-                                       if (solrDocument) {
-                                           // found an existing 'saved' record, check if it looks like we need to update or not
-                                           status = differenceChecker.compareFSFolderToSavedDoc(fsFolder, solrDocument)
-                                           shouldUpdate = differenceChecker.shouldUpdate(status)
-                                           if (shouldUpdate) {
-                                               log.info "\t\tFolder($fsFolder) needs update: $shouldUpdate"
-                                           } else {
-                                               log.debug "\t\tFolder($fsFolder) DO NOT need update: $shouldUpdate"
-                                           }
-                                       } else {
-                                           log.info "\t\tNo matching solr doc, defaulting to FSFolder ($fsFolder) DOES NEED to be processed"
-                                       }
-                                   }
-
-                                   if (shouldUpdate) {
-//                                       fsFolder.ignore = false
-                                       log.info "\t\t++++ ADDING Crawl folder: $fsFolder"
-                                       foldersMap.put(f.path, fsFolder)
-                                   } else {
-                                       log.info "\t\t===='${fsFolder.name}' is current (path:'${fsFolder.path}') no update needed"
-                                   }
-                               }
-                           } else {
-                               log.warn "Got a bad/inaccessible folder? $it"
-                               return FileVisitResult.SKIP_SUBTREE
-                           }
+                           return doPreDirectory(it, startPath, crawlName, ignorePattern, existingSolrFolderDocs, foldersMap)
                        },
 /*
                        postDir  : {
@@ -162,11 +173,93 @@ class LocalFileSystemCrawler {
 
         log.debug "Starting crawl of folder: ($startFolder)  ..."
 
-        startFolder.traverse(options) { def folder ->
+        startFolder.traverse(options) { File folder ->
             log.debug "\t\ttraverse folder $folder"     // should there be action here?
         }
 
         return foldersMap?.values()?.toList()
+    }
+
+
+    // todo -- remove or refactor,... this is a bad approach...?
+    def doPreDirectory = { Path startPath, String crawlName, Pattern ignorePattern, Map<String, SolrDocument> existingSolrFolderDocs, LinkedHashMap<String, FSFolder> foldersMap ->
+        File f = (File) it
+        boolean accessible = f.exists() && f.canRead() && f.canExecute()
+
+        int depth = getRelativeDepth(startPath, f)
+        FSFolder fsFolder = new FSFolder(f, this.locationName, this.crawlName, depth)
+
+        if (accessible) {
+            if (it.name ==~ ignorePattern) {
+                fsFolder.ignore = true
+                log.info "\t\t----Ignorable folder, AND does not need updating: $fsFolder"
+                // todo -- add should update status for ignored folders??
+                return FileVisitResult.SKIP_SUBTREE
+
+            } else {
+                boolean shouldUpdate = true         // default to true, make check unset if all conditions are met
+                DifferenceStatus status
+                SolrDocument solrDocument           // solr doc to compare "saved" info and freshness with this file object
+
+                if (existingSolrFolderDocs) {
+                    shouldUpdate = checkShouldUpdate(existingSolrFolderDocs, fsFolder)
+                }
+
+                if (shouldUpdate) {                 //fsFolder.ignore = false
+                    log.info "\t\t++++ ADDING Crawl folder: $fsFolder"
+                    foldersMap.put(f.path, fsFolder)
+                } else {
+                    log.info "\t\t===='${fsFolder.name}' is current (path:'${fsFolder.path}') no update needed"
+                }
+            }
+        } else {
+            log.warn "Got a bad/inaccessible folder? $it"
+            return FileVisitResult.SKIP_SUBTREE
+        }
+    }
+
+
+    /**
+     * helper function to check if a given FSFolder is current with existing/saved Solr doc
+     * @param existingSolrFolderDocs
+     * @param fsFolder
+     * @return true of the solr index needs to be updated from the filesystem
+     */
+    public boolean checkShouldUpdate(Map<String, SolrDocument> existingSolrFolderDocs, FSFolder fsFolder) {
+        boolean shouldUpdate = true
+        if (existingSolrFolderDocs?.size() > 0) {
+            DifferenceStatus status
+            SolrDocument solrDocument
+            solrDocument = existingSolrFolderDocs.get(fsFolder.id)
+            if (solrDocument) {
+                // found an existing 'saved' record, check if it looks like we need to update or not
+                status = differenceChecker.compareFSFolderToSavedDoc(fsFolder, solrDocument)
+                shouldUpdate = differenceChecker.shouldUpdate(status)
+                if (shouldUpdate) {
+                    log.info "\t\tFolder($fsFolder) needs update: $shouldUpdate"
+                } else {
+                    log.debug "\t\tFolder($fsFolder) DO NOT need update: $shouldUpdate"
+                }
+            } else {
+                log.info "\t\tNo matching solr doc, defaulting to FSFolder ($fsFolder) DOES NEED to be processed"
+            }
+        } else {
+//            log.debug "no existingSolrFolderDocs to check against, so everything gets updated"
+        }
+        return shouldUpdate
+    }
+
+    /**
+     * helper func to get relative depth (from crawl's start folder)
+     * @param startPath - original start path
+     * @param f current file,
+     * @return count of levels between startpath and current path
+     */
+    public int getRelativeDepth(Path startPath, File f) {
+        Path reletivePath = startPath.relativize(f.toPath())
+        String relPath = reletivePath.toString()
+        int depth = relPath > '' ? reletivePath.getNameCount() : 0
+        depth
     }
 
 
@@ -209,16 +302,6 @@ class LocalFileSystemCrawler {
     }
 
 
-    /**
-     * consider moving this to analyzer code
-     * @param folder
-     * @param savedFolderDoc
-     * @return
-     */
-//    boolean folderHasUpdates(FSFolder folder, SolrDocument savedFolderDoc){
-//        log.info "Folder to consider: $folder -- Saved info: $savedFolderDoc"
-//        return true
-//    }
     @Override
     public String toString() {
         return "LocalFileSystemCrawler{" + "crawlName='" + crawlName + '\'' + ", locationName='" + locationName + '\'' + '}';
