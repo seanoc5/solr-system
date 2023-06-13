@@ -8,8 +8,11 @@ Get all relevannt (non-ignored) folders (type FSFolder).
 ?? Call fsFolder.analyze
 
 ## First pass 
+Update: switch to processing (slocate) each folder on it's own. Allow more comprehensive analysis in subsequent passes.
+
+
 slocate-type processing: get basic folders and files, no content, no analysis yet (that is second pass)
-- Get all (non-ignored) folders.
+- ~~Get all (non-ignored) folders.~~  porocess them one-by-one
 - each folder:
   - get file objects 
     - with ignore flag if should 'ignore'
