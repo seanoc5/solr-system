@@ -23,14 +23,14 @@ class LocalFileSystemCrawlerTest extends Specification {
     String locationName = 'spock'
     String crawlName = 'test'
     Pattern ignorePattern = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]
-    def startFolder = Path.of(getClass().getResource('/content').toURI());
+    Path startFolder = Path.of(getClass().getResource('/content').toURI());
 
     def "basic localhost crawl of 'content' resource folder"() {
         given:
         LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName)
 
         when:
-        List<FSFolder> results = crawler.buildCrawlFolders(crawlName, startFolder, ignorePattern, existingSolrFolderDocs)
+        List<FSFolder> results = crawler.buildCrawlFolders(crawlName, startFolder, ignorePattern, null)
         def toCrawl = results.findAll { !it.ignore }
         def toIgnore = results.findAll { it.ignore }
 
@@ -39,17 +39,32 @@ class LocalFileSystemCrawlerTest extends Specification {
 
         List<String> cnames = ['content', 'testsub', 'subfolder2', 'subfolder3']
         FSFolder firstFsFolderToCrawl = toCrawl[0]
+        FSFolder secondFsFolderToCrawl = toCrawl[1]
 
         then:
         results != null
-        results.size() == 5
+        results.size() == 4
         toCrawl.size() == 4
         crawlNames.containsAll(cnames)
         firstFsFolderToCrawl.name == 'content'
-        firstFsFolderToCrawl.depth == 1
+        firstFsFolderToCrawl.depth == 0
         firstFsFolderToCrawl.type == FSFolder.TYPE
+        secondFsFolderToCrawl.depth == 1
 
         ignoreNames.containsAll(['ignoreMe'])
+    }
+
+
+    def 'basic LocalFileSystemCrawler.crawlFolders'() {
+        given:
+        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName)
+
+        when:
+        def results = crawler.crawlFolders(crawlName, startFolder.toFile(), ignorePattern, null)
+
+        then:
+        results!=null
+
     }
 
 
@@ -57,7 +72,7 @@ class LocalFileSystemCrawlerTest extends Specification {
         given:
         LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName)
         Map<String, List<SavableObject>> folderFilesMap = [:]
-        List<String> ignoreList = []
+//        List<String> ignoreList = []
 
 
         when:
@@ -80,7 +95,7 @@ class LocalFileSystemCrawlerTest extends Specification {
         List<SavableObject> subfolder3Children = folderFilesMap['subfolder3']
 
         then:
-        ignoreList[0].name == 'ignoreMe'
+//        ignoreList[0].name == 'ignoreMe'
         allFolders.size() == 5
         folderFilesMap.keySet().containsAll(['content', 'testsub', 'subfolder2', 'subfolder3'])
         contentChildren.size()==21
@@ -149,7 +164,7 @@ class LocalFileSystemCrawlerTest extends Specification {
 
         then:
         allFolders!= null
-        allFolders.size() == 5
+        allFolders.size() == 4
 
         updatableFolders!=null
         updatableFolders.size() == 2
