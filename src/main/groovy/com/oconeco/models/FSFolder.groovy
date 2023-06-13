@@ -262,6 +262,7 @@ class FSFolder extends SavableObject {
                                     fsFolder.ignore = true
                                 }
                                 children << fsFolder
+
                             } else {
                                 FSFile fsFile = new FSFile(file, this, locationName, crawlName)
                                 if (file.name ==~ ignoreFilesPattern) {
@@ -278,9 +279,9 @@ class FSFolder extends SavableObject {
                         }
                     } else {
                         log.warn "file: $file -- does not exist???"
-
                     }
                 }
+
             } else {
                 log.warn "\t\tCannot read folder: ${folder.absolutePath}"
             }
