@@ -5,6 +5,7 @@ import com.oconeco.models.SavableObject
 import com.oconeco.persistence.SolrSystemClient
 import org.apache.log4j.Logger
 import org.apache.solr.common.SolrDocument
+
 /**
  * codify what qualifies as a difference worthy of 're-indexing'
  */
