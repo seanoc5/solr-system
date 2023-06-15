@@ -4,8 +4,27 @@ Basic `slocate` functionality: locate folders and files
 
 This approach keeps track of `skip` patterns for both folders and files.
 
-Get all relevannt (non-ignored) folders (type FSFolder).
-?? Call fsFolder.analyze
+~~Get all relevannt (non-ignored) folders (type FSFolder).
+?? Call fsFolder.analyze~~
+
+- Crawler: folderPatterns, filePatterns, Config, DifferenceChecker?
+  - SolrSystemClient
+  - one crawler per **locationName**
+  - iterate crawlNames/startFolders
+    - File.traverse() -- traverse directory tree (bredth first) -- save each folder as we go
+    ```
+    visit folders - build FSFolder
+    check for existing solr doc
+    if present && in sync: skip update
+    else save new or updated 
+    ```
+      - predir: if folder.ignore: skip tree (but save ignored folder as "ignored" for review/auditing)
+      - if shouldUpdate: get all non-ignored files
+      - if or extended folder/file pattern map
+        - add tags
+      - if analyser: 
+        - add analysis
+      - save all gathered objects for current folder
 
 ## First pass 
 Update: switch to processing (slocate) each folder on it's own. Allow more comprehensive analysis in subsequent passes.
@@ -41,10 +60,12 @@ Apply more broadly scoped pattern matching to determin if a given file should be
 
 
 ## Data Model
-- FSFolder
-  - parent (fsfolder)
-  - children(fsfile
-- FSFile
-  - parent (fsfolder)
-  - ?Archive folders/files?
-    - parent (fsfile)
+- SavableObject
+  - FSObject (tbd)
+  - FSFolder
+    - parent (fsfolder)  ?? needed ??
+    - children(fsfile)
+  - FSFile
+    - parent (fsfolder)
+    - ?Archive folders/files?
+      - parent (fsfile)
