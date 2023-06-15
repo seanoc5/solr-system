@@ -2,11 +2,20 @@ package configs
 
 solrUrl = "http://localhost:8983/solr/solr_system"
 
+// todo -- refactor to bring namePatterns into localFiles (fileSystem??), add layer of 'folders'
 dataSources {
     localFiles {
         MyDesktop: '/home/sean/Desktop'
         MyDocuments: '/home/sean/Documents'
         MyPictures: '/home/sean/Pictures'
+    }
+    email {
+        // todo -- replace me, temp placeholder
+        foo:'bar'
+    }
+    browserProfile {
+        // todo -- replace me, temp placeholder
+        foo:'bar'
     }
 }
 
