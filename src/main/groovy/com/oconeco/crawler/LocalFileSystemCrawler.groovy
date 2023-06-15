@@ -89,29 +89,52 @@ class LocalFileSystemCrawler {
      * Basic crawl functionality here, with visitor pattern
      * @param crawlName (subset of locationName/source)
      * @param startFolder folder to start crawl
-     * @param ignorePattern regex to indicate we should save the current folder, mark as ignore, and not descend any further
+     * @param ignoreFolders regex to indicate we should save the current folder, mark as ignore, and not descend any further
      * @param existingSolrFolderDocs - collection of pre-existing solr docs, for comparison of 'freshness' (need update?)
      * @return map of status counts
      */
-    Map<String, Object> crawlFolders(String crawlName, File startFolder, Pattern ignorePattern, Map<String, SolrDocument> existingSolrFolderDocs) {
+    Map<String, Object> crawlFolders(String crawlName, File startFolder, Pattern ignoreFolders, Pattern ignoreFiles, Map<String, SolrDocument> existingSolrFolderDocs) {
         Map<String, Object> resultsMap = [newFiles  : 0, updatedFiles: 0, ignoredFiles: 0, currentFiles: 0,
                                           newFolders: 0, updatedFolders: 0, ignoredFolders: 0, currentFolders: 0,]
 
         log.debug "Starting crawl of folder: ($startFolder)  ..."
         Path startPath = startFolder.toPath()   // Path so we can 'relativize` to get relative depth of this crawl
+        FSFolder currentFolder = null
 
         def doPreDir = {
+            File f = it
             log.debug "\t\tPre dir:  $it"
+            FileVisitResult fvr = FileVisitResult.CONTINUE
+            boolean accessible = f.exists() && f.canRead() && f.canExecute()
+
+            int depth = getRelativeDepth(startPath, f)
+            currentFolder = new FSFolder(f, this.locationName, this.crawlName, depth)
+
+            if (accessible) {
+                if (it.name ==~ ignoreFolders) {
+                    currentFolder.ignore = true
+                    log.info "\t\t----Ignorable folder, AND does not need updating: $currentFolder"
+                    fvr = FileVisitResult.SKIP_SUBTREE
+                } else {
+                    log.debug "\t\t----Not ignorable folder: $currentFolder"
+                    fvr = FileVisitResult.CONTINUE
+                }
+            } else {
+                log.info "Folder: $currentFolder is not accessible, skip subtree: $f"
+                fvr = FileVisitResult.SKIP_SUBTREE
+            }
+            return fvr
         }
 
+
         def doPostDir = {
-            log.debug "\t\tPost dir: $it"
+            log.info "\t\tPost dir: $it"
         }
 
 
         Map options = [
                 type     : FileType.DIRECTORIES,
-                preDir   : doPreDirectory(),
+                preDir   : doPreDir,
                 postDir  : doPostDir,
                 preRoot  : true,
                 postRoot : true,
@@ -119,33 +142,31 @@ class LocalFileSystemCrawler {
         ]
 
         startFolder.traverse(options) { File folder ->
-            log.debug "\t\ttraverse folder $folder"     // should there be action here?
-            int depth = getRelativeDepth(startPath, folder)
-            FSFolder fsFolder = new FSFolder(folder, locationName, crawlName, depth)
-            def details = fsFolder.addFolderDetails()
-            boolean shouldUpdate = checkShouldUpdate(existingSolrFolderDocs, fsFolder)
-            if (shouldUpdate) {
-                def children = fsFolder.buildChildrenList(ignorePattern)
-                log.info "Folder ($fsFolder) -- Children count: ${children.size()} -- Details($details)"
-            } else {
-                log.info "\t\tno updated needed "
-            }
+                log.debug "\t\ttraverse folder $folder"     // should there be action here?
+                boolean shouldUpdate = checkShouldUpdate(existingSolrFolderDocs, currentFolder)
+                if (shouldUpdate) {
+                    def children = currentFolder.buildChildrenList(ignoreFiles)
+                    log.info "Folder ($currentFolder) -- Children count: ${children.size()} -- should update: $shouldUpdate"
+                    log.info "call solr save..."
+                } else {
+                    log.info "\t\tno updated needed "
+                }
         }
 
         return resultsMap
     }
 
 
-    /**
-     * user filevisitor pattern to get all the folders which are not explicitly ignored
-     * @param startFolder
-     * @param namePatterns
-     * @return map of ignored and not-ignored folders
-     *
-     * this is a quick/light scan of folders, assumes following processing will order crawl of folders by priority,
-     * and even check for updates to skip folders with no apparent changes
-     * @deprecated - consider just using crawlFolders(....)
-     */
+/**
+ * user filevisitor pattern to get all the folders which are not explicitly ignored
+ * @param startFolder
+ * @param namePatterns
+ * @return map of ignored and not-ignored folders
+ *
+ * this is a quick/light scan of folders, assumes following processing will order crawl of folders by priority,
+ * and even check for updates to skip folders with no apparent changes
+ * @deprecated - consider just using crawlFolders(....)
+ */
     List<FSFolder> visitFolders(String crawlName, File startFolder, Pattern ignorePattern, Map<String, SolrDocument> existingSolrFolderDocs) {
         HashMap<String, FSFolder> foldersMap = [:]
 
@@ -158,7 +179,7 @@ class LocalFileSystemCrawler {
         // else save new or updated
         Map options = [type     : FileType.DIRECTORIES,
                        preDir   : {
-                           return doPreDirectory(it, startPath, crawlName, ignorePattern, existingSolrFolderDocs, foldersMap)
+                           return doPreDirectory(startPath, crawlName, ignorePattern, existingSolrFolderDocs, foldersMap)
                        },
 /*
                        postDir  : {
@@ -181,7 +202,7 @@ class LocalFileSystemCrawler {
     }
 
 
-    // todo -- remove or refactor,... this is a bad approach...?
+// todo -- remove or refactor,... this is a bad approach...?
     def doPreDirectory = { Path startPath, String crawlName, Pattern ignorePattern, Map<String, SolrDocument> existingSolrFolderDocs, LinkedHashMap<String, FSFolder> foldersMap ->
         File f = (File) it
         boolean accessible = f.exists() && f.canRead() && f.canExecute()
@@ -219,12 +240,12 @@ class LocalFileSystemCrawler {
     }
 
 
-    /**
-     * helper function to check if a given FSFolder is current with existing/saved Solr doc
-     * @param existingSolrFolderDocs
-     * @param fsFolder
-     * @return true of the solr index needs to be updated from the filesystem
-     */
+/**
+ * helper function to check if a given FSFolder is current with existing/saved Solr doc
+ * @param existingSolrFolderDocs
+ * @param fsFolder
+ * @return true of the solr index needs to be updated from the filesystem
+ */
     public boolean checkShouldUpdate(Map<String, SolrDocument> existingSolrFolderDocs, FSFolder fsFolder) {
         boolean shouldUpdate = true
         if (existingSolrFolderDocs?.size() > 0) {
@@ -249,12 +270,12 @@ class LocalFileSystemCrawler {
         return shouldUpdate
     }
 
-    /**
-     * helper func to get relative depth (from crawl's start folder)
-     * @param startPath - original start path
-     * @param f current file,
-     * @return count of levels between startpath and current path
-     */
+/**
+ * helper func to get relative depth (from crawl's start folder)
+ * @param startPath - original start path
+ * @param f current file,
+ * @return count of levels between startpath and current path
+ */
     public int getRelativeDepth(Path startPath, File f) {
         Path reletivePath = startPath.relativize(f.toPath())
         String relPath = reletivePath.toString()
@@ -263,12 +284,12 @@ class LocalFileSystemCrawler {
     }
 
 
-    /**
-     * Get all the non-ignore files in a folder
-     * param folder - folder to get files from
-     * param ignoredFolders - ignore pattern
-     * return list of files
-     */
+/**
+ * Get all the non-ignore files in a folder
+ * param folder - folder to get files from
+ * param ignoredFolders - ignore pattern
+ * return list of files
+ */
     List<FSFile> populateFolderFsFiles(FSFolder fSFolder, Pattern ignoreFilesPattern) {
         List<FSFile> fSFilesList = []
         File folder = fSFolder.thing
@@ -306,4 +327,5 @@ class LocalFileSystemCrawler {
     public String toString() {
         return "LocalFileSystemCrawler{" + "crawlName='" + crawlName + '\'' + ", locationName='" + locationName + '\'' + '}';
     }
+
 }

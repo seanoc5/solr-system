@@ -22,7 +22,8 @@ class LocalFileSystemCrawlerTest extends Specification {
     Logger log = Logger.getLogger(this.class.name);
     String locationName = 'spock'
     String crawlName = 'test'
-    Pattern ignorePattern = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]
+    Pattern ignoreFolders = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]
+    Pattern ignoreFiles = Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE]
     Path startFolder = Path.of(getClass().getResource('/content').toURI());
 
     def "basic localhost crawl of 'content' resource folder"() {
@@ -30,7 +31,7 @@ class LocalFileSystemCrawlerTest extends Specification {
         LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName)
 
         when:
-        List<FSFolder> results = crawler.buildCrawlFolders(crawlName, startFolder, ignorePattern, null)
+        List<FSFolder> results = crawler.buildCrawlFolders(crawlName, startFolder, ignoreFolders, ignoreFiles, null)
         def toCrawl = results.findAll { !it.ignore }
         def toIgnore = results.findAll { it.ignore }
 
@@ -60,7 +61,7 @@ class LocalFileSystemCrawlerTest extends Specification {
         LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName)
 
         when:
-        def results = crawler.crawlFolders(crawlName, startFolder.toFile(), ignorePattern, null)
+        def results = crawler.crawlFolders(crawlName, startFolder.toFile(), ignoreFolders, ignoreFiles,null)
 
         then:
         results!=null
@@ -76,7 +77,7 @@ class LocalFileSystemCrawlerTest extends Specification {
 
 
         when:
-        List<FSFolder> allFolders = crawler.buildCrawlFolders(crawlName, startFolder, ignorePattern, null)
+        List<FSFolder> allFolders = crawler.buildCrawlFolders(crawlName, startFolder, ignoreFolders, null)
         Map<String, SolrDocument> existingSolrFolderDocs = mockSolrFolderDocs(allFolders)
         allFolders.each { FSFolder fsFolder ->
             if (fsFolder.ignore) {
@@ -84,7 +85,7 @@ class LocalFileSystemCrawlerTest extends Specification {
                 ignoreList << fsFolder
             } else {
                 log.info "crawl files in folder: $fsFolder"
-                 def folderFiles= crawler.populateFolderFsFiles(fsFolder, ignorePattern)
+                 def folderFiles= crawler.populateFolderFsFiles(fsFolder, ignoreFolders)
                 folderFilesMap[fsFolder.name] = folderFiles
                 log.info "Folder files: ${folderFiles.size()}"
             }
@@ -108,14 +109,14 @@ class LocalFileSystemCrawlerTest extends Specification {
     def 'basic localhost with archives included'() {
         given:
         LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName)
-        List<FSFolder> crawlFolders = crawler.buildCrawlFolders(crawlName, startFolder, ignorePattern, null)
+        List<FSFolder> crawlFolders = crawler.buildCrawlFolders(crawlName, startFolder, ignoreFolders, null)
         List<FSFile> archiveFSFiles = []
         List<SavableObject> archiveItems = []
 
         when:
         crawlFolders.each {FSFolder fsFolder ->
             if(!fsFolder.ignore){
-                List<FSFile> folderFiles= crawler.populateFolderFsFiles(fsFolder, ignorePattern)
+                List<FSFile> folderFiles= crawler.populateFolderFsFiles(fsFolder, ignoreFolders)
                 List<FSFile> archiveFiles = folderFiles.findAll {it.isArchive()}
                 if(archiveFiles?.size()) {
                     archiveFSFiles.addAll(archiveFiles)
@@ -143,7 +144,7 @@ class LocalFileSystemCrawlerTest extends Specification {
         given:
         LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName)
         Map<String, List<SavableObject>> folderFilesMap = [:]
-        List<FSFolder> allFolders = crawler.buildCrawlFolders(crawlName, startFolder, ignorePattern, null)
+        List<FSFolder> allFolders = crawler.buildCrawlFolders(crawlName, startFolder, ignoreFolders, null)
         Map<String, SolrDocument> existingSolrFolderDocs = mockSolrFolderDocs(allFolders)
 
         when:
@@ -160,7 +161,7 @@ class LocalFileSystemCrawlerTest extends Specification {
         Integer size1 = doc1.getFirstValue(SolrSystemClient.FLD_SIZE)
         doc1.setField(SolrSystemClient.FLD_SIZE, size1 -1)
 
-        List<FSFolder> updatableFolders = crawler.buildCrawlFolders(crawlName, startFolder, ignorePattern, existingSolrFolderDocs)
+        List<FSFolder> updatableFolders = crawler.buildCrawlFolders(crawlName, startFolder, ignoreFolders, existingSolrFolderDocs)
 
         then:
         allFolders!= null
