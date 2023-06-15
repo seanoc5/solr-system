@@ -8,13 +8,13 @@
     - folder count
     - modified date
   - track files in each folder
-    - quick-assign file types by patterns
+    - quick-assign file types by patterns _(labels?)_
     - name
     - size
     - file count
     - folder count
     - modified date
-  - folder-assign based on file patterns, and: 
+  - folder-assign based on file patterns, and: (move this to 'extra' analysis phase)
     - parent folder
     - children folders
 
@@ -24,6 +24,23 @@
 - or should the crawler call the individual analysis for each object/type? (better flexibility? let the crawler "know" the intent/goal)
 
 ## Analysis
+- Simple: 
+  - name based
+- Moderate:
+  - name and neighbors
+- Advanced
+  - content, ML, LLM, NLP
+
+### Content qualitative analysis
+- text field
+  - all text, irrespective
+- content
+  - filtered, de-boilerplated, more analyzed (the good stuff)
+- term analysis
+  - shingles
+    - 2, 3, and 4 shingling?
+  - outliers (unusual)
+  - term halos
 
 ### Folders
 
