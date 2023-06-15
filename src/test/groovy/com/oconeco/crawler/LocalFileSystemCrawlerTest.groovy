@@ -58,7 +58,8 @@ class LocalFileSystemCrawlerTest extends Specification {
 
     def 'basic LocalFileSystemCrawler.crawlFolders'() {
         given:
-        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName)
+        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName, mockSolrClient, differenceChecker)
+//        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName)
 
         when:
         def results = crawler.crawlFolders(crawlName, startFolder.toFile(), ignoreFolders, ignoreFiles,null)
