@@ -48,7 +48,7 @@ long start = System.currentTimeMillis()
 crawlMap.each { String crawlName, String startPath ->
     log.info "Crawl name: $crawlName -- start path: $startPath -- location: $locationName "
     DifferenceChecker differenceChecker = new DifferenceChecker()
-    LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName, 3, differenceChecker)
+    LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName, differenceChecker, solrClient, 3)
     Map<String, SolrDocument> existingSolrFolderDocs
     if(config.wipeContent==true) {
         log.warn "\t\tConfig/args indicates we whould wipe content for crawl: $crawler"

@@ -20,13 +20,23 @@ class DifferenceStatus {
     Boolean differentLocations
 
     Boolean sourceIsNewer
+    Boolean noMatchingSavedDoc
+    List<String> messages = []
 
     DifferenceStatus(SavableObject object, SolrDocument solrDocument) {
         this.object = object
-        this.solrDocument = solrDocument
+        if(solrDocument) {
+            this.solrDocument = solrDocument
+            noMatchingSavedDoc = false
+        } else {
+            String msg = "no existing solr doc to compare to, assuming new Savable object"
+            log.info "\t\t $msg: $object"
+            messages << msg
+            noMatchingSavedDoc = true
+        }
     }
 
     String toString() {
-        String s = "$object) "
+        String s = "Diff Status: $object) " + messages ? messages : 'no messages'
     }
 }

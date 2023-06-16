@@ -2,6 +2,7 @@ package com.oconeco.crawler
 
 import com.oconeco.models.FSFile
 import com.oconeco.models.FSFolder
+import com.oconeco.persistence.SolrSystemClient
 import groovy.io.FileType
 import groovy.io.FileVisitResult
 import org.apache.log4j.Logger
@@ -28,9 +29,10 @@ class LocalFileSystemCrawler {
     String osName
     int statusDepth = 3
     DifferenceChecker differenceChecker
+    SolrSystemClient solrSystemClient
 
 
-    LocalFileSystemCrawler(String locationName, String crawlName, int statusDepth = 3, DifferenceChecker diffChecker = new DifferenceChecker()) {
+    LocalFileSystemCrawler(String locationName, String crawlName, DifferenceChecker diffChecker = new DifferenceChecker(), SolrSystemClient solrSystemClient, int statusDepth = 3) {
         log.debug "${this.class.simpleName} constructor with location:$locationName, name: $crawlName,  statusDepth:$statusDepth..."
         this.crawlName = crawlName
         this.locationName = locationName
@@ -38,6 +40,7 @@ class LocalFileSystemCrawler {
         // moved this from config file to here in case we start supporting remote filesystems...? (or WSL...?)
         this.statusDepth = statusDepth
         this.differenceChecker = diffChecker
+        this.solrSystemClient = solrSystemClient
     }
 
 
@@ -114,6 +117,7 @@ class LocalFileSystemCrawler {
                 if (it.name ==~ ignoreFolders) {
                     currentFolder.ignore = true
                     log.info "\t\t----Ignorable folder, AND does not need updating: $currentFolder"
+                    resultsMap.ignoredFolders++
                     fvr = FileVisitResult.SKIP_SUBTREE
                 } else {
                     log.debug "\t\t----Not ignorable folder: $currentFolder"
@@ -142,15 +146,16 @@ class LocalFileSystemCrawler {
         ]
 
         startFolder.traverse(options) { File folder ->
-                log.debug "\t\ttraverse folder $folder"     // should there be action here?
-                boolean shouldUpdate = checkShouldUpdate(existingSolrFolderDocs, currentFolder)
-                if (shouldUpdate) {
-                    def children = currentFolder.buildChildrenList(ignoreFiles)
-                    log.info "Folder ($currentFolder) -- Children count: ${children.size()} -- should update: $shouldUpdate"
-                    log.info "call solr save..."
-                } else {
-                    log.info "\t\tno updated needed "
-                }
+            log.debug "\t\ttraverse folder $folder"     // should there be action here?
+            def diff = differenceChecker.compareFSFolderToSavedDocMap(currentFolder, existingSolrFolderDocs)
+            boolean shouldUpdate = checkShouldUpdate(existingSolrFolderDocs, currentFolder)
+            if (shouldUpdate) {
+                def children = currentFolder.buildChildrenList(ignoreFiles)
+                log.info "Folder ($currentFolder) -- Children count: ${children.size()} -- should update: $shouldUpdate"
+                log.info "call solr save..."
+            } else {
+                log.info "\t\tno updated needed "
+            }
         }
 
         return resultsMap
@@ -220,7 +225,8 @@ class LocalFileSystemCrawler {
             } else {
                 boolean shouldUpdate = true         // default to true, make check unset if all conditions are met
                 DifferenceStatus status
-                SolrDocument solrDocument           // solr doc to compare "saved" info and freshness with this file object
+                SolrDocument solrDocument
+                // solr doc to compare "saved" info and freshness with this file object
 
                 if (existingSolrFolderDocs) {
                     shouldUpdate = checkShouldUpdate(existingSolrFolderDocs, fsFolder)

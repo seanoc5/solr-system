@@ -15,6 +15,23 @@ class DifferenceChecker {
     List<String> similarities = []
 
 
+    DifferenceStatus compareFSFolderToSavedDocMap(FSFolder fsfolder, Map<String, SolrDocument> existingSolrDocMap) {
+        DifferenceStatus differenceStatus = null
+        if (fsfolder && existingSolrDocMap?.keySet()) {
+            SolrDocument solrDocument = existingSolrDocMap.get(fsfolder.id)
+            if (solrDocument) {
+                log.info "Found existing solr doc to compare: $solrDocument"
+            }
+            differenceStatus = compareFSFolderToSavedDoc(fsfolder, solrDocument)
+
+        } else {
+            differenceStatus = new DifferenceStatus(fsfolder, null)
+
+        }
+        return differenceStatus
+    }
+
+
     /**
      *
      * @param fsfolder
@@ -27,7 +44,7 @@ class DifferenceChecker {
         String solrId = existingSolrDoc.getFirstValue(SolrSystemClient.FLD_ID)
         if (fsId == solrId) {
             status.differentIds = false
-            similarities <<  "FSFolder id ($fsId) matches solr id($solrId"
+            similarities << "FSFolder id ($fsId) matches solr id($solrId"
         } else {
             String msg = "FSFolder id ($fsId) does not match solr id($solrId"
             differences << msg
@@ -38,7 +55,7 @@ class DifferenceChecker {
         Date fsLastModified = fsfolder.lastModifiedDate
         Date solrLastModified = existingSolrDoc.getFirstValue(SolrSystemClient.FLD_LAST_MODIFIED)
         if (fsLastModified == solrLastModified) {
-            String msg =  "FSFolder and Solr doc have SAME last modified date: $solrLastModified"
+            String msg = "FSFolder and Solr doc have SAME last modified date: $solrLastModified"
             similarities << msg
             status.differentLastModifieds = false
             log.debug msg
@@ -58,7 +75,7 @@ class DifferenceChecker {
 
         Long solrSize = existingSolrDoc.getFirstValue(SolrSystemClient.FLD_SIZE)
         if (fsfolder.size == solrSize) {
-            String msg ="Same sizes, fsfolder: ${fsfolder.size} != solr: $solrSize"
+            String msg = "Same sizes, fsfolder: ${fsfolder.size} != solr: $solrSize"
             log.debug msg
             similarities << msg
             status.differentSizes = false
