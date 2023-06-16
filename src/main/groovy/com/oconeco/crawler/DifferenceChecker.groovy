@@ -1,7 +1,6 @@
 package com.oconeco.crawler
 
 import com.oconeco.models.FSFolder
-import com.oconeco.models.SavableObject
 import com.oconeco.persistence.SolrSystemClient
 import org.apache.log4j.Logger
 import org.apache.solr.common.SolrDocument
@@ -10,7 +9,7 @@ import org.apache.solr.common.SolrDocument
  * codify what qualifies as a difference worthy of 're-indexing'
  */
 class DifferenceChecker {
-    Logger log = Logger.getLogger(this.class.name);
+    Logger log = Logger.getLogger(this.class.name)
     List<String> differences = []
     List<String> similarities = []
 
@@ -26,8 +25,9 @@ class DifferenceChecker {
 
         } else {
             differenceStatus = new DifferenceStatus(fsfolder, null)
-
         }
+        // save the results to the actual savable object (this/FSFolder)
+        fsfolder.differenceStatus = differenceStatus
         return differenceStatus
     }
 
@@ -128,44 +128,62 @@ class DifferenceChecker {
         return status
     }
 
+/*
     boolean shouldUpdateFolder(SavableObject fsfolder, SolrDocument existingSolrDoc) {
         DifferenceStatus status = compareFSFolderToSavedDoc(fsfolder, existingSolrDoc)
         boolean should = shouldUpdate(status)
         return should
     }
+*/
 
     boolean shouldUpdate(DifferenceStatus status) {
         boolean should = false
+        String msg
+        if (status.noMatchingSavedDoc) {
+            should = true
+            msg = "no matching saved/solr doc, flagging for update"
+            log.debug "\t\t--$msg"
+        }
         if (status.differentIds) {
             // todo -- check logic and assumptions
+            msg = "different ids, flagging for update"
             should = true
-            log.debug "\t----different ids, flagging for update($should|'true'): $status"
+            log.debug "\t--$msg: $status"
 
         } else if (status.differentDedups) {
             should = true
-            log.debug "\t\t----different dedups, flagging for update($should|'true'): $status"
+            msg = "different dedups, flagging for update"
+            log.debug "\t\t--$msg: $status"
 
         } else if (status.differentSizes) {
             should = true
-            log.debug "\t\t----different sizes, flagging for update($should|'true'): $status"
+            msg = "different sizes, flagging for update"
+            log.debug "\t\t----$msg: $status"
 
         } else if (status.differentPaths) {
             should = true
-            log.info "\t\t----different paths, flagging for update($should|'true'): $status"
+            msg = "different paths, flagging for update"
+            log.info "\t\t--: $status"
         } else if (status.differentLastModifieds) {
             // todo -- check logic and assumptions
             should = true
-            log.info "\t\t----different lastModifiedDate, FLAGGING for update($should|'true'): $status"
-
-
+            msg = "different lastModifiedDate, FLAGGING for update"
+            log.info "\t\t--$msg: $status"
         } else if (status.differentSizes) {
             should = true
-            log.debug "\t----different sizes, flagging for update($should|'true'): $status"
+            msg = "different sizes, flagging for update"
+            log.debug "\t----$msg: $status"
 
         } else if (status.differentLocations) {
             // todo -- check logic and assumptions
             should = false
-            log.info "\t----different locations, BUT NOT CONSIDERED WORTHY of reindexing, NOT flagging for update($should|'false'): $status"
+            msg = "different locations, BUT NOT CONSIDERED WORTHY of reindexing, NOT flagging for update"
+            log.info "\t----$msg: $status"
+        }
+        if (msg) {
+            status.messages << msg
+        } else {
+            log.info "No message for status: $status???"
         }
         return should
     }

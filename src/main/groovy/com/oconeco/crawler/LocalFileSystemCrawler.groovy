@@ -147,11 +147,14 @@ class LocalFileSystemCrawler {
 
         startFolder.traverse(options) { File folder ->
             log.debug "\t\ttraverse folder $folder"     // should there be action here?
+//            boolean shouldUpdate = checkShouldUpdate(existingSolrFolderDocs, currentFolder)
+
             def diff = differenceChecker.compareFSFolderToSavedDocMap(currentFolder, existingSolrFolderDocs)
-            boolean shouldUpdate = checkShouldUpdate(existingSolrFolderDocs, currentFolder)
+            boolean shouldUpdate = differenceChecker.shouldUpdate(diff)
             if (shouldUpdate) {
+//                def savedFiles =
                 def children = currentFolder.buildChildrenList(ignoreFiles)
-                log.info "Folder ($currentFolder) -- Children count: ${children.size()} -- should update: $shouldUpdate"
+                log.info "Update FSFolder:($currentFolder) -- Children count: ${children.size()} -- diffStatus: $diff"
                 log.info "call solr save..."
             } else {
                 log.info "\t\tno updated needed "

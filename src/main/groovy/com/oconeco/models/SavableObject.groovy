@@ -1,5 +1,6 @@
 package com.oconeco.models
 
+import com.oconeco.crawler.DifferenceStatus
 import com.oconeco.helpers.Constants
 import com.oconeco.persistence.SolrSystemClient
 import org.apache.log4j.Logger
@@ -7,7 +8,6 @@ import org.apache.solr.common.SolrInputDocument
 
 import java.util.regex.Matcher
 import java.util.regex.Pattern
-
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -50,6 +50,9 @@ class SavableObject {
 
     /** links to children (if any) */
     List<SavableObject> children
+/** track individual diference/update status */
+    DifferenceStatus differenceStatus
+
     /** rough metric for how recent this is (remove?) */
     def recency
     /** rough metric for how popular or well-used this dir is */
