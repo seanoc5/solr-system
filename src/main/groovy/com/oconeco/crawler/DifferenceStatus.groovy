@@ -37,6 +37,6 @@ class DifferenceStatus {
     }
 
     String toString() {
-        String s = "Diff Status: $object) " + messages ? messages : 'no messages'
+        String s = "Diff Status:($object) $messages"
     }
 }

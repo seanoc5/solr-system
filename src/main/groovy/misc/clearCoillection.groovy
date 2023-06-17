@@ -21,7 +21,7 @@ def foo = solrSaver.deleteDocuments(q)
 log.info "Clear results: $foo"
 QueryResponse resp2 = solrSaver.query(q)
 
-long numFound2 = resp.results.getNumFound()
+long numFound2 =solrSaver.getDocumentCount(q)
 log.info "NumFound after clear: $numFound2"
 
 solrSaver.closeClient(this.class.name)

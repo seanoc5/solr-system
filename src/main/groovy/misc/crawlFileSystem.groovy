@@ -1,6 +1,6 @@
 package misc
 
-import com.oconeco.crawler.DifferenceChecker
+
 import com.oconeco.crawler.LocalFileSystemCrawler
 import com.oconeco.helpers.SolrCrawlArgParser
 import com.oconeco.models.FSFolder
@@ -47,15 +47,17 @@ long start = System.currentTimeMillis()
 
 crawlMap.each { String crawlName, String startPath ->
     log.info "Crawl name: $crawlName -- start path: $startPath -- location: $locationName "
-    DifferenceChecker differenceChecker = new DifferenceChecker()
-    LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName, differenceChecker, solrClient, 3)
-    Map<String, SolrDocument> existingSolrFolderDocs
+//    DifferenceChecker differenceChecker = new DifferenceChecker()
+    LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName, solrClient)
+//    LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName, solrClient, differenceChecker, 3)
+    Map<String, SolrDocument> existingSolrFolderDocs = null
+
     if(config.wipeContent==true) {
         log.warn "\t\tConfig/args indicates we whould wipe content for crawl: $crawler"
         Map<String, Object> deleteResults = solrClient.deleteCrawledDocuments(crawler)
         log.info "\t\tDelete results map: $deleteResults"
     } else {
-        existingSolrFolderDocs = solrClient.getSolrFolderDocs(crawler)
+        existingSolrFolderDocs = crawler.getSolrFolderDocs(locationName, crawlName)
         if(existingSolrFolderDocs) {
             log.debug "\t\texisting Solr Folder docs (to check incremental) size: ${existingSolrFolderDocs.size()}"
         } else {

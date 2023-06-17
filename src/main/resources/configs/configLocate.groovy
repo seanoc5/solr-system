@@ -19,7 +19,7 @@ userHome = System.getProperty("user.home")
 osName = System.getProperty("os.name")
 // be default don't follow links, just focus on the 'original'
 linkOption = LinkOption.NOFOLLOW_LINKS
-ignoreArchivesPattern = ~/.*[jw]ar/
+ignoreArchivesPattern = ~/.*([jw]ar|docx|pptx|xlsx)/
 
 
 // todo -- these name: path entries are not yet used, still reading path and name from cli args

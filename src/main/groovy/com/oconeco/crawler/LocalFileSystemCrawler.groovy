@@ -2,15 +2,18 @@ package com.oconeco.crawler
 
 import com.oconeco.models.FSFile
 import com.oconeco.models.FSFolder
+import com.oconeco.models.SavableObject
 import com.oconeco.persistence.SolrSystemClient
 import groovy.io.FileType
 import groovy.io.FileVisitResult
 import org.apache.log4j.Logger
+import org.apache.solr.client.solrj.SolrQuery
+import org.apache.solr.client.solrj.response.QueryResponse
 import org.apache.solr.common.SolrDocument
+import org.apache.solr.common.SolrDocumentList
 
 import java.nio.file.Path
 import java.util.regex.Pattern
-
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -30,9 +33,11 @@ class LocalFileSystemCrawler {
     int statusDepth = 3
     DifferenceChecker differenceChecker
     SolrSystemClient solrSystemClient
+    String checkFolderFields = SolrSystemClient.DEFAULT_FIELDS_TO_CHECK.join(' ')
+    String checkFileFields = SolrSystemClient.DEFAULT_FIELDS_TO_CHECK.join(' ')
 
 
-    LocalFileSystemCrawler(String locationName, String crawlName, DifferenceChecker diffChecker = new DifferenceChecker(), SolrSystemClient solrSystemClient, int statusDepth = 3) {
+    LocalFileSystemCrawler(String locationName, String crawlName, SolrSystemClient solrSystemClient, DifferenceChecker diffChecker = new DifferenceChecker(), int statusDepth = 3) {
         log.debug "${this.class.simpleName} constructor with location:$locationName, name: $crawlName,  statusDepth:$statusDepth..."
         this.crawlName = crawlName
         this.locationName = locationName
@@ -88,6 +93,26 @@ class LocalFileSystemCrawler {
     }
 
 
+    def getSolrDocCount(String crawlName = '', String q = '*:*', String filterQuery = '') {
+        SolrQuery solrQuery = new SolrQuery(q)
+        solrQuery.setFields('')
+        solrQuery.setRows(0)
+        if (locationName) {
+            solrQuery.addFilterQuery("${SolrSystemClient.FLD_LOCATION_NAME}:\"$locationName\"")
+        }
+        if (crawlName) {
+            solrQuery.addFilterQuery("${SolrSystemClient.FLD_CRAWL_NAME}:\"$crawlName\"")
+        }
+        if (filterQuery) {
+            solrQuery.addFilterQuery(filterQuery)
+        }
+        QueryResponse response = solrSystemClient.query(solrQuery)
+        long numFound = response.results.getNumFound()
+        log.info "\t\t LocalFSCrawler getSolrDocCount: $numFound -- $this"
+        return numFound
+    }
+
+
     /**
      * Basic crawl functionality here, with visitor pattern
      * @param crawlName (subset of locationName/source)
@@ -96,9 +121,9 @@ class LocalFileSystemCrawler {
      * @param existingSolrFolderDocs - collection of pre-existing solr docs, for comparison of 'freshness' (need update?)
      * @return map of status counts
      */
-    Map<String, Object> crawlFolders(String crawlName, File startFolder, Pattern ignoreFolders, Pattern ignoreFiles, Map<String, SolrDocument> existingSolrFolderDocs) {
-        Map<String, Object> resultsMap = [newFiles  : 0, updatedFiles: 0, ignoredFiles: 0, currentFiles: 0,
-                                          newFolders: 0, updatedFolders: 0, ignoredFolders: 0, currentFolders: 0,]
+   List<FSFolder> crawlFolders(String crawlName, File startFolder, Pattern ignoreFolders, Pattern ignoreFiles) {
+        def results = []
+        Map<String, SolrDocument> existingSolrFolderDocs = getSolrFolderDocs(crawlName)
 
         log.debug "Starting crawl of folder: ($startFolder)  ..."
         Path startPath = startFolder.toPath()   // Path so we can 'relativize` to get relative depth of this crawl
@@ -106,35 +131,31 @@ class LocalFileSystemCrawler {
 
         def doPreDir = {
             File f = it
-            log.debug "\t\tPre dir:  $it"
+            log.debug "\t\t====PRE dir:  $it"
             FileVisitResult fvr = FileVisitResult.CONTINUE
             boolean accessible = f.exists() && f.canRead() && f.canExecute()
 
             int depth = getRelativeDepth(startPath, f)
             currentFolder = new FSFolder(f, this.locationName, this.crawlName, depth)
+            results << currentFolder
 
             if (accessible) {
                 if (it.name ==~ ignoreFolders) {
                     currentFolder.ignore = true
                     log.info "\t\t----Ignorable folder, AND does not need updating: $currentFolder"
-                    resultsMap.ignoredFolders++
                     fvr = FileVisitResult.SKIP_SUBTREE
                 } else {
                     log.debug "\t\t----Not ignorable folder: $currentFolder"
                     fvr = FileVisitResult.CONTINUE
                 }
             } else {
-                log.info "Folder: $currentFolder is not accessible, skip subtree: $f"
+                log.warn "Folder: $currentFolder is not accessible, skip subtree: $f"
                 fvr = FileVisitResult.SKIP_SUBTREE
             }
             return fvr
         }
 
-
-        def doPostDir = {
-            log.info "\t\tPost dir: $it"
-        }
-
+        def doPostDir = {log.debug "\t\tPost dir: $it" }
 
         Map options = [
                 type     : FileType.DIRECTORIES,
@@ -149,19 +170,25 @@ class LocalFileSystemCrawler {
             log.debug "\t\ttraverse folder $folder"     // should there be action here?
 //            boolean shouldUpdate = checkShouldUpdate(existingSolrFolderDocs, currentFolder)
 
-            def diff = differenceChecker.compareFSFolderToSavedDocMap(currentFolder, existingSolrFolderDocs)
-            boolean shouldUpdate = differenceChecker.shouldUpdate(diff)
+            DifferenceStatus differenceStatus = differenceChecker.compareFSFolderToSavedDocMap(currentFolder, existingSolrFolderDocs)
+            boolean shouldUpdate = differenceChecker.shouldUpdate(differenceStatus)
             if (shouldUpdate) {
 //                def savedFiles =
-                def children = currentFolder.buildChildrenList(ignoreFiles)
-                log.info "Update FSFolder:($currentFolder) -- Children count: ${children.size()} -- diffStatus: $diff"
-                log.info "call solr save..."
+                List<SavableObject> folderObjects = currentFolder.buildChildrenList(ignoreFiles)
+                log.info "Update FSFolder:($currentFolder) -- Objects count: ${folderObjects.size()} -- diffStatus: $differenceStatus"
+                folderObjects.add(currentFolder)
+                def response = solrSystemClient.saveObjects(folderObjects)
+                log.info "\t\tSave folder (${currentFolder.toString()}) results: $results"
             } else {
-                log.info "\t\tno updated needed "
+                if(currentFolder.depth <= statusDepth) {
+                    log.info "\t\tcurrent::$differenceStatus"
+                } else {
+                    log.debug "\t\tcurrent::$differenceStatus"
+                }
             }
         }
 
-        return resultsMap
+        return results
     }
 
 
@@ -332,8 +359,40 @@ class LocalFileSystemCrawler {
     }
 
 
+    /**
+     * get the 'folder' documents for a given crawler (i.e. location name and crawl name)
+     * @param crawler
+     * @param q
+     * @param fq
+     * @param fl
+     * @return
+     */
+    Map<String, SolrDocument> getSolrFolderDocs(String crawlName, String fq = "type_s:${FSFolder.TYPE}", String fl = this.checkFolderFields, int maxRowsReturned = SolrSystemClient.MAX_ROWS_RETURNED) {
+        SolrQuery sq = new SolrQuery('*:*')
+        sq.setRows(maxRowsReturned)
+        sq.setFilterQueries(fq)
+        // add filter queries to further limit
+        String filterLocation = SolrSystemClient.FLD_LOCATION_NAME + ':' + locationName
+        sq.addFilterQuery(filterLocation)
+        String filterCrawl = SolrSystemClient.FLD_CRAWL_NAME + ':' + crawlName
+        sq.addFilterQuery(filterCrawl)
+
+        sq.setFields(fl)
+
+        QueryResponse response = solrSystemClient.query(sq)
+        SolrDocumentList docs = response.results
+        if (docs.size() == maxRowsReturned) {
+            log.warn "getExistingFolders returned lots of rows (${docs.size()}) which equals our upper limit: ${maxRowsReturned}, this is almost certainly a problem.... ${sq}}"
+        } else {
+            log.debug "\t\tGet existing solr folder docs map, size: ${docs.size()} -- Filters: ${sq.getFilterQueries()}"
+        }
+        Map<String, SolrDocument> docsMap = docs.groupBy { it.getFirstValue('id') }
+        return docsMap
+    }
+
+
     @Override
-    public String toString() {
+    String toString() {
         return "LocalFileSystemCrawler{" + "crawlName='" + crawlName + '\'' + ", locationName='" + locationName + '\'' + '}';
     }
 

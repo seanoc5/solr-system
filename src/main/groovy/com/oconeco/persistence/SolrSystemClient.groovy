@@ -1,8 +1,7 @@
 package com.oconeco.persistence
 
-
 import com.oconeco.crawler.LocalFileSystemCrawler
-import com.oconeco.models.FSFolder
+import com.oconeco.models.SavableObject
 import org.apache.log4j.Logger
 import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.client.solrj.SolrRequest
@@ -12,8 +11,6 @@ import org.apache.solr.client.solrj.impl.Http2SolrClient
 import org.apache.solr.client.solrj.request.CollectionAdminRequest
 import org.apache.solr.client.solrj.response.QueryResponse
 import org.apache.solr.client.solrj.response.UpdateResponse
-import org.apache.solr.common.SolrDocument
-import org.apache.solr.common.SolrDocumentList
 import org.apache.solr.common.SolrInputDocument
 import org.apache.solr.common.util.NamedList
 import org.apache.tika.config.TikaConfig
@@ -21,7 +18,6 @@ import org.apache.tika.detect.Detector
 import org.apache.tika.parser.AutoDetectParser
 import org.apache.tika.parser.Parser
 import org.apache.tika.sax.BodyContentHandler
-
 /**
  * Looking at helper class to save solr_system (file crawl to start with content to solr
  */
@@ -44,7 +40,7 @@ class SolrSystemClient {
     public static String FLD_NAME_S = 'name_s'
     public static String FLD_NAME_T = 'name_txt_en'
     public static String FLD_CONTENT_BODY = 'content_txt_en'
-    public static String FLD_SIZE = "size_i"
+    public static String FLD_SIZE = "size_l"
     public static String FLD_DEDUP = 'dedup_s'
 
     public static String FLD_INDEX_DATETIME = "indexedTime_dt"        // pdate dynamic field
@@ -78,7 +74,7 @@ class SolrSystemClient {
     public static String FLD_IGNORED_FOLDERS_COUNT = 'ignoredFoldersCount_i'
     public static String FLD_IGNORED_FOLDERS = 'ignoredFolders_ss'
 
-    public static List<String> FIELDS_TO_CHECK = [
+    public static final List<String> DEFAULT_FIELDS_TO_CHECK = [
             FLD_ID,
             FLD_LAST_MODIFIED,
             FLD_SIZE,
@@ -185,7 +181,7 @@ class SolrSystemClient {
      *
      * todo -- add logic to handle "complex" clear paths -- sym links etc....
      */
-    UpdateResponse deleteDocuments(String deleteQuery, int commitWithinMS = 0, boolean checkBeforeAfter = true) {
+    UpdateResponse deleteDocuments(String deleteQuery, int commitWithinMS = 500, boolean checkBeforeAfter = true) {
         Long beforeCount
         if(checkBeforeAfter){
             beforeCount = getDocumentCount(deleteQuery)
@@ -193,6 +189,7 @@ class SolrSystemClient {
         }
         log.warn "Clearing collection: ${this.solrClient.baseURL} -- deleteQuery: $deleteQuery (commit within: $commitWithinMS)"
         UpdateResponse ursp = solrClient.deleteByQuery(deleteQuery, commitWithinMS)
+        UpdateResponse ursp2 = solrClient.commit(true, true)
         int status = ursp.getStatus()
         if (status == 0) {
             log.debug "\t\tSuccess clearing collection with query: $deleteQuery"
@@ -258,16 +255,31 @@ class SolrSystemClient {
         return resp
     }
 
+    def saveObjects(List<SavableObject> objects, int commitWithinMS = 1000) {
+        log.debug "Adding solrInputDocuments, size: ${objects.size()}"
+        UpdateResponse resp
+        List<SolrInputDocument> solrInputDocuments = objects.collect {it.toSolrInputDocument()}
+        try {
+            resp = solrClient.add(solrInputDocuments, commitWithinMS)
+        } catch (SolrServerException sse) {
+            log.error "Solr server exception: $sse"
+        }
+        return resp
+    }
+
 
     /**
      * convenience method to get a count of documents in index
      * @param queryToCount (defaults to all docs)
      * @return
      */
-    def long getDocumentCount(String queryToCount = '*:*') {
+    def long getDocumentCount(String queryToCount = '*:*', String filterQuery = null) {
         SolrQuery sq = new SolrQuery(queryToCount)
         sq.setFields('')
         sq.setRows(0)
+        if(filterQuery){
+            sq.addFilterQuery(filterQuery)
+        }
         QueryResponse resp = solrClient.query(sq)
         long docCount = resp.getResults().numFound
         return docCount
@@ -275,11 +287,13 @@ class SolrSystemClient {
 
 
     QueryResponse query(SolrQuery sq) {
+        // todo -- add retry if timeout
         QueryResponse resp = solrClient.query(sq)
         return resp
     }
 
     QueryResponse query(String query) {
+        // todo -- add retry if timeout
         SolrQuery sq = new SolrQuery(query)
         QueryResponse resp = this.query(sq)
         return resp
@@ -301,34 +315,4 @@ class SolrSystemClient {
     }
 
 
-    /**
-     * get the 'folder' documents for a given crawler (i.e. location name and crawl name)
-     * @param crawler
-     * @param q
-     * @param fq
-     * @param fl
-     * @return
-     */
-    Map<String, SolrDocument> getSolrFolderDocs(LocalFileSystemCrawler crawler, String q = '*:*', String fq = "type_s:${FSFolder.TYPE}", String fl = SolrSystemClient.FIELDS_TO_CHECK.join(' ')) {
-        SolrQuery sq = new SolrQuery('*:*')
-        sq.setRows(MAX_ROWS_RETURNED)
-        sq.setFilterQueries(fq)
-        // add filter queries to further limit
-        String filterLocation =SolrSystemClient.FLD_LOCATION_NAME + ':' + crawler.locationName
-        sq.addFilterQuery(filterLocation)
-        String filterCrawl =SolrSystemClient.FLD_CRAWL_NAME + ':' + crawler.crawlName
-        sq.addFilterQuery(filterCrawl)
-
-        sq.setFields(fl)
-
-        QueryResponse response = query(sq)
-        SolrDocumentList docs = response.results
-        if (docs.size() == MAX_ROWS_RETURNED) {
-            log.warn "getExistingFolders returned lots of rows (${docs.size()}) which equals our upper limit: ${MAX_ROWS_RETURNED}, this is almost certainly a problem.... ${sq}}"
-        } else {
-            log.debug "\t\tGet existing solr folder docs map, size: ${docs.size()} -- Filters: ${sq.getFilterQueries()}"
-        }
-        Map<String, SolrDocument> docsMap = docs.groupBy {it.getFirstValue('id')}
-        return docsMap
-    }
 }

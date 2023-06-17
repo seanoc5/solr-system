@@ -238,8 +238,10 @@ class FSFolder extends SavableObject {
      * it is expected that the constructors will flag ignorable objects appropriately
      * This is similar functionality to a crawler object building the children of the FSFolder, here partly for unit testing, partly to provide implementation flexibilty
      */
-    List<SavableObject> buildChildrenList(Pattern ignoreFilesPattern = Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE], Pattern ignoreFoldersPattern = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]) {
+    List<SavableObject> buildChildrenList(Pattern ignoreFilesPattern = Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE],
+                                          Pattern ignoreFoldersPattern = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]) {
         File folder = (File) thing
+        SavableObject object
         if (children) {
             log.warn "Children property already initialized!!!  reseting children to empty list: $this"
             children = []
@@ -256,22 +258,24 @@ class FSFolder extends SavableObject {
                         if (file.canRead()) {
                             cnt++
                             if (file.isDirectory()) {
-                                FSFolder fsFolder = new FSFolder(file, this, locationName, crawlName)
-                                if (fsFolder.name ==~ ignoreFoldersPattern) {
-                                    log.info "\t\t$cnt) ----- IGNORE FOLDER ----- ${this} has ignorable subsolder: $fsFolder"
-                                    fsFolder.ignore = true
+                                 object = new FSFolder(file, this, locationName, crawlName)
+                                if (object.name ==~ ignoreFoldersPattern) {
+                                    log.info "\t\t$cnt) ----- mark 'ignore' CHILD folder ----- ${this} has ignorable subsolder: $object"
+                                    object.ignore = true
+                                } else {
+                                    log.debug "\t\t--NOT IGNORED FOLDER: $object"
                                 }
-                                children << fsFolder
+                                children << object
 
                             } else {
-                                FSFile fsFile = new FSFile(file, this, locationName, crawlName)
+                                object = new FSFile(file, this, locationName, crawlName)
                                 if (file.name ==~ ignoreFilesPattern) {
-                                    fsFile.ignore = true
-                                    children << fsFile
+                                    object.ignore = true
+                                    children << object
                                     log.info "\t\t[file:$cnt] ----- Ignoring ----- file: $file"
                                 } else {
                                     log.debug "\t\t$cnt) adding file: $file"
-                                    children << fsFile
+                                    children << object
                                 }
                             }
                         } else {
@@ -280,13 +284,16 @@ class FSFolder extends SavableObject {
                     } else {
                         log.warn "file: $file -- does not exist???"
                     }
-                }
+                }           // end for eachfile
 
             } else {
                 log.warn "\t\tCannot read folder: ${folder.absolutePath}"
             }
         } else {
             log.warn "\t\tFolder (${folder.absolutePath}) does not exist!!"
+        }
+        if(!object || object.id ==null){
+            log.warn "Saved object: $object has no id"
         }
         return children
     }

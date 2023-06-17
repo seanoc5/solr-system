@@ -31,8 +31,8 @@ class SolrCrawlArgParser {
         cli.with {
             h longOpt: 'help', 'Show usage information'
             c longOpt: 'config', required: true, args: 1, argName: 'ConfigFile', 'optional configuration file to be parsed/slurped with configSlurper'
-            f longOpt: 'folders', required: false, 'Parent folder(s) to crawl' , args: '+', valueSeparator: ','
-            l longOpt: 'locationName', args:1, required: false, 'Name of source location to be added to all solr input docs (files and folders), i.e. hostname, profile name, imap account,...'
+            f longOpt: 'folders', required: false, 'Parent folder(s) to crawl', args: '+', valueSeparator: ','
+            l longOpt: 'locationName', args: 1, required: false, 'Name of source location to be added to all solr input docs (files and folders), i.e. hostname, profile name, imap account,...'
             s longOpt: 'solrUrl', args: 1, required: false, 'Solr url with protocol, host, and port (if any)'
             w longOpt: 'wipeContent', required: false, 'Clear data from previous crawl (beware--easy to really bork things with this..)'
         }
@@ -57,6 +57,8 @@ class SolrCrawlArgParser {
             config = new ConfigSlurper().parse(cfgUrl)
         } else {
             log.warn "\t\tcould not find config file: ${cfgFile.absolutePath}"
+            cli.usage()
+            System.exit(0)
 //            URL cfgUrl = cl.getResource(configLocation)
         }
 
@@ -64,7 +66,7 @@ class SolrCrawlArgParser {
         if (options.solrUrl) {
             log.info "\t\tUsing Solr url from Command line (overriding config file): ${options.solrUrl}"
             config.solrUrl = options.solrUrl
-        } else if(config?.solrUrl){
+        } else if (config?.solrUrl) {
             log.info "\t\tUsing Solr url from CONFIG file): ${config.solrUrl}"
         } else {
             log.info "\t\tNo solr url given in command line args NOR config file, this should not be possible, exiting..."
@@ -72,19 +74,19 @@ class SolrCrawlArgParser {
         }
 
         def localFolders = config?.dataSources.localFolders
-        if(options.folderss){
+        if (options.folderss) {
             List<String> ds = options.folderss
             int cnt = ds.size()
-            Map dsMap = ds.collectEntries{it.split(':')}
+            Map dsMap = ds.collectEntries { it.split(':') }
             log.info "\t\tReplace config folders ($localFolders) with folders from command line args: ($dsMap) "
             config?.dataSources.localFolders = dsMap
         }
 
         def wipe = options.wipeContent
-        if(wipe){
+        if (wipe) {
             log.warn "Found flag `wipeContent` which will send deletes for each datasource"
             config?.wipeContent = true
-        } else if(config.wipeContent){
+        } else if (config.wipeContent) {
             log.warn "Found config file setting `wipeContent` with value (${config.wipeContent}) which might send deletes for each datasource"
         }
 
