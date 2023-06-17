@@ -1,5 +1,6 @@
 package misc
 
+import com.oconeco.crawler.DifferenceChecker
 import com.oconeco.crawler.LocalFileSystemCrawler
 import com.oconeco.helpers.SolrCrawlArgParser
 import com.oconeco.models.FSFolder
@@ -25,6 +26,8 @@ log.info "config.ignoreArchivesPattern == " + config.ignoreArchivesPattern + " -
 SolrSystemClient solrClient = new SolrSystemClient(solrUrl)
 log.info "\t\tSolr Saver created: $solrClient"
 
+long numFoundPreLocation = solrClient.getDocumentCount()
+
 //FolderAnalyzer folderAnalyzer = new FolderAnalyzer(config)
 //FileAnalyzer fileAnalyzer = new FileAnalyzer(config)
 
@@ -32,12 +35,12 @@ long start = System.currentTimeMillis()
 
 crawlMap.each { String crawlName, String startPath ->
     log.info "Crawl name: $crawlName -- start path: $startPath -- location: $locationName "
-//    DifferenceChecker differenceChecker = new DifferenceChecker()
-    LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName, solrClient)
-    long numFound = crawler.getSolrDocCount(crawlName)
-    log.debug "\t\tSolr Doc Count before crawl($crawlName): $numFound"
 
+    LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName, solrClient, new DifferenceChecker())
+    long numFoundPreCrawl = crawler.getSolrDocCount(crawlName)
+    log.debug "\t\tSolr Doc Count before crawl($crawlName): $numFoundPreCrawl"
 
+    // clear specific crawl if arg/config indicates
     if(config.wipeContent==true) {
         log.warn "\t\tConfig/args indicates we whould wipe content for crawl: $crawler"
         Map<String, Object> deleteResults = solrClient.deleteCrawledDocuments(crawler)
@@ -50,13 +53,14 @@ crawlMap.each { String crawlName, String startPath ->
     log.info "\t\tCrawled Folders: ${crawlFolders.size()}"
 }
 
-solrClient.commitUpdates(true, true)
 long end = System.currentTimeMillis()
 long elapsed = end - start
 log.info "${this.class.name} Elapsed time: ${elapsed}ms (${elapsed / 1000} sec)"
 
+log.info "Force commit updates to get proper count a"
+solrClient.commitUpdates(true, true)
 
-long numFound2 = resp.results.getNumFound()
-log.info "Before crawl ($numFound) -- After crawl NumFound: $numFound2 -- difference:${numFound2-numFound}"
+long numFoundPostLocation = solrClient.getDocumentCount()
+log.info "Before crawl ($numFoundPreLocation) -- After crawl NumFound ($numFoundPostLocation) -- difference:${numFoundPostLocation-numFoundPreLocation}"
 
 solrClient.closeClient(this.class.name)

@@ -32,8 +32,8 @@ class FSFolder extends SavableObject {
 
 
     FSFolder(File srcFolder, SavableObject parent, String locationName, String crawlName = Constants.LBL_UNKNOWN) {
-        this(srcFolder, locationName, crawlName )
-        this.depth = parent ? parent.depth+1 : 1
+        this(srcFolder, locationName, crawlName)
+        this.depth = parent ? parent.depth + 1 : 1
         this.parent = parent
         this.parentId = parent.id
     }
@@ -48,27 +48,22 @@ class FSFolder extends SavableObject {
         super(srcFolder, locationName, crawlName, depth)
         osName = System.getProperty("os.name")      // todo - time this call, is it significant overhead?
         if (srcFolder.isHidden()) {
-            log.info "\t\t~~~~processing hidden folder: $srcFolder"
+            log.debug "\t\t~~~~processing hidden folder: $srcFolder"
             hidden = true
         }
-        if (srcFolder.exists() && srcFolder.canRead() && srcFolder.canExecute()) {
+        if (srcFolder.exists()) {
             type = TYPE
             name = srcFolder.getName()
             size = srcFolder.size()
             path = srcFolder.absolutePath
+            dedup = buildDedupString()
 
             // todo -- revisit replacing backslashes with forward slashes--just cosmetics? avoid double-backslashes in path fields for windows machines
             id = SavableObject.buildId(locationName, path.replaceAll('\\\\', '/'))
-            if(srcFolder?.parentFile) {
+            if (srcFolder.parentFile) {
                 // todo -- check if such a parent is (or will be) saved? currently just saving the id of a parent without caring if it does or will exist in solr
                 parentId = SavableObject.buildId(locationName, srcFolder.parent.replaceAll('\\\\', '/'))
             }
-
-            dedup = buildDedupString()
-
-            // todo -- revisit to cost of getting the dir size, for a large dir it is many seconds (a minute or two??)
-            size = FileUtils.sizeOfDirectory(srcFolder)
-
             Path nioPath = srcFolder.toPath()
             BasicFileAttributes attr = Files.readAttributes(nioPath, BasicFileAttributes.class);
             FileTime lastAccessTime = attr.lastAccessTime()
@@ -79,6 +74,12 @@ class FSFolder extends SavableObject {
             FileOwnerAttributeView ownerAttributeView = Files.getFileAttributeView(nioPath, FileOwnerAttributeView.class);
             owner = ownerAttributeView.getOwner();
 
+            if (srcFolder.canExecute() && srcFolder.canRead()) {
+                // todo -- revisit to cost of getting the dir size, for a large dir it is many seconds (a minute or two??)
+                size = FileUtils.sizeOfDirectory(srcFolder)
+            } else {
+                log.info "Cannot execute/read folder: $srcFolder"
+            }
 
         } else {
             log.warn "Src folder ($srcFolder) is not accessible??"
@@ -258,9 +259,9 @@ class FSFolder extends SavableObject {
                         if (file.canRead()) {
                             cnt++
                             if (file.isDirectory()) {
-                                 object = new FSFolder(file, this, locationName, crawlName)
+                                object = new FSFolder(file, this, locationName, crawlName)
                                 if (object.name ==~ ignoreFoldersPattern) {
-                                    log.info "\t\t$cnt) ----- mark 'ignore' CHILD folder ----- ${this} has ignorable subsolder: $object"
+                                    log.debug "\t\t$cnt) ----- mark 'ignore' CHILD folder ----- ${this} has ignorable subsolder: $object"
                                     object.ignore = true
                                 } else {
                                     log.debug "\t\t--NOT IGNORED FOLDER: $object"
@@ -292,22 +293,22 @@ class FSFolder extends SavableObject {
         } else {
             log.warn "\t\tFolder (${folder.absolutePath}) does not exist!!"
         }
-        if(!object || object.id ==null){
+        if (!object || object.id == null) {
             log.warn "Saved object: $object has no id"
         }
         return children
     }
 
-    List<FSFile> gatherArchiveFiles(def ignoreArchives){
+    List<FSFile> gatherArchiveFiles(def ignoreArchives) {
         List<FSFile> archFiles = []
-        if(this.children == null){
+        if (this.children == null) {
             log.warn "Children of FSFolder ($this) is null, not initialized!!?!"
         } else {
             archFiles = children.findAll {
                 boolean gather = false
-                if(it.type==FSFile.TYPE && ((FSFile)it).isArchive() ){
-                    if(ignoreArchives){
-                         def matches = it.name ==~ ignoreArchives      // we have an ignore pattern, check to see if we should ignore
+                if (it.type == FSFile.TYPE && ((FSFile) it).isArchive()) {
+                    if (ignoreArchives) {
+                        def matches = it.name ==~ ignoreArchives      // we have an ignore pattern, check to see if we should ignore
                         gather = !matches
                     } else {
                         // no ignoreArchives pattern, so default true

@@ -30,7 +30,7 @@ class DifferenceStatus {
             noMatchingSavedDoc = false
         } else {
             String msg = "no existing solr doc to compare to, assuming new Savable object"
-            log.info "\t\t $msg: $object"
+            log.debug "\t\t $msg: $object"
             messages << msg
             noMatchingSavedDoc = true
         }

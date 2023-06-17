@@ -142,15 +142,15 @@ class LocalFileSystemCrawler {
             if (accessible) {
                 if (it.name ==~ ignoreFolders) {
                     currentFolder.ignore = true
-                    log.info "\t\t----Ignorable folder, AND does not need updating: $currentFolder"
+                    log.debug "\t\t----Ignorable folder, AND does not need updating: $currentFolder"
                     fvr = FileVisitResult.SKIP_SUBTREE
                 } else {
                     log.debug "\t\t----Not ignorable folder: $currentFolder"
                     fvr = FileVisitResult.CONTINUE
                 }
             } else {
-                log.warn "Folder: $currentFolder is not accessible, skip subtree: $f"
                 fvr = FileVisitResult.SKIP_SUBTREE
+                log.warn "Folder: $currentFolder is not accessible, skip subtree: $f"
             }
             return fvr
         }
@@ -175,13 +175,13 @@ class LocalFileSystemCrawler {
             if (shouldUpdate) {
 //                def savedFiles =
                 List<SavableObject> folderObjects = currentFolder.buildChildrenList(ignoreFiles)
-                log.info "Update FSFolder:($currentFolder) -- Objects count: ${folderObjects.size()} -- diffStatus: $differenceStatus"
+                log.debug "Update FSFolder:($currentFolder) -- Objects count: ${folderObjects.size()} -- diffStatus: $differenceStatus"
                 folderObjects.add(currentFolder)
                 def response = solrSystemClient.saveObjects(folderObjects)
-                log.info "\t\tSave folder (${currentFolder.toString()}) results: $results"
+                log.debug "\t\tSave folder (${currentFolder.toString()}) results: $results"
             } else {
                 if(currentFolder.depth <= statusDepth) {
-                    log.info "\t\tcurrent::$differenceStatus"
+                    log.info "\t\tcurrent:$differenceStatus ($currentFolder)"
                 } else {
                     log.debug "\t\tcurrent::$differenceStatus"
                 }
@@ -248,7 +248,7 @@ class LocalFileSystemCrawler {
         if (accessible) {
             if (it.name ==~ ignorePattern) {
                 fsFolder.ignore = true
-                log.info "\t\t----Ignorable folder, AND does not need updating: $fsFolder"
+                log.debug "\t\t----Ignorable folder, AND does not need updating: $fsFolder"
                 // todo -- add should update status for ignored folders??
                 return FileVisitResult.SKIP_SUBTREE
 

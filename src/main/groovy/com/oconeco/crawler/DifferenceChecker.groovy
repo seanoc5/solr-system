@@ -50,7 +50,7 @@ class DifferenceChecker {
             similarities << msg
         } else if (!existingSolrDoc) {
             String msg = "existingSolrDoc is null"
-            log.warn "$msg: folder:$fsfolder"
+            log.debug "$msg: folder:$fsfolder"
             status.noMatchingSavedDoc = true
         } else {
             String fsId = fsfolder.id
