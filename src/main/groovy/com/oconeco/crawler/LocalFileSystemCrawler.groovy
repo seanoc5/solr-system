@@ -107,7 +107,7 @@ class LocalFileSystemCrawler {
         }
         QueryResponse response = solrSystemClient.query(solrQuery)
         long numFound = response.results.getNumFound()
-        log.info "\t\tLocalFSCrawler getSolrDocCount: $numFound -- $this"
+        log.debug "\t\tLocalFSCrawler getSolrDocCount: $numFound -- $this"
         return numFound
     }
 
@@ -170,7 +170,7 @@ class LocalFileSystemCrawler {
         startFolder.traverse(options) { File folder ->
             cnt++
             if(cnt % cntStatusFrequency==0){
-                log.info "\t....$cnt) traverse folder $folder"     // should there be action here?
+                log.info "\t\t\t$cnt) traverse folder $folder"     // should there be action here?
             } else {
                 log.debug "\t\t$cnt) traverse folder $folder"     // should there be action here?
             }
