@@ -22,10 +22,10 @@ class DifferenceChecker {
             SolrDocument solrDocument = existingSolrDocMap.get(fsId)
             if (solrDocument) {
                 log.debug "\t\tFound existing solr doc to compare, id:'${solrDocument.id}'"
+                differenceStatus = compareFSFolderToSavedDoc(fsfolder, solrDocument)
             } else {
-                log.debug "\t\tNo existing solr doc to compare, id:'${fsId}'"
+                log.info "\t\tNo existing solr doc to compare, id:'${fsId}'"
             }
-            differenceStatus = compareFSFolderToSavedDoc(fsfolder, solrDocument)
 
         } else {
             differenceStatus = new DifferenceStatus(fsfolder, null)
@@ -152,55 +152,60 @@ class DifferenceChecker {
     boolean shouldUpdate(DifferenceStatus status) {
         boolean should = false
         String msg
-        if (status.noMatchingSavedDoc) {
-            should = true
-            msg = "no matching saved/solr doc, flagging for update"
-            log.debug "\t\t--$msg"
-        }
-        if (status.differentIds) {
-            // todo -- check logic and assumptions
-            msg = "different ids, flagging for update"
-            should = true
-            log.debug "\t--$msg: $status"
+        if(status) {
+            if (status.noMatchingSavedDoc) {
+                should = true
+                msg = "no matching saved/solr doc, flagging for update"
+                log.debug "\t\t--$msg"
+            } else {
+                if (status.differentIds) {
+                    // todo -- check logic and assumptions
+                    msg = "different ids, flagging for update"
+                    should = true
+                    log.debug "\t--$msg: $status"
 
-        } else if (status.differentDedups) {
-            should = true
-            msg = "different dedups, flagging for update"
-            log.debug "\t\t--$msg: $status"
+                } else if (status.differentDedups) {
+                    should = true
+                    msg = "different dedups, flagging for update"
+                    log.debug "\t\t--$msg: $status"
 
-        } else if (status.differentSizes) {
-            should = true
-            msg = "different sizes, flagging for update"
-            log.debug "\t\t----$msg: $status"
+                } else if (status.differentSizes) {
+                    should = true
+                    msg = "different sizes, flagging for update"
+                    log.debug "\t\t----$msg: $status"
 
-        } else if (status.differentPaths) {
-            should = true
-            msg = "different paths, flagging for update"
-            log.info "\t\t--: $status"
-        } else if (status.differentLastModifieds) {
-            // todo -- check logic and assumptions
-            should = true
-            msg = "different lastModifiedDate, FLAGGING for update"
-            log.info "\t\t--$msg: $status"
-        } else if (status.differentSizes) {
-            should = true
-            msg = "different sizes, flagging for update"
-            log.debug "\t----$msg: $status"
+                } else if (status.differentPaths) {
+                    should = true
+                    msg = "different paths, flagging for update"
+                    log.info "\t\t--: $status"
+                } else if (status.differentLastModifieds) {
+                    // todo -- check logic and assumptions
+                    should = true
+                    msg = "different lastModifiedDate, FLAGGING for update"
+                    log.info "\t\t--$msg: $status"
+                } else if (status.differentSizes) {
+                    should = true
+                    msg = "different sizes, flagging for update"
+                    log.debug "\t----$msg: $status"
 
-        } else if (status.differentLocations) {
-            // todo -- check logic and assumptions
-            should = false
-            msg = "different locations, BUT NOT CONSIDERED WORTHY of reindexing, NOT flagging for update"
-            log.info "\t----$msg: $status"
+                } else if (status.differentLocations) {
+                    // todo -- check logic and assumptions
+                    should = false
+                    msg = "different locations, BUT NOT CONSIDERED WORTHY of reindexing, NOT flagging for update"
+                    log.info "\t----$msg: $status"
 
+                } else {
+                    msg = "no differences found, flagging as NO update"
+                }
+            }
+            if (msg) {
+                status.messages << msg
+            } else {
+                log.info "\t\t....No message for status: $status???"
+            }
         } else {
-            msg = "no differences found, flagging as NO update"
-        }
-
-        if (msg) {
-            status.messages << msg
-        } else {
-            log.info "\t\t....No message for status: $status???"
+            log.warn "No valid DifferenceStatus, coding bug??!?!"
+            should = true
         }
         return should
     }

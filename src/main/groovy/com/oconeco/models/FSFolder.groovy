@@ -293,7 +293,9 @@ class FSFolder extends SavableObject {
         } else {
             log.warn "\t\tFolder (${folder.absolutePath}) does not exist!!"
         }
-        if (!object || object.id == null) {
+        if (!object){
+            log.warn "Saved object: $object is missing/null"
+        } else if (object.id == null) {
             log.warn "Saved object: $object has no id"
         }
         return children

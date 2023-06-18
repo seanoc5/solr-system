@@ -53,7 +53,7 @@ class FSFile extends SavableObject {
         type = TYPE
         hidden = f.isHidden()
         if (hidden)
-            log.info "\t\tprocessing hidden file: $f"
+            log.info "\t\t~~~~processing hidden file: $f"
 
         if (!this.thing) {
             this.thing = f

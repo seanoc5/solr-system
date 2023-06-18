@@ -30,20 +30,19 @@ class LocalFileSystemCrawler {
     String crawlName        // todo -- remove this from class, leave as arg in methods where appropriate
     String locationName
     String osName
-    int statusDepth = 3
+//    int statusDepth = 3
     DifferenceChecker differenceChecker
     SolrSystemClient solrSystemClient
     String checkFolderFields = SolrSystemClient.DEFAULT_FIELDS_TO_CHECK.join(' ')
     String checkFileFields = SolrSystemClient.DEFAULT_FIELDS_TO_CHECK.join(' ')
 
 
-    LocalFileSystemCrawler(String locationName, String crawlName, SolrSystemClient solrSystemClient, DifferenceChecker diffChecker = new DifferenceChecker(), int statusDepth = 3) {
-        log.debug "${this.class.simpleName} constructor with location:$locationName, name: $crawlName,  statusDepth:$statusDepth..."
+    LocalFileSystemCrawler(String locationName, String crawlName, SolrSystemClient solrSystemClient, DifferenceChecker diffChecker = new DifferenceChecker()) {
+        log.debug "${this.class.simpleName} constructor with location:$locationName, name: $crawlName"
         this.crawlName = crawlName
         this.locationName = locationName
         osName = System.getProperty("os.name")
         // moved this from config file to here in case we start supporting remote filesystems...? (or WSL...?)
-        this.statusDepth = statusDepth
         this.differenceChecker = diffChecker
         this.solrSystemClient = solrSystemClient
     }
@@ -108,7 +107,7 @@ class LocalFileSystemCrawler {
         }
         QueryResponse response = solrSystemClient.query(solrQuery)
         long numFound = response.results.getNumFound()
-        log.info "\t\t LocalFSCrawler getSolrDocCount: $numFound -- $this"
+        log.info "\t\tLocalFSCrawler getSolrDocCount: $numFound -- $this"
         return numFound
     }
 
@@ -121,8 +120,8 @@ class LocalFileSystemCrawler {
      * @param existingSolrFolderDocs - collection of pre-existing solr docs, for comparison of 'freshness' (need update?)
      * @return map of status counts
      */
-   List<FSFolder> crawlFolders(String crawlName, File startFolder, Pattern ignoreFolders, Pattern ignoreFiles) {
-        def results = []
+   Map<String, List<FSFolder>> crawlFolders(String crawlName, File startFolder, Pattern ignoreFolders, Pattern ignoreFiles) {
+       Map<String, List<FSFolder>> results = [:].withDefault {[]}
         Map<String, SolrDocument> existingSolrFolderDocs = getSolrFolderDocs(crawlName)
 
         log.debug "Starting crawl of folder: ($startFolder)  ..."
@@ -137,7 +136,7 @@ class LocalFileSystemCrawler {
 
             int depth = getRelativeDepth(startPath, f)
             currentFolder = new FSFolder(f, this.locationName, this.crawlName, depth)
-            results << currentFolder
+//            results << currentFolder
 
             if (accessible) {
                 if (it.name ==~ ignoreFolders) {
@@ -166,10 +165,15 @@ class LocalFileSystemCrawler {
                 visitRoot: true,
         ]
 
+       long cnt = 0
+       int cntStatusFrequency = 20 // show log message every cntStatusFrequency folders
         startFolder.traverse(options) { File folder ->
-            log.debug "\t\ttraverse folder $folder"     // should there be action here?
-//            boolean shouldUpdate = checkShouldUpdate(existingSolrFolderDocs, currentFolder)
-
+            cnt++
+            if(cnt % cntStatusFrequency==0){
+                log.info "\t....$cnt) traverse folder $folder"     // should there be action here?
+            } else {
+                log.debug "\t\t$cnt) traverse folder $folder"     // should there be action here?
+            }
             DifferenceStatus differenceStatus = differenceChecker.compareFSFolderToSavedDocMap(currentFolder, existingSolrFolderDocs)
             boolean shouldUpdate = differenceChecker.shouldUpdate(differenceStatus)
             if (shouldUpdate) {
@@ -178,13 +182,11 @@ class LocalFileSystemCrawler {
                 log.debug "Update FSFolder:($currentFolder) -- Objects count: ${folderObjects.size()} -- diffStatus: $differenceStatus"
                 folderObjects.add(currentFolder)
                 def response = solrSystemClient.saveObjects(folderObjects)
-                log.debug "\t\tSave folder (${currentFolder.toString()}) results: $results"
+                log.info "\t\t++++Save folder (${currentFolder.toString()}) response: $response -- diffStatus:$differenceStatus"
+                results.updated << currentFolder
             } else {
-                if(currentFolder.depth <= statusDepth) {
-                    log.info "\t\tcurrent:$differenceStatus ($currentFolder)"
-                } else {
-                    log.debug "\t\tcurrent::$differenceStatus"
-                }
+                results.skipped << currentFolder
+                log.debug "\t\tno need to update: $differenceStatus"
             }
         }
 

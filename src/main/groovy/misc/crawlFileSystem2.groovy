@@ -49,8 +49,8 @@ crawlMap.each { String crawlName, String startPath ->
 
     log.debug "\t\tcrawl map item with label:'$crawlName' --- and --- startpath:'$startPath'..."
     File startFolder = new File(startPath)
-    List<FSFolder> crawlFolders = crawler.crawlFolders(crawlName, startFolder, folderIgnorePattern, fileIgnorePattern)
-    log.info "\t\tCrawled Folders: ${crawlFolders.size()}"
+    Map<String, List<FSFolder>> crawlFolders = crawler.crawlFolders(crawlName, startFolder, folderIgnorePattern, fileIgnorePattern)
+    log.info "\t\tCrawled Folders, updated:${crawlFolders?.updated?.size()} -- skipped: ${crawlFolders?.skipped?.size()}"
 }
 
 long end = System.currentTimeMillis()
