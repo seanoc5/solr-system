@@ -28,7 +28,7 @@ class LocalFileSystemCrawlerTest extends Specification {
     def mockSolrClient = null
     SolrDocumentList existingSolrFolderDocsBlank = []
     File startFile = new File(getClass().getResource('/content').toURI())
-    FSFolder startFSFolder = new FSFolder(startFile, locationName,crawlName,0)
+    FSFolder startFSFolder = new FSFolder(startFile, locationName, crawlName, ignoreFolders, ignoreFiles, 0)
     Map<String, SolrDocument> existingSolrFolderDocsMocked = mockSolrFolderDocs([startFSFolder])
     DifferenceChecker differenceChecker = new DifferenceChecker()
 

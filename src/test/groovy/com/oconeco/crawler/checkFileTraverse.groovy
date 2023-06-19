@@ -33,7 +33,7 @@ def postDirVisitor = {
     log.info "$count) ---- POST dir : $it"
     lastFolder = currentFolder
     int depth = getRelativeDepth(startPath, it)
-    FSFolder fsFolder = new FSFolder(it, locationName, crawlName, depth)
+    FSFolder fsFolder = new FSFolder(it, locationName, crawlName, ignoreFolders, ignoreFiles, depth)
     def details = fsFolder.addFolderDetails()
     def children = fsFolder.buildChildrenList(ignorePattern)
     log.info "Folder ($fsFolder) -- Children count: ${children.size()} -- Details($details)"

@@ -57,6 +57,7 @@ class LocalFileSystemCrawler {
      * @param existingSolrFolderDocs
      * @return
      */
+/*
     List<FSFolder> buildCrawlFolders(String crawlName, def source, Pattern ignorePattern, Map<String, SolrDocument> existingSolrFolderDocs) {
         log.debug "\t\t....buildCrawlFolders ($crawlName) with source path:($source) and name ignore pattern: $ignorePattern -- existing folder doc count: ${existingSolrFolderDocs?.size()} (for checking if solr is in sync/updated)"
 
@@ -67,6 +68,7 @@ class LocalFileSystemCrawler {
         List<FSFolder> results = visitFolders(crawlName, startFolder, ignorePattern, existingSolrFolderDocs)
         return results
     }
+*/
 
 
     /**
@@ -130,12 +132,12 @@ class LocalFileSystemCrawler {
 
         def doPreDir = {
             File f = it
-            log.debug "\t\t====PRE dir:  $it"
+            log.info "\t\t====PRE dir:  $it"
             FileVisitResult fvr = FileVisitResult.CONTINUE
             boolean accessible = f.exists() && f.canRead() && f.canExecute()
 
             int depth = getRelativeDepth(startPath, f)
-            currentFolder = new FSFolder(f, this.locationName, this.crawlName, depth)
+            currentFolder = new FSFolder(f, this.locationName, this.crawlName, ignoreFolders, ignoreFiles, depth)
 //            results << currentFolder
 
             if (accessible) {
@@ -154,7 +156,7 @@ class LocalFileSystemCrawler {
             return fvr
         }
 
-        def doPostDir = {log.debug "\t\tPost dir: $it" }
+        def doPostDir = {log.info "\t\tPost dir: $it" }
 
         Map options = [
                 type     : FileType.DIRECTORIES,
@@ -204,6 +206,7 @@ class LocalFileSystemCrawler {
  * and even check for updates to skip folders with no apparent changes
  * @deprecated - consider just using crawlFolders(....)
  */
+/*
     List<FSFolder> visitFolders(String crawlName, File startFolder, Pattern ignorePattern, Map<String, SolrDocument> existingSolrFolderDocs) {
         HashMap<String, FSFolder> foldersMap = [:]
 
@@ -218,12 +221,14 @@ class LocalFileSystemCrawler {
                        preDir   : {
                            return doPreDirectory(startPath, crawlName, ignorePattern, existingSolrFolderDocs, foldersMap)
                        },
+*/
 /*
                        postDir  : {
                            println("Post dir: $it")
                            totalSize = 0
                        },
-*/
+*//*
+
                        preRoot  : true,
                        postRoot : true,
                        visitRoot: true,
@@ -237,15 +242,17 @@ class LocalFileSystemCrawler {
 
         return foldersMap?.values()?.toList()
     }
+*/
 
 
 // todo -- remove or refactor,... this is a bad approach...?
+/*
     def doPreDirectory = { Path startPath, String crawlName, Pattern ignorePattern, Map<String, SolrDocument> existingSolrFolderDocs, LinkedHashMap<String, FSFolder> foldersMap ->
         File f = (File) it
         boolean accessible = f.exists() && f.canRead() && f.canExecute()
 
         int depth = getRelativeDepth(startPath, f)
-        FSFolder fsFolder = new FSFolder(f, this.locationName, this.crawlName, depth)
+        FSFolder fsFolder = new FSFolder(f, this.locationName, this.crawlName, ignoreFolders, ignoreFiles, depth)
 
         if (accessible) {
             if (it.name ==~ ignorePattern) {
@@ -276,6 +283,7 @@ class LocalFileSystemCrawler {
             return FileVisitResult.SKIP_SUBTREE
         }
     }
+*/
 
 
 /**

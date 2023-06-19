@@ -20,7 +20,7 @@ class FolderAnalyzerTest extends Specification {
 
     def "basic folder type analysis"() {
         when:
-        FSFolder fsFolder = new FSFolder(folder, locationName, crawlName, 1)
+        FSFolder fsFolder = new FSFolder(folder, locationName, crawlName, ignoreFolders, ignoreFiles, 1)
         List<String> labels = analyzer.analyze(fsFolder)
 
         then:

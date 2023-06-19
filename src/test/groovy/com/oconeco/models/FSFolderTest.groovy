@@ -13,11 +13,13 @@ class FSFolderTest extends Specification {
     String crawlName = 'test'
 //    def startFolder = Path.of(getClass().getResource('/content').toURI());
     File startFolder = new File(getClass().getResource('/content').toURI())
-    FSFolder parentFolder = new FSFolder(startFolder, locationName, crawlName, 1)
+    Pattern ignoreFolders = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]
+    Pattern ignoreFiles = Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE]
+    FSFolder parentFolder = new FSFolder(startFolder, locationName, crawlName, ignoreFolders, ignoreFiles, 0)
 
     def "should build basic FSFolder"() {
         when:
-        FSFolder fsFolder = new FSFolder(startFolder, locationName, crawlName, 1)
+        FSFolder fsFolder = new FSFolder(startFolder, locationName, crawlName, ignoreFolders, ignoreFiles, 1)
         fsFolder.addFolderDetails()
 
         then:
@@ -33,7 +35,7 @@ class FSFolderTest extends Specification {
 
     def "items should have date and size as well as unique path:size combo"() {
         given:
-        FSFolder fsFolder = new FSFolder(startFolder, locationName, crawlName, 1)
+        FSFolder fsFolder = new FSFolder(startFolder, locationName, crawlName, ignoreFolders, ignoreFiles, 1)
 
         when:
         Map<String, Object> details = fsFolder.addFolderDetails()
@@ -54,7 +56,7 @@ class FSFolderTest extends Specification {
 
     def "basic folder load with ignore check toSolrInputDocument"() {
         given:
-        FSFolder fsFolder = new FSFolder(startFolder, locationName, crawlName, 1)
+        FSFolder fsFolder = new FSFolder(startFolder, locationName, crawlName, ignoreFolders, ignoreFiles, 1)
         Map<String, Object> details = fsFolder.addFolderDetails()
 
         when:
@@ -72,7 +74,7 @@ class FSFolderTest extends Specification {
 
     def "folder and files with ignore check toSolrInputDocument"() {
         given:
-        FSFolder fsFolder = new FSFolder(startFolder, locationName, crawlName, 1)
+        FSFolder fsFolder = new FSFolder(startFolder, locationName, crawlName, ignoreFolders, ignoreFiles, 1)
         fsFolder.addFolderDetails()
         fsFolder.buildChildrenList(Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE])
 
@@ -136,7 +138,7 @@ class FSFolderTest extends Specification {
         Pattern ignoreFiles = Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE]
 
         when:
-        FSFolder fsFolder = new FSFolder(startFolder, locationName, crawlName, 1)
+        FSFolder fsFolder = new FSFolder(startFolder, locationName, crawlName, ignoreFolders, ignoreFiles, 1)
         def details = fsFolder.addFolderDetails()
         List<SavableObject> children = fsFolder.buildChildrenList(ignoreFiles)
         List<SolrInputDocument> solrDocs = fsFolder.toSolrInputDocumentList()
@@ -157,7 +159,7 @@ class FSFolderTest extends Specification {
 //        File src = new File(getClass().getResource('/content').toURI())
         ConfigObject config = new ConfigSlurper().parse(getClass().getResource('/configLocate.groovy'))
         FolderAnalyzer analyzer = new FolderAnalyzer(config)
-        FSFolder startFolder = new FSFolder(startFolder, locationName, crawlName, 1)
+        FSFolder startFolder = new FSFolder(startFolder, locationName, crawlName, ignoreFolders, ignoreFiles, 1)
 
         when:
         def results = analyzer.analyze(startFolder)

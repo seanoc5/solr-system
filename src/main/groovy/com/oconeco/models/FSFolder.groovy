@@ -31,8 +31,8 @@ class FSFolder extends SavableObject {
     Logger log = Logger.getLogger(this.class.name);
 
 
-    FSFolder(File srcFolder, SavableObject parent, String locationName, String crawlName = Constants.LBL_UNKNOWN) {
-        this(srcFolder, locationName, crawlName)
+    FSFolder(File srcFolder, SavableObject parent, String locationName, String crawlName, Pattern ignoreFolders, Pattern ignoreFiles) {
+        this(srcFolder, locationName, crawlName, ignoreFolders, ignoreFiles)
         this.depth = parent ? parent.depth + 1 : 1
         this.parent = parent
         this.parentId = parent.id
@@ -44,7 +44,7 @@ class FSFolder extends SavableObject {
      * @param id
      * @param locationName
      */
-    FSFolder(File srcFolder, String locationName, String crawlName = Constants.LBL_UNKNOWN, Integer depth = null) {
+    FSFolder(File srcFolder, String locationName, String crawlName, Pattern ignoreFolders, Pattern ignoreFiles, Integer depth = null) {
         super(srcFolder, locationName, crawlName, depth)
         osName = System.getProperty("os.name")      // todo - time this call, is it significant overhead?
         if (srcFolder.isHidden()) {
@@ -54,7 +54,7 @@ class FSFolder extends SavableObject {
         if (srcFolder.exists()) {
             type = TYPE
             name = srcFolder.getName()
-            size = srcFolder.size()
+//            size = srcFolder.size()           // sse FileUtils.sizeOfDirectory(srcFolder) below
             path = srcFolder.absolutePath
             dedup = buildDedupString()
 
@@ -76,7 +76,9 @@ class FSFolder extends SavableObject {
 
             if (srcFolder.canExecute() && srcFolder.canRead()) {
                 // todo -- revisit to cost of getting the dir size, for a large dir it is many seconds (a minute or two??)
-                size = FileUtils.sizeOfDirectory(srcFolder)
+//                size = FileUtils.sizeOfDirectory(srcFolder)           // sizeOfDirectory is recursive, we just want the size non-recursive
+                size = FileUtils.sizeOf(srcFolder)
+                log.debug "directory size: $size"
             } else {
                 log.info "Cannot execute/read folder: $srcFolder"
             }
@@ -253,13 +255,14 @@ class FSFolder extends SavableObject {
 
         if (folder.exists()) {
             if (folder.canRead()) {
+                log.info "\t\tstart buildChildrenList ($folder)"
                 int cnt = 0
                 folder.eachFile { File file ->
                     if (file.exists()) {
                         if (file.canRead()) {
                             cnt++
                             if (file.isDirectory()) {
-                                object = new FSFolder(file, this, locationName, crawlName)
+                                object = new FSFolder(file, this, locationName, crawlName,ignoreFoldersPattern, ignoreFilesPattern)
                                 if (object.name ==~ ignoreFoldersPattern) {
                                     log.debug "\t\t$cnt) ----- mark 'ignore' CHILD folder ----- ${this} has ignorable subsolder: $object"
                                     object.ignore = true

@@ -10,7 +10,7 @@ class DifferenceCheckerTest extends Specification {
     String crawlName = 'test'
 
     File startFolder = new File(getClass().getResource('/content').toURI())
-    FSFolder fsFolder = new FSFolder(startFolder, locationName, crawlName, 1)
+    FSFolder fsFolder = new FSFolder(startFolder, locationName, crawlName, ignoreFolders, ignoreFiles, 1)
 //    Map<String, Object> fieldsMap = ["${SolrSystemClient.FLD_ID}": fsFolder.id, "${SolrSystemClient.FLD_TYPE}": "${FSFolder.TYPE}", "${SolrSystemClient.FLD_PATH_S}": '/content', "${SolrSystemClient.FLD_LAST_MODIFIED}": fsFolder.lastModifiedDate]
 //    SolrDocument solrDoc = new SolrDocument(fieldsMap)
 

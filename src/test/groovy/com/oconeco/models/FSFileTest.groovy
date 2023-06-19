@@ -14,7 +14,7 @@ class FSFileTest extends Specification {
     File jsonFile = new File(getClass().getResource("/content/${jsonName}").toURI())
     File zipFile = new File(getClass().getResource("/content/${zipName}").toURI())
     File tarFile = new File(getClass().getResource("/content/${tarName}").toURI())
-    FSFolder parentFolder = new FSFolder(jsonFile.parentFile, locationName, crawlName, 0)
+    FSFolder parentFolder = new FSFolder(jsonFile.parentFile, locationName, crawlName, ignoreFolders, ignoreFiles, 0)
 
     def "should create basic FSFile - non-archive"() {
         when:

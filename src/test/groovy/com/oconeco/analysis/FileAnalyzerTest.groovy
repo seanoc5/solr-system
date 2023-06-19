@@ -21,7 +21,7 @@ class FileAnalyzerTest extends Specification {
 //    File paramsJson = new File(FileAnalyzerTest.getClassLoader().getResource('./content/params.json').toURI())
     File currencyXml = new File(FileAnalyzerTest.getClassLoader().getResource('./content/currency.xml').toURI())
     File datasourcesZip = new File(FileAnalyzerTest.getClassLoader().getResource('./content/datasources.zip').toURI())
-    FSFolder parentFolder = new FSFolder(currencyXml.parentFile,locationName,crawlName, 1)
+    FSFolder parentFolder = new FSFolder(currencyXml.parentFile, locationName, crawlName, ignoreFolders, ignoreFiles, 1)
 
     def "Analyze Test resource files"() {
         given:
