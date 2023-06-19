@@ -30,13 +30,13 @@ def preDirVisitor = {
 
 def postDirVisitor = {
     count++
-    log.info "$count) ---- POST dir : $it"
+    log.debug "$count) ---- POST dir : $it"
     lastFolder = currentFolder
     int depth = getRelativeDepth(startPath, it)
     FSFolder fsFolder = new FSFolder(it, locationName, crawlName, ignoreFolders, ignoreFiles, depth)
     def details = fsFolder.addFolderDetails()
     def children = fsFolder.buildChildrenList(ignorePattern)
-    log.info "Folder ($fsFolder) -- Children count: ${children.size()} -- Details($details)"
+    log.debug "Folder ($fsFolder) -- Children count: ${children.size()} -- Details($details)"
 }
 
 // bredth first - get folder AND files, then descend

@@ -1,7 +1,9 @@
 package com.oconeco.models
 
-
+import com.oconeco.helpers.Constants
 import spock.lang.Specification
+
+import java.util.regex.Pattern
 
 class FSFileTest extends Specification {
     String locationName = 'spock'
@@ -14,6 +16,9 @@ class FSFileTest extends Specification {
     File jsonFile = new File(getClass().getResource("/content/${jsonName}").toURI())
     File zipFile = new File(getClass().getResource("/content/${zipName}").toURI())
     File tarFile = new File(getClass().getResource("/content/${tarName}").toURI())
+    Pattern ignoreFiles = Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE]
+    Pattern ignoreFolders = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]
+
     FSFolder parentFolder = new FSFolder(jsonFile.parentFile, locationName, crawlName, ignoreFolders, ignoreFiles, 0)
 
     def "should create basic FSFile - non-archive"() {
@@ -90,7 +95,7 @@ class FSFileTest extends Specification {
 
         when:
         List<SavableObject> children = fSFile.gatherArchiveEntries()
-        def groups  = children.groupBy { it.type }
+        def groups = children.groupBy { it.type }
 
 
         then:
@@ -98,10 +103,10 @@ class FSFileTest extends Specification {
         children.size() == 40
 
         groups.keySet().toList().containsAll(['ArchFile', 'ArchFolder'])
-        groups['ArchFile'].size()==34
-        groups['ArchFile'].collect{it.name}.containsAll(['.helmignore', 'ADOPTERS.md'])
-        groups['ArchFolder'].size()==6
-        groups['ArchFolder'].collect{it.name}.containsAll(['subtestme', 'content'])
+        groups['ArchFile'].size() == 34
+        groups['ArchFile'].collect { it.name }.containsAll(['.helmignore', 'ADOPTERS.md'])
+        groups['ArchFolder'].size() == 6
+        groups['ArchFolder'].collect { it.name }.containsAll(['subtestme', 'content'])
     }
 
 

@@ -5,6 +5,9 @@ import com.oconeco.models.FSFile
 import com.oconeco.models.FSFolder
 import org.apache.log4j.Logger
 import spock.lang.Specification
+
+import java.util.regex.Pattern
+
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -17,10 +20,12 @@ class FileAnalyzerTest extends Specification {
     String locationName = 'spock'
     String crawlName = 'test'
 
-    URL  purl = FileAnalyzerTest.getClassLoader().getResource('./content/params.json')
+    URL purl = FileAnalyzerTest.getClassLoader().getResource('./content/params.json')
 //    File paramsJson = new File(FileAnalyzerTest.getClassLoader().getResource('./content/params.json').toURI())
     File currencyXml = new File(FileAnalyzerTest.getClassLoader().getResource('./content/currency.xml').toURI())
     File datasourcesZip = new File(FileAnalyzerTest.getClassLoader().getResource('./content/datasources.zip').toURI())
+    Pattern ignoreFiles = Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE]
+    Pattern ignoreFolders = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]
     FSFolder parentFolder = new FSFolder(currencyXml.parentFile, locationName, crawlName, ignoreFolders, ignoreFiles, 1)
 
     def "Analyze Test resource files"() {

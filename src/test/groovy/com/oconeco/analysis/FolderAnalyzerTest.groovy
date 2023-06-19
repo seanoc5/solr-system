@@ -1,7 +1,11 @@
 package com.oconeco.analysis
 
+import com.oconeco.helpers.Constants
 import com.oconeco.models.FSFolder
 import spock.lang.Specification
+
+import java.util.regex.Pattern
+
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -17,6 +21,9 @@ class FolderAnalyzerTest extends Specification {
     ConfigObject config = new ConfigSlurper().parse(cfgUrl)
     FolderAnalyzer analyzer = new FolderAnalyzer(config)
     File folder = new File(getClass().getResource('/content').toURI())
+    Pattern ignoreFiles = Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE]
+    Pattern ignoreFolders = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]
+
 
     def "basic folder type analysis"() {
         when:

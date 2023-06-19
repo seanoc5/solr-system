@@ -63,7 +63,7 @@ class DifferenceChecker {
                 status.similarities << "FSFolder id ($fsId) matches solr id($solrId"
             } else {
                 msg = "FSFolder id ($fsId) does not match solr id($solrId"
-                differences << msg
+                status.differences << msg
                 log.warn msg
                 status.differentIds = true
             }
@@ -78,13 +78,13 @@ class DifferenceChecker {
                 log.debug msg
             } else if (fsLastModified > solrLastModified) {
                 msg = "FSFolder (${fsfolder.path}) is newer ($fsLastModified) than solr folder ($solrLastModified)"
-                differences << msg
+                status.differences << msg
                 log.info '\t\t' + msg
                 status.differentLastModifieds = true
                 status.sourceIsNewer = true
             } else {
                 msg = "FSFolder (${fsfolder.path}) lastModified ($fsLastModified) is NOT the same date as solr folder ($solrLastModified), Solr is newer???"
-                differences << msg
+                status.differences << msg
                 log.info "\t---- $msg"
                 status.differentLastModifieds = true
                 status.sourceIsNewer = false

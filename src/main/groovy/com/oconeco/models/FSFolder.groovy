@@ -56,7 +56,6 @@ class FSFolder extends SavableObject {
             name = srcFolder.getName()
 //            size = srcFolder.size()           // sse FileUtils.sizeOfDirectory(srcFolder) below
             path = srcFolder.absolutePath
-            dedup = buildDedupString()
 
             // todo -- revisit replacing backslashes with forward slashes--just cosmetics? avoid double-backslashes in path fields for windows machines
             id = SavableObject.buildId(locationName, path.replaceAll('\\\\', '/'))
@@ -80,8 +79,11 @@ class FSFolder extends SavableObject {
                 size = FileUtils.sizeOf(srcFolder)
                 log.debug "directory size: $size"
             } else {
-                log.info "Cannot execute/read folder: $srcFolder"
+                log.warn "Cannot execute/read folder: $srcFolder"
+                size = srcFolder.size()
             }
+
+            dedup = buildDedupString()
 
         } else {
             log.warn "Src folder ($srcFolder) is not accessible??"
@@ -170,7 +172,7 @@ class FSFolder extends SavableObject {
         if (dedup) {
             log.debug "ensure dedupe is saved, and replaces name-size field"
         } else {
-            log.warn "ensure dedupe is saved, and replaces name-size field"
+            log.warn "no dedupe: $this"
         }
 
 //        sidFolder.setField(SolrSystemClient.FLD_SUBDIR_COUNT, countSubdirs)
@@ -255,7 +257,7 @@ class FSFolder extends SavableObject {
 
         if (folder.exists()) {
             if (folder.canRead()) {
-                log.info "\t\tstart buildChildrenList ($folder)"
+                log.debug "\t\tstart buildChildrenList ($folder)"
                 int cnt = 0
                 folder.eachFile { File file ->
                     if (file.exists()) {
@@ -276,14 +278,14 @@ class FSFolder extends SavableObject {
                                 if (file.name ==~ ignoreFilesPattern) {
                                     object.ignore = true
                                     children << object
-                                    log.info "\t\t[file:$cnt] ----- Ignoring ----- file: $file"
+                                    log.debug "\t\t[file:$cnt] ----- Ignoring ----- file: $file"
                                 } else {
                                     log.debug "\t\t$cnt) adding file: $file"
                                     children << object
                                 }
                             }
                         } else {
-                            log.warn "Cannot read file: $file"
+                            log.warn "Cannot read file: $file (file permissions??)"
                         }
                     } else {
                         log.warn "file: $file -- does not exist???"

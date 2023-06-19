@@ -10,6 +10,7 @@ import spock.lang.Specification
 
 import java.nio.file.Path
 import java.util.regex.Pattern
+
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -24,8 +25,8 @@ class LocalFileSystemCrawlerTest extends Specification {
     Pattern ignoreFolders = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]
     Pattern ignoreFiles = Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE]
     Path startFolder = Path.of(getClass().getResource('/content').toURI());
-//    SolrSystemClient mockSolrClient = new SolrSystemClient()
-    def mockSolrClient = null
+    SolrSystemClient mockSolrClient = Mock()          // new SolrSystemClient()
+//    def mockSolrClient = null
     SolrDocumentList existingSolrFolderDocsBlank = []
     File startFile = new File(getClass().getResource('/content').toURI())
     FSFolder startFSFolder = new FSFolder(startFile, locationName, crawlName, ignoreFolders, ignoreFiles, 0)
@@ -68,10 +69,10 @@ class LocalFileSystemCrawlerTest extends Specification {
 //        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName)
 
         when:
-        def results = crawler.crawlFolders(crawlName, startFolder.toFile(), ignoreFolders, ignoreFiles,null)
+        def results = crawler.crawlFolders(crawlName, startFolder.toFile(), ignoreFolders, ignoreFiles)
 
         then:
-        results!=null
+        results != null
 
     }
 
@@ -184,7 +185,7 @@ class LocalFileSystemCrawlerTest extends Specification {
      * @param sourceFolders
      * @return
      */
-    static Map<String, SolrDocument> mockSolrFolderDocs(List<FSFolder> sourceFolders ){
+    static Map<String, SolrDocument> mockSolrFolderDocs(List<FSFolder> sourceFolders) {
         Map<String, SolrDocument> sdocMap = [:]
         sourceFolders.each { FSFolder fsFolder ->
             SolrDocument solrDocument = new SolrDocument()

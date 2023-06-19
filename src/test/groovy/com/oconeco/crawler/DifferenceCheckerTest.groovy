@@ -1,13 +1,19 @@
 package com.oconeco.crawler
 
+import com.oconeco.helpers.Constants
 import com.oconeco.models.FSFolder
 import com.oconeco.persistence.SolrSystemClient
 import org.apache.solr.common.SolrDocument
 import spock.lang.Specification
 
+import java.util.regex.Pattern
+
 class DifferenceCheckerTest extends Specification {
     String locationName = 'spock'
     String crawlName = 'test'
+    Pattern ignoreFiles = Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE]
+    Pattern ignoreFolders = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]
+
 
     File startFolder = new File(getClass().getResource('/content').toURI())
     FSFolder fsFolder = new FSFolder(startFolder, locationName, crawlName, ignoreFolders, ignoreFiles, 1)

@@ -132,7 +132,7 @@ class LocalFileSystemCrawler {
 
         def doPreDir = {
             File f = it
-            log.info "\t\t====PRE dir:  $it"
+            log.debug "\t\t====PRE dir:  $it"
             FileVisitResult fvr = FileVisitResult.CONTINUE
             boolean accessible = f.exists() && f.canRead() && f.canExecute()
 
@@ -156,7 +156,7 @@ class LocalFileSystemCrawler {
             return fvr
         }
 
-        def doPostDir = {log.info "\t\tPost dir: $it" }
+        def doPostDir = {log.debug "\t\tPost dir: $it" }
 
         Map options = [
                 type     : FileType.DIRECTORIES,
