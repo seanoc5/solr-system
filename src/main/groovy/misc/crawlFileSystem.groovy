@@ -1,5 +1,7 @@
 package misc
 
+import com.oconeco.analysis.FileAnalyzer
+import com.oconeco.analysis.FolderAnalyzer
 import com.oconeco.crawler.DifferenceChecker
 import com.oconeco.crawler.LocalFileSystemCrawler
 import com.oconeco.helpers.SolrCrawlArgParser
@@ -18,7 +20,7 @@ ConfigObject config = SolrCrawlArgParser.parse(this.class.simpleName, args)
 Map<String, String> crawlMap = config.dataSources.localFolders
 log.info "\t\tCrawl Map (config.dataSources.localFolders): $crawlMap"
 String solrUrl = config.solrUrl
-String locationName = config.sourceName
+String locationName = config.locationName
 Pattern fileIgnorePattern = config.namePatterns.files.ignore
 Pattern folderIgnorePattern = config.namePatterns.folders.ignore
 log.info "config.ignoreArchivesPattern == " + config.ignoreArchivesPattern + " -- special pattern to block out things like docx which is really a conceptual doc, but zip of files"
@@ -28,13 +30,14 @@ log.info "\t\tSolr Saver created: $solrClient"
 
 long numFoundPreLocation = solrClient.getDocumentCount()
 
-//FolderAnalyzer folderAnalyzer = new FolderAnalyzer(config)
-//FileAnalyzer fileAnalyzer = new FileAnalyzer(config)
+FolderAnalyzer folderAnalyzer = new FolderAnalyzer(config)
+FileAnalyzer fileAnalyzer = new FileAnalyzer(config)
+boolean compareExistingSolrFolderDocs = config.compareExistingSolrFolderDocs
 
 long start = System.currentTimeMillis()
 
 crawlMap.each { String crawlName, String startPath ->
-    log.info "Crawl name: $crawlName -- start path: $startPath -- location: $locationName "
+    log.debug "Crawl name: $crawlName -- start path: $startPath -- location: $locationName "
 
     LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName, solrClient, new DifferenceChecker())
     long numFoundPreCrawl = crawler.getSolrDocCount(crawlName)
@@ -42,14 +45,14 @@ crawlMap.each { String crawlName, String startPath ->
 
     // clear specific crawl if arg/config indicates
     if(config.wipeContent==true) {
-        log.warn "\t\tConfig/args indicates we whould wipe content for crawl: $crawler"
+        log.warn "Config/args indicates we whould WIPE CONTENT for crawl: $crawler"
         Map<String, Object> deleteResults = solrClient.deleteCrawledDocuments(crawler)
         log.info "\t\tDelete results map: $deleteResults"
     }
 
     log.debug "\t\tcrawl map item with label:'$crawlName' --- and --- startpath:'$startPath'..."
     File startFolder = new File(startPath)
-    Map<String, List<FSFolder>> crawlFolders = crawler.crawlFolders(crawlName, startFolder, folderIgnorePattern, fileIgnorePattern)
+    Map<String, List<FSFolder>> crawlFolders = crawler.crawlFolders(crawlName, startFolder, folderIgnorePattern, fileIgnorePattern, compareExistingSolrFolderDocs, folderAnalyzer, fileAnalyzer)
     if(crawlFolders.updated) {
         log.info "\t\tCrawled Folders, updated:${crawlFolders?.updated?.size()} -- skipped: ${crawlFolders?.skipped?.size()}"
         long numFoundPostCrawl = crawler.getSolrDocCount(crawlName)

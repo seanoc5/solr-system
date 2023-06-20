@@ -69,3 +69,9 @@ Apply more broadly scoped pattern matching to determin if a given file should be
     - parent (fsfolder)
     - ?Archive folders/files?
       - parent (fsfile)
+
+
+- Crawler
+  - persistence client (Solr, CSV file,...)
+  - diff checker
+  - analyzer

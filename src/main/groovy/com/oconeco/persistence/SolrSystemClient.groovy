@@ -18,34 +18,27 @@ import org.apache.tika.detect.Detector
 import org.apache.tika.parser.AutoDetectParser
 import org.apache.tika.parser.Parser
 import org.apache.tika.sax.BodyContentHandler
+
 /**
  * Looking at helper class to save solr_system (file crawl to start with content to solr
  */
-class SolrSystemClient {
+class SolrSystemClient extends BaseClient {
     public static final Logger log = Logger.getLogger(this.class.name)
 
+    /** upper limit of 'big' queries, e.g. folder lists for a gven crawl */
     public static int MAX_ROWS_RETURNED = 100000
-    //upper limit of 'big' queries, e.g. folder lists for a gven crawl
+
 
     // todo -- move this to (BASE) Object hierarchy, leave solrsaver to do the actual saving, not building?
-    public static String FLD_ID = 'id'
     public static String FLD_PARENT_ID = 'parentId_s'
-    public static String FLD_CRAWL_NAME = "crawlName_s"
-    public static String FLD_LOCATION_NAME = "locationName_s"
 
     public static String FLD_DEPTH = 'depth_i'
-    public static String FLD_TYPE = 'type_s'
-    public static String FLD_PATH_S = 'path_s'
     public static String FLD_PATH_T = 'path_txt_en'
     public static String FLD_NAME_S = 'name_s'
     public static String FLD_NAME_T = 'name_txt_en'
     public static String FLD_CONTENT_BODY = 'content_txt_en'
-    public static String FLD_SIZE = "size_l"
-    public static String FLD_DEDUP = 'dedup_s'
 
-    public static String FLD_INDEX_DATETIME = "indexedTime_dt"        // pdate dynamic field
     public static String FLD_CREATED_DATE = "createdDate_dt"          // pdate dynamic field
-    public static String FLD_LAST_MODIFIED = "lastModified_dt"        // pdate dynamic field
     // todo - improve owner name extraction/ETL
     public static String FLD_OWNER = "owner_s"                        // varies by operating system...
 
@@ -74,16 +67,7 @@ class SolrSystemClient {
     public static String FLD_IGNORED_FOLDERS_COUNT = 'ignoredFoldersCount_i'
     public static String FLD_IGNORED_FOLDERS = 'ignoredFolders_ss'
 
-    public static final List<String> DEFAULT_FIELDS_TO_CHECK = [
-            FLD_ID,
-            FLD_LAST_MODIFIED,
-            FLD_SIZE,
-            FLD_DEDUP,
-            FLD_PATH_S,
-            FLD_LOCATION_NAME,
-            FLD_INDEX_DATETIME,
-//            SolrSystemClient.FLD_,
-    ]
+
 
 
     Integer SOLR_BATCH_SIZE = 5000
@@ -173,7 +157,6 @@ class SolrSystemClient {
      */
 
 
-
     /**
      * Clear the solr collection, but using a path of folders (and children) to clear
      * @param pathToClear
@@ -183,27 +166,27 @@ class SolrSystemClient {
      */
     UpdateResponse deleteDocuments(String deleteQuery, int commitWithinMS = 500, boolean checkBeforeAfter = true) {
         Long beforeCount
-        if(checkBeforeAfter){
+        if (checkBeforeAfter) {
             beforeCount = getDocumentCount(deleteQuery)
             log.info "\t\t$beforeCount count before query: $deleteQuery"
         }
-        log.warn "Clearing collection: ${this.solrClient.baseURL} -- deleteQuery: $deleteQuery (commit within: $commitWithinMS)"
+        log.warn "DELETing solr docs: ${this.solrClient.baseURL} -- deleteQuery: $deleteQuery (commit within: $commitWithinMS)"
         UpdateResponse ursp = solrClient.deleteByQuery(deleteQuery, commitWithinMS)
         UpdateResponse ursp2 = solrClient.commit(true, true)
         int status = ursp.getStatus()
         if (status == 0) {
-            log.debug "\t\tSuccess clearing collection with query: $deleteQuery"
+            log.debug "\t\tSuccess deleting documents with query: $deleteQuery"
         } else {
             log.warn "FAILED to delete docs with delete query: ($deleteQuery) -- solr problem/error?? $ursp"
         }
-        if(checkBeforeAfter){
+        if (checkBeforeAfter) {
             Long afterCount = getDocumentCount(deleteQuery)
-            log.debug "\t\t$afterCount count AFTER query: $deleteQuery (diff: ${beforeCount - afterCount})"      // todo -- is this bad code? defaults somehow to not wait for commit? later call catches proper counter (0)???
+            log.debug "\t\t$afterCount count AFTER query: $deleteQuery (diff: ${beforeCount - afterCount})"
+            // todo -- is this bad code? defaults somehow to not wait for commit? later call catches proper counter (0)???
         }
 
         return ursp
     }
-
 
 
     /**
@@ -211,7 +194,7 @@ class SolrSystemClient {
      * @param Specific crawler with locationName and crawlName
      * @return difference between before delete and after delete
      */
-    Map<String, Object> deleteCrawledDocuments(LocalFileSystemCrawler crawler){
+    Map<String, Object> deleteCrawledDocuments(LocalFileSystemCrawler crawler) {
         Map<String, Object> results = [:]
         String deleteQuery = SolrSystemClient.FLD_LOCATION_NAME + ':"' + crawler.locationName + '" AND ' + com.oconeco.persistence.SolrSystemClient.FLD_CRAWL_NAME + ':"' + crawler.crawlName + '"'
         long preDeleteCount = getDocumentCount(deleteQuery)
@@ -220,7 +203,7 @@ class SolrSystemClient {
         UpdateResponse commitResponse = commitUpdates(true, true)
         long postDeleteCount = getDocumentCount(deleteQuery)
         log.debug "\t\t------ POST-delete count:($postDeleteCount)"
-        results = [deleteQuery:deleteQuery, preDeleteCount:preDeleteCount, postDeleteCount:postDeleteCount, deleteResponse:deleteResponse, commitResponse:commitResponse]
+        results = [deleteQuery: deleteQuery, preDeleteCount: preDeleteCount, postDeleteCount: postDeleteCount, deleteResponse: deleteResponse, commitResponse: commitResponse]
         return results
     }
 
@@ -232,9 +215,9 @@ class SolrSystemClient {
      * @param waitSearcher
      * @return
      */
-    def commitUpdates(boolean waitFlush = false, boolean  waitSearcher = false) {
+    def commitUpdates(boolean waitFlush = false, boolean waitSearcher = false) {
         log.debug "\t\t____explicit call to solr 'commit' (consider allowing autocommit settings to do this for you...)"
-        solrClient.commit(waitFlush,waitSearcher)
+        solrClient.commit(waitFlush, waitSearcher)
     }
 
 
@@ -244,7 +227,7 @@ class SolrSystemClient {
      * @param commitWithinMS time to allow before solr autocommit (solr performance tuning/batching)
      * @return UpdateResponse
      */
-    def saveDocs(ArrayList<SolrInputDocument> solrInputDocuments, int commitWithinMS = 1000) {
+/*    def saveDocs(ArrayList<SolrInputDocument> solrInputDocuments, int commitWithinMS = 1000) {
         log.debug "Adding solrInputDocuments, size: ${solrInputDocuments.size()}"
         UpdateResponse resp
         try {
@@ -253,12 +236,12 @@ class SolrSystemClient {
             log.error "Solr server exception: $sse"
         }
         return resp
-    }
+    }*/
 
     def saveObjects(List<SavableObject> objects, int commitWithinMS = 1000) {
         log.debug "Adding solrInputDocuments, size: ${objects.size()}"
         UpdateResponse resp
-        List<SolrInputDocument> solrInputDocuments = objects.collect {it.toSolrInputDocument()}
+        List<SolrInputDocument> solrInputDocuments = objects.collect { it.toSolrInputDocument() }
         try {
             resp = solrClient.add(solrInputDocuments, commitWithinMS)
         } catch (SolrServerException sse) {
@@ -277,7 +260,7 @@ class SolrSystemClient {
         SolrQuery sq = new SolrQuery(queryToCount)
         sq.setFields('')
         sq.setRows(0)
-        if(filterQuery){
+        if (filterQuery) {
             sq.addFilterQuery(filterQuery)
         }
         QueryResponse resp = solrClient.query(sq)

@@ -30,16 +30,15 @@ class FolderAnalyzer extends BaseAnalyzer {
      */
     ConfigObject config
 
-//    List<String> extensions = []
-//    Map<String, Pattern> fileNamePatterns = Constants.DEFAULT_FILENAME_PATTERNS
     Map<String, Pattern> namePatternsMap = Constants.DEFAULT_FOLDERNAME_PATTERNS
+    Map<String, Pattern> pathPatternsMap = Constants.DEFAULT_FOLDERPATH_PATTERNS
 
-    ArchiveStreamFactory archiveStreamFactory = new ArchiveStreamFactory();
+//    ArchiveStreamFactory archiveStreamFactory = new ArchiveStreamFactory();
 
-    FolderAnalyzer() {
-        this(Constants.DEFAULT_FILENAME_PATTERNS, Constants.DEFAULT_FOLDERNAME_PATTERNS)
-        log.info "Blank constructor, using defaults..."
-    }
+//    FolderAnalyzer() {
+//        this(Constants.DEFAULT_FILENAME_PATTERNS, Constants.DEFAULT_FOLDERNAME_PATTERNS)
+//        log.info "Blank constructor, using defaults..."
+//    }
 
     FolderAnalyzer(Map<String, Pattern> fileNamePatterns, Map<String, Pattern> namePatternsMap) {
         this.fileNamePatterns = fileNamePatterns
@@ -54,12 +53,15 @@ class FolderAnalyzer extends BaseAnalyzer {
         } else {
             log.warn "No namePatternsMap found in config file... no analysis of Folders?"
         }
+        if (config.pathPatterns?.folders) {
+            pathPatternsMap = config.pathPatterns.folders
+            log.info "\t\tAnalyzer (${this.class.simpleName}) setting pathPatternsMap: $pathPatternsMap"
+        } else {
+            log.warn "No namePatternsMap found in config file... no analysis of Folders?"
+        }
     }
 
 
-//    FolderAnalyzer(Map fnPatterns) {
-//        folderNamePatterns = fnPatterns
-//    }
 
     List<String> analyze(SavableObject object) {
         List<String> labels = []
@@ -75,12 +77,22 @@ class FolderAnalyzer extends BaseAnalyzer {
 
             namePatternsMap.each { String label, Pattern pattern ->
                 if (ffs.name ==~ pattern) {
-                    log.info "\t\tASSIGNING label: $label -- $ffs"
+                    log.debug "\t\tASSIGNING name label: $label -- $ffs"
                     ffs.labels << label
                 } else {
                     log.debug "\\t\t ($label) no match on pattern: $pattern -- $ffs"
                 }
             }
+
+            pathPatternsMap.each { String label, Pattern pattern ->
+                if (ffs.path ==~ pattern) {
+                    log.debug "\t\tASSIGNING path label: $label -- $ffs"
+                    ffs.labels << label
+                } else {
+                    log.debug "\\t\t ($label) no match on pattern: $pattern -- $ffs"
+                }
+            }
+
             labels = ffs.labels
             if (labels) {
                 if (labels.size() > 1) {
@@ -102,6 +114,7 @@ class FolderAnalyzer extends BaseAnalyzer {
      * @param files
      * @return list of types found, plus we updated the sourcec list (non-FP friendly...)
      */
+/*
     List<String> assignFileTypes(List<FSFile> files) {
         List<String> allLabels = []
         files.each { FSFile fileFS ->
@@ -130,6 +143,7 @@ class FolderAnalyzer extends BaseAnalyzer {
         }
         return allLabels
     }
+*/
 
 
     /**
@@ -138,6 +152,7 @@ class FolderAnalyzer extends BaseAnalyzer {
      * @param filesFs
      * @return
      */
+/*
     def analyzeArchives(List<FSFile> filesFs) {
 
         filesFs.each { FSFile ffs ->
@@ -171,6 +186,7 @@ class FolderAnalyzer extends BaseAnalyzer {
             }
         }
     }
+*/
 
 
 //    @Override

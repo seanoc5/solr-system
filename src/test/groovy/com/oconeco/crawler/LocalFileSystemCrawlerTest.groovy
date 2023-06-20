@@ -10,7 +10,6 @@ import spock.lang.Specification
 
 import java.nio.file.Path
 import java.util.regex.Pattern
-
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -25,7 +24,8 @@ class LocalFileSystemCrawlerTest extends Specification {
     Pattern ignoreFolders = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]
     Pattern ignoreFiles = Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE]
     Path startFolder = Path.of(getClass().getResource('/content').toURI());
-    SolrSystemClient mockSolrClient = Mock()          // new SolrSystemClient()
+//    SolrSystemClient mockSolrClient = Stub(SolrSystemClient.class)      //Mock()          // new SolrSystemClient()
+    SolrSystemClient mockSolrClient =  new SolrSystemClient('')
 //    def mockSolrClient = null
     SolrDocumentList existingSolrFolderDocsBlank = []
     File startFile = new File(getClass().getResource('/content').toURI())
@@ -67,9 +67,24 @@ class LocalFileSystemCrawlerTest extends Specification {
         given:
         LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName, mockSolrClient, differenceChecker)
 //        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName)
+        Map<String, SolrDocument> existingSolrFolderDocs = null
+        boolean compareExistingSolrFolderDocs = false
 
         when:
-        def results = crawler.crawlFolders(crawlName, startFolder.toFile(), ignoreFolders, ignoreFiles)
+        Map<String, List<FSFolder>> results = crawler.crawlFolders(crawlName, startFolder.toFile(), ignoreFolders, ignoreFiles, compareExistingSolrFolderDocs, folderAnalyzer, fileAnalyzer)
+
+        then:
+        results != null
+
+    }
+
+
+    def 'basic LocalFileSystemCrawler.crawlFolders with existing docs'() {
+        given:
+        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName, mockSolrClient, differenceChecker)
+
+        when:
+        def results = crawler.crawlFolders(crawlName, startFolder.toFile(), ignoreFolders, ignoreFiles, existingSolrFolderDocsMocked)
 
         then:
         results != null

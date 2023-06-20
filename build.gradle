@@ -24,6 +24,7 @@ dependencies {
 
     // implementation, runtimeOnly, testImplementation, and testRuntimeOnly
    implementation group: 'org.spockframework', name: 'spock-core', version: '2.4-M1-groovy-4.0'
+   implementation group: 'net.bytebuddy', name: 'byte-buddy', version: '1.14.2'
 
 
     // old solr version: 8.11.1 -> 9.1.0

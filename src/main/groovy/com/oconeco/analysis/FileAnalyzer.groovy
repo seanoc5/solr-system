@@ -17,9 +17,6 @@ import java.util.regex.Pattern
 
 class FileAnalyzer extends BaseAnalyzer {
     Logger log = Logger.getLogger(this.class.name)
-    Map DEFAULT_FILENAME_PATTERNS = [ignore: ~/([.~]*lock.*|_.*|.*\.te?mp$|.*\.class$|robots.txt)/,
-                                     index : ~/(bash.*|csv|groovy|ics|ipynb|java|lst|md|php|py|rdf|rss|scala|sh|tab|te?xt|tsv)/,
-    ]
     Map namePatternsMap = null
 
     FileAnalyzer() {
@@ -48,7 +45,7 @@ class FileAnalyzer extends BaseAnalyzer {
     List<String> analyze(List<FSFile> fileFsList) {
         List<String> labels = []
         fileFsList.each { FSFile filefs ->
-            log.info "Analyze fileFS: $filefs"
+            log.debug "Analyze fileFS: $filefs"
             String label = analyze(filefs)
         }
     }
@@ -63,7 +60,7 @@ class FileAnalyzer extends BaseAnalyzer {
             FSFile fSFile = object
             namePatternsMap.each { String label, Pattern pattern ->
                 if (fSFile.name ==~ pattern) {
-                    log.info "\t\tASSIGNING label: $label -- $fSFile"
+                    log.debug "\t\tASSIGNING label: $label -- $fSFile"
                     fSFile.labels << label
                 } else {
                     log.debug "\\t\t ($label) no match on pattern: $pattern -- $fSFile"
@@ -75,7 +72,7 @@ class FileAnalyzer extends BaseAnalyzer {
                     log.debug " \t\t........ More that one label?? $labels -- $fSFile"
                 }
             } else {
-                log.debug "\t\tNO LABEL folderType assigned?? $fSFile  --> ${((FSFolder) fSFile).thing.absolutePath}"
+                log.debug "\t\tNO LABEL folderType assigned?? $fSFile  --> ${((FSFile) fSFile).thing.absolutePath}"
                 fSFile.labels << Constants.LBL_UNKNOWN
             }
         } else {
