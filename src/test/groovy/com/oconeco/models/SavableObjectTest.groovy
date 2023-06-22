@@ -4,13 +4,13 @@ import spock.lang.Specification
 
 class SavableObjectTest extends Specification {
 
-    def "check empty constructor"() {
-        when:
-        SavableObject object = new SavableObject()
-
-        then:
-        object !=null
-    }
+//    def "check empty constructor"() {
+//        when:
+//        SavableObject object = new SavableObject()
+//
+//        then:
+//        object !=null
+//    }
 
     def "check basic constructor"() {
         given:

@@ -1,7 +1,6 @@
 package com.oconeco.crawler
 
-import com.oconeco.analysis.FileAnalyzer
-import com.oconeco.analysis.FolderAnalyzer
+import com.oconeco.analysis.BaseAnalyzer
 import com.oconeco.models.FSFile
 import com.oconeco.models.FSFolder
 import com.oconeco.models.SavableObject
@@ -17,7 +16,6 @@ import org.apache.solr.common.SolrDocumentList
 
 import java.nio.file.Path
 import java.util.regex.Matcher
-import java.util.regex.Pattern
 
 /**
  * @author :    sean
@@ -35,20 +33,20 @@ class LocalFileSystemCrawler {
     String crawlName        // todo -- remove this from class, leave as arg in methods where appropriate
     String locationName
     String osName
-    DifferenceChecker differenceChecker
+    BaseDifferenceChecker differenceChecker
     BaseClient persistenceClient
-    String checkFolderFields = SolrSystemClient.DEFAULT_FIELDS_TO_CHECK.join(' ')
-    String checkFileFields = SolrSystemClient.DEFAULT_FIELDS_TO_CHECK.join(' ')
+//    String checkFolderFields = SolrSystemClient.DEFAULT_FIELDS_TO_CHECK.join(' ')
+//    String checkFileFields = SolrSystemClient.DEFAULT_FIELDS_TO_CHECK.join(' ')
+    BaseAnalyzer analyzer
 
-
-    LocalFileSystemCrawler(String locationName, String crawlName, BaseClient persistenceClient, DifferenceChecker diffChecker = new DifferenceChecker()) {
-        log.debug "${this.class.simpleName} constructor with location:$locationName, name: $crawlName"
-        this.crawlName = crawlName
+    LocalFileSystemCrawler(String locationName, BaseClient persistenceClient, BaseDifferenceChecker diffChecker, BaseAnalyzer analyzer) {
+        log.debug "${this.class.simpleName} constructor with location:$locationName, Client($persistenceClient) DiffChecker($differenceChecker) analyzer($analyzer) "
         this.locationName = locationName
         osName = System.getProperty("os.name")
         // moved this from config file to here in case we start supporting remote filesystems...? (or WSL...?)
         this.differenceChecker = diffChecker
         this.persistenceClient = persistenceClient
+        this.analyzer = analyzer
     }
 
 
@@ -95,17 +93,17 @@ class LocalFileSystemCrawler {
     }
 
 
-    Map<String, List<FSFolder>> crawlFolders(String crawlName, File startFolder, Pattern ignoreFolders, Pattern ignoreFiles, boolean compareExistingSolrFolderDocs = true, FolderAnalyzer folderAnalyzer=null, FileAnalyzer fileAnalyzer=null) {
-        Map<String, SolrDocument> existingSolrFolderDocs
-        if (compareExistingSolrFolderDocs) {
-            existingSolrFolderDocs = getSolrFolderDocs(crawlName)
-            log.debug "\t\t$crawlName) compareExistingSolrFolderDocs set to true, existingSolrFolderDocs:(${existingSolrFolderDocs.size()})"
-        } else {
-            log.debug "\t\t$crawlName) compareExistingSolrFolderDocs set to false, so leave existingSolrFolderDocs empty/null to skip, full read/indexing"
-        }
-        Map<String, List<FSFolder>> results = crawlFolders(crawlName, startFolder, ignoreFolders, ignoreFiles, existingSolrFolderDocs, folderAnalyzer, fileAnalyzer)
-        return results
-    }
+//    Map<String, List<FSFolder>> crawlFolders(String crawlName, File startFolder, Pattern ignoreFolders, Pattern ignoreFiles, boolean compareExistingSolrFolderDocs = true, FolderAnalyzer folderAnalyzer=null, FileAnalyzer fileAnalyzer=null) {
+//        Map<String, SolrDocument> existingSolrFolderDocs
+//        if (compareExistingSolrFolderDocs) {
+//            existingSolrFolderDocs = getSolrFolderDocs(crawlName)
+//            log.debug "\t\t$crawlName) compareExistingSolrFolderDocs set to true, existingSolrFolderDocs:(${existingSolrFolderDocs.size()})"
+//        } else {
+//            log.debug "\t\t$crawlName) compareExistingSolrFolderDocs set to false, so leave existingSolrFolderDocs empty/null to skip, full read/indexing"
+//        }
+//        Map<String, List<FSFolder>> results = crawlFolders(crawlName, startFolder, ignoreFolders, ignoreFiles, existingSolrFolderDocs, folderAnalyzer, fileAnalyzer)
+//        return results
+//    }
 
     /**
      * Basic crawl functionality here, with visitor pattern
@@ -115,7 +113,7 @@ class LocalFileSystemCrawler {
      * @param ignoreFiles regex to indicate any files to not save/index
      * @return map of status counts
      */
-    Map<String, List<FSFolder>> crawlFolders(String crawlName, File startFolder, Pattern ignoreFolders, Pattern ignoreFiles, Map<String, SolrDocument> existingSolrFolderDocs, FolderAnalyzer folderAnalyzer=null, FileAnalyzer fileAnalyzer=null) {
+    Map<String, List<FSFolder>> crawlFolders(String crawlName, File startFolder, Map<String, SolrDocument> existingSolrFolderDocs, BaseAnalyzer analyzer = null) {
         Map<String, List<FSFolder>> results = [:].withDefault { [] }
 
         log.info "$locationName:$crawlName -> Starting crawl of folder: ($startFolder) [existing solrFolderDocs:${existingSolrFolderDocs.size()}]"
@@ -129,7 +127,7 @@ class LocalFileSystemCrawler {
             boolean accessible = f.exists() && f.canRead() && f.canExecute()
 
             int depth = getRelativeDepth(startPath, f)
-            currentFolder = new FSFolder(f, this.locationName, this.crawlName, ignoreFolders, ignoreFiles, depth)
+            currentFolder = new FSFolder(f, currentFolder, this.locationName, this.crawlName, depth)
 //            results << currentFolder
 
             if (accessible) {
@@ -184,11 +182,11 @@ class LocalFileSystemCrawler {
                 if (shouldUpdate) {
                     List<SavableObject> folderObjects = currentFolder.buildChildrenList(ignoreFiles)
                     log.debug "Update FSFolder:($currentFolder) -- Objects count: ${folderObjects.size()} -- diffStatus: $differenceStatus"
-                    if(folderAnalyzer){     // todo -- refactor to make folder/file analyser more elegant/readable
-                        folderAnalyzer.analyze(currentFolder)
+                    if(analyzer){     // todo -- refactor to make folder/file analyser more elegant/readable
+                        analyzer.analyze(currentFolder)
                         folderObjects.each{
                             if(it.type==FSFolder.TYPE){
-                                folderAnalyzer.analyze(it)
+                                analyzer.analyze(it)
                             } else if(it.type== FSFile.TYPE){
                                 fileAnalyzer.analyze(it)
                             } else {

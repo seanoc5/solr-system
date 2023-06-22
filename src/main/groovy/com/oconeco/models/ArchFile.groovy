@@ -25,8 +25,8 @@ class ArchFile extends SavableObject {
     public static final String TYPE = 'ArchFile'
     String extension
 
-    ArchFile(ArchiveEntry ae, SavableObject parent, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN) {
-        super(ae, parent, locationName)
+    ArchFile(ArchiveEntry ae, SavableObject parent, String locationName, String crawlName ) {
+        super(ae, parent, locationName, crawlName)
         String parentId = parent.id
         if (ae.name) {
             path = FilenameUtils.getFullPathNoEndSeparator(ae.name)

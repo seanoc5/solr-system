@@ -6,6 +6,7 @@ package configs
  */
 import com.oconeco.analysis.BaseAnalyzer
 import com.oconeco.helpers.Constants
+import com.oconeco.models.FSFolder
 
 import java.nio.file.LinkOption
 
@@ -63,9 +64,9 @@ dataSources {
 
 // note: all of the labels below are optional/customizable.
 namePatterns {
-    folders = [
+    FSFolder.TYPE = [
             ignore : [pattern: Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE], analysis: [BaseAnalyzer.IGNORE]],
-            default: [pattern: ~/.*/, analysis: BaseAnalyzer.DEFAULT],
+            default: [pattern: '', analysis: BaseAnalyzer.DEFAULT],
     ]
 
     files = [

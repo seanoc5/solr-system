@@ -1,9 +1,12 @@
 package misc
 
+import com.oconeco.analysis.BaseAnalyzer
 import com.oconeco.analysis.FileAnalyzer
+import com.oconeco.analysis.FileSystemAnalyzer
 import com.oconeco.analysis.FolderAnalyzer
-import com.oconeco.crawler.DifferenceChecker
+import com.oconeco.crawler.BaseDifferenceChecker
 import com.oconeco.crawler.LocalFileSystemCrawler
+import com.oconeco.crawler.SolrDifferenceChecker
 import com.oconeco.helpers.SolrCrawlArgParser
 import com.oconeco.models.FSFolder
 import com.oconeco.persistence.SolrSystemClient
@@ -33,13 +36,14 @@ long numFoundPreLocation = solrClient.getDocumentCount()
 FolderAnalyzer folderAnalyzer = new FolderAnalyzer(config)
 FileAnalyzer fileAnalyzer = new FileAnalyzer(config)
 boolean compareExistingSolrFolderDocs = config.compareExistingSolrFolderDocs
-
+BaseDifferenceChecker differenceChecker = new SolrDifferenceChecker()
+BaseAnalyzer analyzer = new FileSystemAnalyzer()
 long start = System.currentTimeMillis()
 
 crawlMap.each { String crawlName, String startPath ->
     log.debug "Crawl name: $crawlName -- start path: $startPath -- location: $locationName "
 
-    LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName, solrClient, new DifferenceChecker())
+    LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName, solrClient, )
     long numFoundPreCrawl = crawler.getSolrDocCount(crawlName)
     log.debug "\t\t====Solr Doc Count before crawl($crawlName): $numFoundPreCrawl"
 

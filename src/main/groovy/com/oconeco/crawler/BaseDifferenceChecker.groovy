@@ -8,9 +8,20 @@ import org.apache.solr.common.SolrDocument
 /**
  * codify what qualifies as a difference worthy of 're-indexing'
  */
-class DifferenceChecker {
+class BaseDifferenceChecker {
     Logger log = Logger.getLogger(this.class.name)
+    String checkFolderFields
+    String checkFileFields
 
+    BaseDifferenceChecker() {
+        this.checkFolderFields =SolrSystemClient.DEFAULT_FIELDS_TO_CHECK.join(' ')
+        this.checkFileFields = SolrSystemClient.DEFAULT_FIELDS_TO_CHECK.join(' ')
+    }
+
+    BaseDifferenceChecker(String checkFolderFields, String checkFileFields) {
+        this.checkFolderFields = checkFolderFields
+        this.checkFileFields = checkFileFields
+    }
 
     DifferenceStatus compareFSFolderToSavedDocMap(FSFolder fsfolder, Map<String, SolrDocument> existingSolrDocMap) {
         DifferenceStatus differenceStatus = null

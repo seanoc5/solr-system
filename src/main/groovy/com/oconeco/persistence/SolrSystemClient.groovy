@@ -1,6 +1,6 @@
 package com.oconeco.persistence
 
-import com.oconeco.crawler.LocalFileSystemCrawler
+
 import com.oconeco.models.SavableObject
 import org.apache.log4j.Logger
 import org.apache.solr.client.solrj.SolrQuery
@@ -18,7 +18,6 @@ import org.apache.tika.detect.Detector
 import org.apache.tika.parser.AutoDetectParser
 import org.apache.tika.parser.Parser
 import org.apache.tika.sax.BodyContentHandler
-
 /**
  * Looking at helper class to save solr_system (file crawl to start with content to solr
  */
@@ -194,9 +193,9 @@ class SolrSystemClient extends BaseClient {
      * @param Specific crawler with locationName and crawlName
      * @return difference between before delete and after delete
      */
-    Map<String, Object> deleteCrawledDocuments(LocalFileSystemCrawler crawler) {
+    Map<String, Object> deleteCrawledDocuments(String locationName, String crawlName) {
         Map<String, Object> results = [:]
-        String deleteQuery = SolrSystemClient.FLD_LOCATION_NAME + ':"' + crawler.locationName + '" AND ' + com.oconeco.persistence.SolrSystemClient.FLD_CRAWL_NAME + ':"' + crawler.crawlName + '"'
+        String deleteQuery = SolrSystemClient.FLD_LOCATION_NAME + ':"' + locationName + '" AND ' + SolrSystemClient.FLD_CRAWL_NAME + ':"' + crawlName + '"'
         long preDeleteCount = getDocumentCount(deleteQuery)
         log.debug "\t\t------ DELETE query: $deleteQuery (pre-delete count: $preDeleteCount)"
         UpdateResponse deleteResponse = deleteDocuments(deleteQuery, 0)

@@ -1,7 +1,6 @@
 package com.oconeco.models
 
 import com.oconeco.helpers.Constants
-import com.oconeco.persistence.SolrSystemClient
 import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
 import org.apache.solr.common.SolrInputDocument
@@ -12,7 +11,6 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileOwnerAttributeView
 import java.nio.file.attribute.FileTime
 import java.util.regex.Pattern
-
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -25,40 +23,22 @@ import java.util.regex.Pattern
  * handles both basic information from the filesystem, and analysis results from some process
  * todo -- switch to NIO Files and Paths
  */
-class FSFolder extends SavableObject {
+class FSFolder extends FSObject {
     public static final String TYPE = 'Folder'
     String osName
     Logger log = Logger.getLogger(this.class.name);
 
 
-    FSFolder(File srcFolder, SavableObject parent, String locationName, String crawlName, Pattern ignoreFolders, Pattern ignoreFiles) {
-        this(srcFolder, locationName, crawlName, ignoreFolders, ignoreFiles)
-        this.depth = parent ? parent.depth + 1 : 1
-        this.parent = parent
-        this.parentId = parent.id
-    }
+    FSFolder(File srcFolder, SavableObject parent, String locationName, String crawlName) {
+        super(srcFolder, parent, locationName, crawlName)
 
-
-    /**
-     * This constructor has the ability to recurse through the filesystem and build tree
-     * @param id
-     * @param locationName
-     */
-    FSFolder(File srcFolder, String locationName, String crawlName, Pattern ignoreFolders, Pattern ignoreFiles, Integer depth = null) {
-        super(srcFolder, locationName, crawlName, depth)
-        osName = System.getProperty("os.name")      // todo - time this call, is it significant overhead?
-        if (srcFolder.isHidden()) {
-            log.debug "\t\t~~~~processing hidden folder: $srcFolder"
-            hidden = true
-        }
         if (srcFolder.exists()) {
             type = TYPE
-            name = srcFolder.getName()
+//            name = srcFolder.getName()
 //            size = srcFolder.size()           // sse FileUtils.sizeOfDirectory(srcFolder) below
-            path = srcFolder.absolutePath
+//            path = srcFolder.absolutePath
 
             // todo -- revisit replacing backslashes with forward slashes--just cosmetics? avoid double-backslashes in path fields for windows machines
-            id = SavableObject.buildId(locationName, path.replaceAll('\\\\', '/'))
             if (srcFolder.parentFile) {
                 // todo -- check if such a parent is (or will be) saved? currently just saving the id of a parent without caring if it does or will exist in solr
                 parentId = SavableObject.buildId(locationName, srcFolder.parent.replaceAll('\\\\', '/'))
@@ -74,8 +54,6 @@ class FSFolder extends SavableObject {
             owner = ownerAttributeView.getOwner();
 
             if (srcFolder.canExecute() && srcFolder.canRead()) {
-                // todo -- revisit to cost of getting the dir size, for a large dir it is many seconds (a minute or two??)
-//                size = FileUtils.sizeOfDirectory(srcFolder)           // sizeOfDirectory is recursive, we just want the size non-recursive
                 size = FileUtils.sizeOf(srcFolder)
                 log.debug "directory size: $size"
             } else {
@@ -164,6 +142,7 @@ class FSFolder extends SavableObject {
      * Get solr input docs for this object, and all its children -- convenience wrapper
      * @return list of solr input docs ready to be indexed in solr
      */
+/*
     List<SolrInputDocument> toSolrInputDocumentList() {
         List<SolrInputDocument> sidList = []
         // todo - add more FSFolder specific fields here
@@ -209,39 +188,14 @@ class FSFolder extends SavableObject {
 
         return sidList
     }
+*/
 
-
-    def addFolderDetails() {
-        Map<String, Object> details = [:]
-        File srcFolder = (File) this.thing
-
-        if (!path) {
-            path = srcFolder.absolutePath
-            details.path = path
-        }
-
-        BasicFileAttributes attr = Files.readAttributes(srcFolder.toPath(), BasicFileAttributes.class);
-        FileTime lastAccessTime = attr.lastAccessTime()
-        lastAccessDate = new Date(lastAccessTime.toMillis())
-        details.lastAccessDate = lastAccessDate
-
-        FileTime lastModifyTime = attr.lastModifiedTime()
-        lastModifiedDate = new Date(lastModifyTime.toMillis())
-        details.lastModifiedDate = lastModifiedDate
-
-        createdDate = new Date(attr.creationTime().toMillis())
-        details.createdDate = createdDate
-        FileOwnerAttributeView ownerAttributeView = Files.getFileAttributeView(((File) this.thing).toPath(), FileOwnerAttributeView.class);
-        owner = ownerAttributeView.getOwner();
-        details.owner = owner
-
-        return details
-    }
 
     /**
      * helper method to load Directories and Files for this FSFolder object
      * it is expected that the constructors will flag ignorable objects appropriately
      * This is similar functionality to a crawler object building the children of the FSFolder, here partly for unit testing, partly to provide implementation flexibilty
+     * @deprecated use Crawler to do this
      */
     List<SavableObject> buildChildrenList(Pattern ignoreFilesPattern = Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE],
                                           Pattern ignoreFoldersPattern = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]) {
@@ -264,7 +218,7 @@ class FSFolder extends SavableObject {
                         if (file.canRead()) {
                             cnt++
                             if (file.isDirectory()) {
-                                object = new FSFolder(file, this, locationName, crawlName,ignoreFoldersPattern, ignoreFilesPattern)
+                                object = new FSFolder(file, this, locationName, crawlName)
                                 if (object.name ==~ ignoreFoldersPattern) {
                                     log.debug "\t\t$cnt) ----- mark 'ignore' CHILD folder ----- ${this} has ignorable subsolder: $object"
                                     object.ignore = true
@@ -306,6 +260,7 @@ class FSFolder extends SavableObject {
         return children
     }
 
+/*
     List<FSFile> gatherArchiveFiles(def ignoreArchives) {
         List<FSFile> archFiles = []
         if (this.children == null) {
@@ -331,9 +286,10 @@ class FSFolder extends SavableObject {
         }
         return archFiles
     }
+*/
 
 
-    String buildId() {
-        buildId(locationName, path)
-    }
+//    String buildId() {
+//        buildId(locationName, path)
+//    }
 }

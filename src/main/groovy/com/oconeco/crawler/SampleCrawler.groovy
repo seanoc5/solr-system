@@ -1,5 +1,6 @@
 package com.oconeco.crawler
 
+import com.oconeco.analysis.BaseAnalyzer
 import com.oconeco.analysis.FileAnalyzer
 import com.oconeco.analysis.FolderAnalyzer
 import com.oconeco.models.FSFile
@@ -35,13 +36,11 @@ class SampleCrawler {
     String crawlName        // todo -- remove this from class, leave as arg in methods where appropriate
     String locationName
     String osName
-    DifferenceChecker differenceChecker
+    BaseDifferenceChecker differenceChecker
     BaseClient persistenceClient
-    String checkFolderFields = SolrSystemClient.DEFAULT_FIELDS_TO_CHECK.join(' ')
-    String checkFileFields = SolrSystemClient.DEFAULT_FIELDS_TO_CHECK.join(' ')
 
 
-    SampleCrawler(String locationName, String crawlName, BaseClient persistenceClient, DifferenceChecker diffChecker = new DifferenceChecker()) {
+    SampleCrawler(String locationName, BaseClient persistenceClient, BaseDifferenceChecker diffChecker, BaseAnalyzer analyzer) {
         log.debug "${this.class.simpleName} constructor with location:$locationName, name: $crawlName"
         this.crawlName = crawlName
         this.locationName = locationName
@@ -69,7 +68,7 @@ class SampleCrawler {
      * @param fileAnalyzer
      * @return
      */
-    Map<String, List<FSFolder>> crawlGrouping(String crawlName, File startFolder, Pattern ignoreFolders, Pattern ignoreFiles, boolean compareExistingSolrFolderDocs = true, FolderAnalyzer folderAnalyzer=null, FileAnalyzer fileAnalyzer=null) {
+    Map<String, List<FSFolder>> crawlGrouping(String crawlName, File startFolder, FolderAnalyzer folderAnalyzer=null, FileAnalyzer fileAnalyzer=null) {
         Map<String, SolrDocument> existingSolrFolderDocs
         if (compareExistingSolrFolderDocs) {
             existingSolrFolderDocs = getSolrFolderDocs(crawlName)
@@ -103,7 +102,7 @@ class SampleCrawler {
             boolean accessible = f.exists() && f.canRead() && f.canExecute()
 
             int depth = getRelativeDepth(startPath, f)
-            currentFolder = new FSFolder(f, this.locationName, this.crawlName, ignoreFolders, ignoreFiles, depth)
+            currentFolder = new FSFolder(f, currentFolder, this.locationName, this.crawlName)
 //            results << currentFolder
 
             if (accessible) {

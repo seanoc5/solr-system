@@ -1,5 +1,7 @@
 package com.oconeco.helpers
 
+import com.oconeco.analysis.BaseAnalyzer
+
 import java.util.regex.Pattern
 
 class Constants {
@@ -20,6 +22,11 @@ class Constants {
             communication: ~/.*(?i)(mail)/,
             system       : ~/.*(?i)(class|sbt|sbt-\d.*|runtime)/,
     ]
+    public static final Map<String, Map<String, Object>> DEFAULT_FOLDERNAME_LOCATE = [
+            ignore : [pattern: Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE], analysis: [com.oconeco.analysis.BaseAnalyzer.IGNORE]],
+            default: [pattern: null, analysis: com.oconeco.analysis.BaseAnalyzer.DEFAULT],
+    ]
+
 
     public static final Map<String, Pattern> DEFAULT_FILENAME_PATTERNS = [
             ignore        : ~/(?i)([.~]*lock.*|_.*|.*\bte?mp|.*\.class|.*\.pem|skipme.*)/,
@@ -35,6 +42,13 @@ class Constants {
             communication : ~/.*(?i)(eml|vcf)/,
     ]
 
+    public static final Map<String, Map<String, Object>> DEFAULT_FILENAME_LOCATE = [
+            ignore : [pattern:  ~/(?i)([.~]*lock.*|_.*|.*\bte?mp|.*\.class|.*\.pem|skipme.*)/, analysis: BaseAnalyzer.IGNORE],
+            basic : [pattern:  ~/.*(?i)(accdb|docx?|go|groovy|gradle|jar|java|javascript|js|jsonl?d?|md|ods|odp|odt|php|pptx?|rtf|schema|sh|vsdx?|xlsx?)/, analysis: BaseAnalyzer.BASIC_LIST],
+            default: [pattern: null, analysis: BaseAnalyzer.DEFAULT],
+    ]
+
+
     public static final Map<String, Pattern> DEFAULT_FOLDERPATH_PATTERNS = [
             configuration: ~/.*(?i)(\/.local\/|configs)/,
             data         : ~/.*(\/data\/).*/,
@@ -42,12 +56,12 @@ class Constants {
             work           : ~/.*\/work\/.*/,
     ]
 
-//    public static final Map<String, Pattern> DEFAULT_FILEPATH_PATTERNS = [
+    public static final Map<String, Pattern> DEFAULT_FILEPATH_PATTERNS = [
 //            configuration: ~/.*(?i)(\/.local\/|configs)/,
 //            data         : ~/.*(\/data\/).*/,
 //            build           : ~/.*(\/build\/).*/,
-//            work           : ~/.*\/work\/.*/,
-//    ]
+            work           : ~/.*\/work\/.*/,
+    ]
 
 
 }

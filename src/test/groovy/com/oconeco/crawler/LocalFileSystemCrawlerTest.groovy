@@ -1,5 +1,6 @@
 package com.oconeco.crawler
 
+import com.oconeco.analysis.BaseAnalyzer
 import com.oconeco.helpers.Constants
 import com.oconeco.models.FSFolder
 import com.oconeco.persistence.SolrSystemClient
@@ -26,14 +27,14 @@ class LocalFileSystemCrawlerTest extends Specification {
     Path startFolder = Path.of(getClass().getResource('/content').toURI());
 //    SolrSystemClient mockSolrClient = Stub(SolrSystemClient.class)      //Mock()          // new SolrSystemClient()
     SolrSystemClient mockSolrClient =  new SolrSystemClient('')
-//    def mockSolrClient = null
     SolrDocumentList existingSolrFolderDocsBlank = []
     File startFile = new File(getClass().getResource('/content').toURI())
-    FSFolder startFSFolder = new FSFolder(startFile, locationName, crawlName, ignoreFolders, ignoreFiles, 0)
+    FSFolder startFSFolder = new FSFolder(startFile, null, locationName, crawlName)
     Map<String, SolrDocument> existingSolrFolderDocsMocked = mockSolrFolderDocs([startFSFolder])
-    DifferenceChecker differenceChecker = new DifferenceChecker()
+    BaseDifferenceChecker differenceChecker = new BaseDifferenceChecker()
+    BaseAnalyzer analyzer = new BaseAnalyzer(Constants.DEFAULT_FOLDERNAME_LOCATE, Constants.DEFAULT_FILENAME_LOCATE)
 
-//    def "basic localhost crawl of 'content' resource folder"() {
+//    def "basic localhost crawl of 'content' resource startFolder"() {
 //        given:
 //        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName, differenceChecker, mockSolrClient)
 //
@@ -65,13 +66,14 @@ class LocalFileSystemCrawlerTest extends Specification {
 
     def 'basic LocalFileSystemCrawler.crawlFolders no existing docs'() {
         given:
-        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName, mockSolrClient, differenceChecker)
+//        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName, mockSolrClient, differenceChecker)
+        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, mockSolrClient, differenceChecker, analyzer)
 //        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName)
         Map<String, SolrDocument> existingSolrFolderDocs = null
         boolean compareExistingSolrFolderDocs = false
 
         when:
-        Map<String, List<FSFolder>> results = crawler.crawlFolders(crawlName, startFolder.toFile(), ignoreFolders, ignoreFiles, compareExistingSolrFolderDocs, folderAnalyzer, fileAnalyzer)
+        Map<String, List<FSFolder>> results = crawler.crawlFolders(crawlName, startFolder.toFile(), ignoreFolders, ignoreFiles, compareExistingSolrFolderDocs, )
 
         then:
         results != null
@@ -84,7 +86,7 @@ class LocalFileSystemCrawlerTest extends Specification {
         LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName, mockSolrClient, differenceChecker)
 
         when:
-        def results = crawler.crawlFolders(crawlName, startFolder.toFile(), ignoreFolders, ignoreFiles, existingSolrFolderDocsMocked)
+        def results = crawler.crawlFolders(crawlName, startFolder.toFile(), existingSolrFolderDocsMocked)
 
         then:
         results != null
@@ -92,7 +94,7 @@ class LocalFileSystemCrawlerTest extends Specification {
     }
 
 
-//    def 'basic localhost with child folders and folder FSFiles lists'() {
+//    def 'basic localhost with child folders and startFolder FSFiles lists'() {
 //        given:
 //        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName, mockSolrClient, differenceChecker)
 //        Map<String, List<SavableObject>> folderFilesMap = [:]
@@ -104,10 +106,10 @@ class LocalFileSystemCrawlerTest extends Specification {
 //        Map<String, SolrDocument> existingSolrFolderDocs = mockSolrFolderDocs(allFolders)
 //        allFolders.each { FSFolder fsFolder ->
 //            if (fsFolder.ignore) {
-//                log.info "Skip crawling files in folder: $fsFolder"
+//                log.info "Skip crawling files in startFolder: $fsFolder"
 //                ignoreList << fsFolder
 //            } else {
-//                log.info "crawl files in folder: $fsFolder"
+//                log.info "crawl files in startFolder: $fsFolder"
 //                 def folderFiles= crawler.populateFolderFsFiles(fsFolder, ignoreFolders)
 //                folderFilesMap[fsFolder.name] = folderFiles
 //                log.info "Folder files: ${folderFiles.size()}"
@@ -148,7 +150,7 @@ class LocalFileSystemCrawlerTest extends Specification {
 //                        archiveItems.addAll(archEntries)
 //                    }
 //                } else {
-//                    log.debug "\t\t not an archive file, so no archive entries in folder: $fsFolder "
+//                    log.debug "\t\t not an archive file, so no archive entries in startFolder: $fsFolder "
 //                }
 //            } else {
 //                log.debug "\t\t------ Ignore Folder: $fsFolder"

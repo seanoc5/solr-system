@@ -1,13 +1,9 @@
 package com.oconeco.models
 
 import com.oconeco.crawler.DifferenceStatus
-import com.oconeco.helpers.Constants
 import com.oconeco.persistence.SolrSystemClient
 import org.apache.log4j.Logger
 import org.apache.solr.common.SolrInputDocument
-
-import java.util.regex.Matcher
-import java.util.regex.Pattern
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -41,6 +37,7 @@ class SavableObject {
     Date createdDate
     /** track updated/lastmodified date */
     Date lastModifiedDate
+    Date lastAccessDate
 
     boolean hidden = false
 
@@ -60,9 +57,9 @@ class SavableObject {
 
     // todo -- look into using categories as well?
     /** type assigned programmatically (by this package's analysis code) */
-    List<String> labels
+    List<String> labels = []
     /** user tagging */
-    List<String> tags
+    List<String> tags = []
     /** machine learning clusters (unsupervised) */
     List<String> mlClusterType
     /** machine learning classifics (supervised) */
@@ -76,8 +73,6 @@ class SavableObject {
     String owner
 
 //    List<String> permissions
-    Date lastAccessDate
-//    Date lastModifyDate
     Boolean archive = false
     Boolean compressed = false
     /** general flag on should the system ignore this object.
@@ -85,26 +80,25 @@ class SavableObject {
      * but this flag can mean it should be filtered out of search & analysis
      */
     Boolean ignore = false
-    /** debug/tracking information on what (if any) string matched the ignore regex pattern */
-    String matchedIgnoreText = null
+
 
 
     /**
      * placeholder 'empty' constructor -- probably should use a 'bigger' constructor
      */
-    SavableObject() {
-        log.warn "Empty constructor SavableObject()... (developer should use a better constructor"
-    }
+//    SavableObject() {
+//        log.warn "Empty constructor SavableObject()... (developer should use a better constructor"
+//    }
 
 
-    /**
-     * Simplest constructor -- assumes descendent objects will add all the real details (try to use 'bigger' constructor with more details
-     * @param thing (file, folder, bookmark, url,...)
-     */
-    SavableObject(def thing) {
-        this.thing = thing
-        log.info "Simple constructor: SavableObject(thing) [${thing.class.name}:${thing}]"
-    }
+//    /**
+//     * Simplest constructor -- assumes descendent objects will add all the real details (try to use 'bigger' constructor with more details
+//     * @param thing (file, folder, bookmark, url,...)
+//     */
+//    SavableObject(def thing) {
+//        this.thing = thing
+//        log.info "Simple constructor: SavableObject(thing) [${thing.class.name}:${thing}]"
+//    }
 
 
     /**
@@ -112,6 +106,7 @@ class SavableObject {
      * @param thing - what is being created, e.g. (file, folder, bookmark, url,...)
      * @param locationName - name source, e.g. hostname for filesystem crawls, profile for browser history/bookmarks, email account...
      */
+/*
     SavableObject(def thing, String locationName, String crawlName = Constants.LBL_UNKNOWN, Integer depth = null) {
         this.thing = thing
         this.locationName = locationName
@@ -119,6 +114,7 @@ class SavableObject {
         this.depth = depth
         log.debug "Typical constructor: SavableObject(thing, locationName, [crawlName], [depth]) -- ($thing, $locationName, $crawlName, $depth)"
     }
+*/
 
 
     /**
@@ -127,10 +123,21 @@ class SavableObject {
      * @param locationName - name source, e.g. hostname for filesystem crawls, profile for browser history/bookmarks, email account...
      * @param parent - depth of thing relative to start (calling code will provide this)
      */
-    SavableObject(def thing, SavableObject parent, String locationName) {
-        this(thing, locationName)
-        this.parent = parent
-        this.depth = parent.depth + 1
+    SavableObject(def thing, SavableObject parent, String locationName, String crawlName) {
+//        this(thing, parent, locationName,)
+        this.thing = thing
+        if(parent) {
+            this.parent = parent
+//            if (parent?.depth) {
+                this.depth = parent.depth + 1
+//            } else {
+//                depth = 0
+//            }
+        } else {
+            log.debug "no valid parent given: $thing"
+        }
+        this.locationName = locationName
+        this.crawlName = crawlName
         log.debug "Creating savable object thing: $thing"
     }
 
@@ -171,8 +178,6 @@ class SavableObject {
         if (hidden)
             sid.setField(SolrSystemClient.FLD_HIDDEN_B, hidden)
 
-//        sid.setField(SolrSystemClient.FLD_LAST_MODIFIED, lastModifiedDate)
-//        if(labels)
         sid.setField(SolrSystemClient.FLD_LABELS, labels)
 
         if (tags)
@@ -195,8 +200,6 @@ class SavableObject {
         } else {
             log.warn "\t\t.....Cannot reliably build a dedup string, missing type:$type, or name:$name, or size:$size"
         }
-
-//        sid.setField(SolrSystemClient.FLD_, )
 
         return sid
     }
@@ -230,7 +233,7 @@ class SavableObject {
      * @param ignoreFiles
      * @return
      */
-    String matchIgnorePattern(Pattern ignoreFiles) {
+/*    String matchIgnorePattern(Pattern ignoreFiles) {
         Matcher matcher = name =~ ignoreFiles
         if (matcher.matches()) {
             String firstGroupMatch = matcher.group(1)
@@ -242,7 +245,7 @@ class SavableObject {
             log.debug "\t\tnot ignoring: $name"
         }
         return matchedIgnoreText
-    }
+    }*/
 
 
     /**

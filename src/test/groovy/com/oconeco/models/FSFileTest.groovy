@@ -19,7 +19,7 @@ class FSFileTest extends Specification {
     Pattern ignoreFiles = Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE]
     Pattern ignoreFolders = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]
 
-    FSFolder parentFolder = new FSFolder(jsonFile.parentFile, locationName, crawlName, ignoreFolders, ignoreFiles, 0)
+    FSFolder parentFolder = new FSFolder(jsonFile.parentFile, null, locationName, crawlName)
 
     def "should create basic FSFile - non-archive"() {
         when:

@@ -23,8 +23,8 @@ class ArchFolder extends SavableObject {
     public static final String TYPE = 'ArchFolder'
     String owner
 
-    ArchFolder(ArchiveEntry ae, SavableObject parent, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN) {
-        super(ae, parent, locationName)
+    ArchFolder(ArchiveEntry ae, SavableObject parent, String locationName , String crawlName) {
+        super(ae, parent, locationName, crawlName)
         type = TYPE
         archive = true
         compressed=true     // todo -- add more logic here to check for archive without compression

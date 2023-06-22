@@ -8,7 +8,7 @@ import spock.lang.Specification
 
 import java.util.regex.Pattern
 
-class DifferenceCheckerTest extends Specification {
+class BaseDifferenceCheckerTest extends Specification {
     String locationName = 'spock'
     String crawlName = 'test'
     Pattern ignoreFiles = Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE]
@@ -16,13 +16,13 @@ class DifferenceCheckerTest extends Specification {
 
 
     File startFolder = new File(getClass().getResource('/content').toURI())
-    FSFolder fsFolder = new FSFolder(startFolder, locationName, crawlName, ignoreFolders, ignoreFiles, 1)
+    FSFolder fsFolder = new FSFolder(startFolder, null, locationName, crawlName)
 //    Map<String, Object> fieldsMap = ["${SolrSystemClient.FLD_ID}": fsFolder.id, "${SolrSystemClient.FLD_TYPE}": "${FSFolder.TYPE}", "${SolrSystemClient.FLD_PATH_S}": '/content', "${SolrSystemClient.FLD_LAST_MODIFIED}": fsFolder.lastModifiedDate]
 //    SolrDocument solrDoc = new SolrDocument(fieldsMap)
 
     def "check when objects should be current"() {
         given:
-        DifferenceChecker differenceChecker = new DifferenceChecker()
+        BaseDifferenceChecker differenceChecker = new BaseDifferenceChecker()
         SolrDocument sameSolrDoc = new SolrDocument()
         sameSolrDoc.setField(SolrSystemClient.FLD_ID, fsFolder.id)
         sameSolrDoc.setField(SolrSystemClient.FLD_TYPE, fsFolder.type)
@@ -60,7 +60,7 @@ class DifferenceCheckerTest extends Specification {
         diffSolrDoc.setField(SolrSystemClient.FLD_SIZE, fsFolder.size + 1)
         diffSolrDoc.setField(SolrSystemClient.FLD_DEDUP, fsFolder.dedup + '!')
         diffSolrDoc.setField(SolrSystemClient.FLD_LOCATION_NAME, fsFolder.locationName + '!')
-        DifferenceChecker differenceChecker = new DifferenceChecker()
+        BaseDifferenceChecker differenceChecker = new BaseDifferenceChecker()
 
         when:
         DifferenceStatus status = differenceChecker.compareFSFolderToSavedDoc(fsFolder, diffSolrDoc)

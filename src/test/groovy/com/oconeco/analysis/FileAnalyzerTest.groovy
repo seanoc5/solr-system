@@ -26,7 +26,7 @@ class FileAnalyzerTest extends Specification {
     File datasourcesZip = new File(FileAnalyzerTest.getClassLoader().getResource('./content/datasources.zip').toURI())
     Pattern ignoreFiles = Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE]
     Pattern ignoreFolders = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]
-    FSFolder parentFolder = new FSFolder(currencyXml.parentFile, locationName, crawlName, ignoreFolders, ignoreFiles, 1)
+    FSFolder parentFolder = new FSFolder(currencyXml.parentFile, null, locationName, crawlName)
 
     def "Analyze Test resource files"() {
         given:

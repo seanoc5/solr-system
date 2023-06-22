@@ -6,6 +6,7 @@ import com.oconeco.models.SavableObject
 import org.apache.log4j.Logger
 
 import java.util.regex.Pattern
+
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -13,35 +14,16 @@ import java.util.regex.Pattern
  * @description:
  */
 
-/**
- * @deprecated see {@link FileSystemAnalyzer}
- */
-class FileAnalyzer /*extends BaseAnalyzer*/ {
+class FileSystemAnalyzer extends BaseAnalyzer {
     Logger log = Logger.getLogger(this.class.name)
-    Map namePatternsMap = null
 
-    FileAnalyzer() {
-        namePatternsMap = Constants.DEFAULT_FILENAME_PATTERNS
-        log.info "Blank constructor, using default filename patterns ($namePatternsMap)...?"
+    FileSystemAnalyzer(folderNameMap, fileNameMap, folderPathMap= null, filePathMap=null) {
+        super(folderNameMap, fileNameMap, folderPathMap, filePathMap)
     }
 
-    FileAnalyzer(Map<String, Pattern> fnPatterns) {
-        namePatternsMap = fnPatterns
-        log.info "Using map constructorm filenamePatterns ($fnPatterns)..."
+    FileSystemAnalyzer(ConfigObject config) {
+        super(config)
     }
-
-
-    FileAnalyzer(ConfigObject config) {
-        log.debug "Config constructor..."
-        if (config?.namePatterns?.files) {
-            namePatternsMap = config?.namePatterns?.files
-            log.info "\t\tusing file name patterns (($namePatternsMap)) from config object."
-        } else {
-            namePatternsMap = Constants.DEFAULT_FILENAME_PATTERNS
-            log.warn "No valid config files.namePatterns!! falling back to default: $namePatternsMap"
-        }
-    }
-
 
     List<String> analyze(List<FSFile> fileFsList) {
         List<String> labels = []

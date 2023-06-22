@@ -20,14 +20,14 @@ class FolderAnalyzerTest extends Specification {
     URL cfgUrl = getClass().getResource('/configLocate.groovy')
     ConfigObject config = new ConfigSlurper().parse(cfgUrl)
     FolderAnalyzer analyzer = new FolderAnalyzer(config)
-    File folder = new File(getClass().getResource('/content').toURI())
+    File startFolder = new File(getClass().getResource('/content').toURI())
     Pattern ignoreFiles = Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE]
     Pattern ignoreFolders = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]
 
 
     def "basic folder type analysis"() {
         when:
-        FSFolder fsFolder = new FSFolder(folder, locationName, crawlName, ignoreFolders, ignoreFiles, 1)
+        FSFolder fsFolder = new FSFolder(startFolder, null, locationName, crawlName)
         List<String> labels = analyzer.analyze(fsFolder)
 
         then:
@@ -37,7 +37,7 @@ class FolderAnalyzerTest extends Specification {
     }
 
 /*
-    def "folder.toSolrInputDocument analysis"() {
+    def "startFolder.toSolrInputDocument analysis"() {
         given:
         ConfigObject config = new ConfigSlurper().parse(getClass().getResource('/configLocate.groovy'))
         FSFolder folderFS = new FSFolder(new File(getClass().getResource('/content').toURI()))

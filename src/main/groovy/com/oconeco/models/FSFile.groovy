@@ -11,11 +11,6 @@ import org.apache.commons.io.FilenameUtils
 import org.apache.log4j.Logger
 import org.apache.solr.common.SolrInputDocument
 
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.attribute.BasicFileAttributes
-import java.nio.file.attribute.FileOwnerAttributeView
-import java.nio.file.attribute.FileTime
 import java.util.regex.Pattern
 /**
  * @author :    sean
@@ -28,59 +23,49 @@ import java.util.regex.Pattern
  * structure for handling information about a folder from the FS (filesystem),
  * handles both basic information from the filesystem, and analysis results from some process
  */
-class FSFile extends SavableObject {
+class FSFile extends  FSObject {
     Logger log = Logger.getLogger(this.class.name)
     public static final String TYPE = 'File'
     String extension
     String mimeType
     String owner
-//    List<String> permissions
 
     String osName
     Integer ARCHIVE_STATUS_SIZE = 10000
     public Pattern FAKE_ARCHIVE_PATTERN = ~/.*(doc|xls|ppt)x/
 
-//    Date lastAccessDate
-//    Date lastModifyDate
-//    Boolean archive
-//    Boolean compressed
 
-    FSFile(File f, SavableObject parent, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN) {
-        super(f, parent, locationName)
-        path = f.absolutePath
+    FSFile(File f, SavableObject parent, String locationName, String crawlName) {
+        super(f, parent, locationName, crawlName)
+
         // todo -- revisit if this replacing backslashes with forward slashes helps, I had trouble querying for id with backslashes (SoC 20230603)
-        id = SavableObject.buildId(locationName, path.replaceAll('\\\\', '/'))
+//        id = SavableObject.buildId(locationName, path.replaceAll('\\\\', '/'))
         type = TYPE
-        hidden = f.isHidden()
-        if (hidden)
-            log.info "\t\t~~~~processing hidden file: $f"
+//        hidden = f.isHidden()
+//        if (hidden)
+//            log.info "\t\t~~~~processing hidden file: $f"
+//
+//        if (!this.thing) {
+//            this.thing = f
+//        }
+//        name = f.name
+//        size = f.size()
+//
+//
+//        if (depth) {
+//            this.depth = depth
+//        }
 
-        if (!this.thing) {
-            this.thing = f
-        }
-        name = f.name
-        size = f.size()
 
-
-        if (depth) {
-            this.depth = depth
-        }
-
-        if (crawlName == Constants.LBL_UNKNOWN || crawlName == null) {
-            log.debug "\t\t you likely want to add crawl name...."
-        } else {
-            this.crawlName = crawlName
-        }
-
-        lastModifiedDate = new Date(f.lastModified())
+//        lastModifiedDate = new Date(f.lastModified())
 
         // todo -- more here -- also check FSFolder object, and analyze() method,
         extension = FilenameUtils.getExtension(f.name)
-        Path path = f.toPath()
 
-        osName = System.getProperty("os.name")
-
+//        osName = System.getProperty("os.name")
+/*
         if (f.exists()) {
+            Path p = f.toPath()
             BasicFileAttributes attr = Files.readAttributes(path, BasicFileAttributes.class)
             FileTime lastAccessTime = attr.lastAccessTime()
             lastAccessDate = new Date(lastAccessTime.toMillis())
@@ -91,42 +76,9 @@ class FSFile extends SavableObject {
             owner = ownerAttributeView.getOwner()
         } else {
             log.warn "File: $f does not exist!! broken symlink??"
-        }
+        }*/
         log.debug "File(${this.toString()})"
     }
-
-    // todo -- remove this, move logic to something like fsFile.expandArchive()
-/*
-    FSFile(ArchiveEntry archiveEntry, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN, Integer depth = null) {
-        super(archiveEntry,locationName, depth)
-        id = locationName + ':' + archiveEntry.name
-        type = 'ArchiveEntry'
-
-        if(!this.thing) {
-            this.thing = archiveEntry
-        }
-        name = archiveEntry.name
-        size = archiveEntry.size
-
-//        if(depth) {
-//            this.depth = depth
-//        }
-
-        if(crawlName==Constants.LBL_UNKNOWN || crawlName == null) {
-            log.debug "\t\t you likely want to add crawl name...."
-        } else {
-            this.crawlName = crawlName
-        }
-
-//        lastModifiedDate = new Date(f.lastModified())
-
-        // todo -- more here -- also check FSFolder object, and analyze() method,
-        extension = FilenameUtils.getExtension(archiveEntry.name)
-//        owner = ownerAttributeView.getOwner();
-
-        log.debug "Archive Entry File(${this.toString()})"
-    }
-*/
 
 
     /**
@@ -286,13 +238,13 @@ class FSFile extends SavableObject {
     }
 
 
-    List<SolrInputDocument> gatherSolrInputDocs(FSFile fsfile, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN, Integer depth = null) {
-        ArchiveInputStream aiszip = ArchiveUtils.getArchiveInputStream(fsfile)
-        List<SolrInputDocument> sidList = gatherSolrInputDocs(aiszip, locationName, crawlName, depth)
-        return sidList
-    }
+//    List<SolrInputDocument> gatherSolrInputDocs(FSFile fsfile, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN, Integer depth = null) {
+//        ArchiveInputStream aiszip = ArchiveUtils.getArchiveInputStream(fsfile)
+//        List<SolrInputDocument> sidList = gatherSolrInputDocs(aiszip, locationName, crawlName, depth)
+//        return sidList
+//    }
 
-    List<SolrInputDocument> gatherSolrInputDocs(ArchiveInputStream ais, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN, Integer depth = null) {
+/*    List<SolrInputDocument> gatherSolrInputDocs(ArchiveInputStream ais, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN, Integer depth = null) {
         List<SolrInputDocument> sidList = []
         // todo -- get parent file object, change constructor sig below
         ArchiveEntry entry = null
@@ -314,6 +266,6 @@ class FSFile extends SavableObject {
             }
         }
         return sidList
-    }
+    }*/
 
 }

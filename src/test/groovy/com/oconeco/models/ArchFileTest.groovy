@@ -12,7 +12,7 @@ class ArchFileTest extends Specification {
     String zipName = 'datasources.zip'
 
     File zipSrcFile = new File(getClass().getResource("/content/${zipName}").toURI())
-    FSFolder parentFolder = new FSFolder(zipSrcFile.parentFile, locationName, crawlName, ignoreFolders, ignoreFiles, 1)
+    FSFolder parentFolder = new FSFolder(zipSrcFile.parentFile, locationName, crawlName)
     FSFile fsZipFile = new FSFile(zipSrcFile, parentFolder, locationName, crawlName)
     File tarSrcFile = new File(getClass().getResource("/content/${tarName}").toURI())
     FSFile fstarFile = new FSFile(tarSrcFile, parentFolder, locationName, crawlName)
