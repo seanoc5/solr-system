@@ -48,12 +48,40 @@ class FSObject extends SavableObject {
             log.warn "OSName is null??!! $this"
             osName = System.getProperty("os.name")
         } else {
-            log.info "OSName: $osName"
+//            log.debug "OSName: $osName"
         }
 
         lastModifiedDate = new Date(f.lastModified())
 
         if (f.exists()) {
+            // todo -- revisit replacing backslashes with forward slashes--just cosmetics? avoid double-backslashes in path fields for windows machines
+            if (parent) {
+                if (parent.id) {
+                    log.debug "\t\tGetting parent id from parent Object ($parent) for this:$this"
+                    parentId = parent.id
+                } else {
+                    log.warn "FSFolder ($this) has a parent ($parent) BUT that has no id!!!? (${parent.id}) -- that makes no sense!!"
+                }
+            } else if (f.parentFile) {
+                // todo -- check if such a parent is (or will be) saved? currently just saving the id of a parent without caring if it does or will exist in solr
+                String p = f.parent
+                if (osName == null) {
+                    log.warn "Unknown/null osName ($osName), replacing any backslashes with forward in path($p) --this:$this"
+                    p = p.replaceAll('\\\\', '/')
+                } else if (osName?.contains('Windows')) {
+                    log.info "\t\treplacing Windows backslashes(\\)  with forward (/) in path: $p (this)"
+                    p = p.replaceAll('\\\\', '/')
+                } else {
+                    if(p.contains('\\')){
+                        log.warn "Path has a backslash ($p) -- is this a problem for solr searching??? ($this)"
+                    }
+                    log.debug "\t\tPath for os ($osName) does not need backslash replacement (??)"
+                }
+
+                parentId = SavableObject.buildId(locationName, p)
+            }
+
+
 //            Path p = f.toPath()
 //            BasicFileAttributes attr = Files.readAttributes(p, BasicFileAttributes.class)
 //            FileTime lastAccessTime = attr.lastAccessTime()
@@ -77,17 +105,17 @@ class FSObject extends SavableObject {
 //    }
 
 
-    def addFolderDetails() {
+    def addFileDetails() {
         Map<String, Object> details = [:]
-        File srcFolder = (File) this.thing
+        File f = (File) this.thing
 
         if (!path) {
             log.warn "No path set for this FSObject ($this)??!! it should have been set already"
-            path = srcFolder.absolutePath
+            path = f.absolutePath
             details.path = path
         }
 
-        BasicFileAttributes attr = Files.readAttributes(srcFolder.toPath(), BasicFileAttributes.class);
+        BasicFileAttributes attr = Files.readAttributes(f.toPath(), BasicFileAttributes.class);
         FileTime lastAccessTime = attr.lastAccessTime()
         lastAccessDate = new Date(lastAccessTime.toMillis())
         details.lastAccessDate = lastAccessDate

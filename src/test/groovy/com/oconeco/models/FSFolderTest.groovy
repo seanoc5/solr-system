@@ -36,7 +36,7 @@ class FSFolderTest extends Specification {
     def "should build basic FSFolder with folder details"() {
         when:
         FSFolder fsFolder = new FSFolder(startFolder, null, locationName, crawlName )
-        fsFolder.addFolderDetails()
+        fsFolder.addFileDetails()
         String pid = SavableObject.buildId(locationName, startFolder.parent)
 
         then:
@@ -55,7 +55,7 @@ class FSFolderTest extends Specification {
     def "should build basic FSFolder with parentObject"() {
         when:
         FSFolder fsFolder = new FSFolder(startFolder, parentFolder, locationName, crawlName )
-        fsFolder.addFolderDetails()
+        fsFolder.addFileDetails()
 
         then:
         fsFolder.parent == parentFolder
@@ -78,7 +78,7 @@ class FSFolderTest extends Specification {
     def "basic folder load with ignore check toSolrInputDocument"() {
         given:
         FSFolder fsFolder = new FSFolder(startFolder, parentFolder, locationName, crawlName)
-        Map<String, Object> details = fsFolder.addFolderDetails()
+        Map<String, Object> details = fsFolder.addFileDetails()
 
         when:
         SolrInputDocument sid = fsFolder.toSolrInputDocument()
@@ -97,7 +97,7 @@ class FSFolderTest extends Specification {
     def "folder and files with ignore check toSolrInputDocument"() {
         given:
         FSFolder fsFolder = new FSFolder(startFolder, parentFolder, locationName, crawlName)
-        fsFolder.addFolderDetails()
+        fsFolder.addFileDetails()
         fsFolder.buildChildrenList(Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE])
 
         when:

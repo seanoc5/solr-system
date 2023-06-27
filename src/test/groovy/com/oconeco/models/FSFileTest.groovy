@@ -21,9 +21,10 @@ class FSFileTest extends Specification {
 
     FSFolder parentFolder = new FSFolder(jsonFile.parentFile, null, locationName, crawlName)
 
-    def "should create basic FSFile - non-archive"() {
+    def "should create basic FSFile"() {
         when:
-        FSFile fsFile = new FSFile(jsonFile, parentFolder, locationName, crawlName)
+        FSFile fsFile = new FSFile(jsonFile, null, locationName, crawlName)
+        String pid = SavableObject.buildId(locationName, jsonFile.parentFile.path)
 
         then:
         fsFile.id.startsWith(fsFile.locationName)
@@ -34,6 +35,21 @@ class FSFileTest extends Specification {
         fsFile.thing instanceof File
         fsFile.thing == jsonFile
         fsFile.isArchive() == false
+
+        fsFile.parent == null
+        fsFile.parentId == pid
+    }
+
+
+    def "should create basic FSFile with parentFolder"() {
+        when:
+        FSFile fsFile = new FSFile(jsonFile, parentFolder, locationName, crawlName)
+        String pid = SavableObject.buildId(locationName, jsonFile.parentFile.path)
+
+        then:
+        fsFile.parent == parentFolder
+        fsFile.parentId == parentFolder.id
+        fsFile.parentId == pid
     }
 
 

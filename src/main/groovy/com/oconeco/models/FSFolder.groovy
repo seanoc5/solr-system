@@ -40,31 +40,6 @@ class FSFolder extends FSObject {
 
             dedup = buildDedupString()
 
-            // todo -- revisit replacing backslashes with forward slashes--just cosmetics? avoid double-backslashes in path fields for windows machines
-            if (parent) {
-                if (parent.id) {
-                    log.debug "\t\tGetting parent id from parent Object ($parent) for this:$this"
-                    parentId = parent.id
-                } else {
-                    log.warn "FSFolder ($this) has a parent ($parent) BUT that has no id!!!? (${parent.id}) -- that makes no sense!!"
-                }
-            } else if (srcFolder.parentFile) {
-                // todo -- check if such a parent is (or will be) saved? currently just saving the id of a parent without caring if it does or will exist in solr
-                String p = srcFolder.parent
-                if (osName == null) {
-                    p = p.replaceAll('\\\\', '/')
-                } else if (osName?.contains('Windows')) {
-                    p = p.replaceAll('\\\\', '/')
-                } else {
-                    if(p.contains('\\')){
-                        log.warn "Path has a backslash ($p) -- is this a problem for solr searching??? ($this)"
-                    }
-                    log.debug "\t\tPath for os ($osName) does not need backslash replacement (??)"
-                }
-
-                parentId = SavableObject.buildId(locationName, p)
-            }
-
 
         } else {
             log.warn "Src folder ($srcFolder) is not accessible??"

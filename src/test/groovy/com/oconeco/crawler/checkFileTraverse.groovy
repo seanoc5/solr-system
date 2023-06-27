@@ -34,7 +34,7 @@ def postDirVisitor = {
     lastFolder = currentFolder
     int depth = getRelativeDepth(startPath, it)
     FSFolder fsFolder = new FSFolder(it, currentFolder,  locationName, crawlName)           // todo revisit....
-    def details = fsFolder.addFolderDetails()
+    def details = fsFolder.addFileDetails()
     def children = fsFolder.buildChildrenList(ignorePattern)
     log.debug "Folder ($fsFolder) -- Children count: ${children.size()} -- Details($details)"
 }
