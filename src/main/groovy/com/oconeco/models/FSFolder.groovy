@@ -5,11 +5,6 @@ import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
 import org.apache.solr.common.SolrInputDocument
 
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.attribute.BasicFileAttributes
-import java.nio.file.attribute.FileOwnerAttributeView
-import java.nio.file.attribute.FileTime
 import java.util.regex.Pattern
 /**
  * @author :    sean
@@ -24,9 +19,8 @@ import java.util.regex.Pattern
  * todo -- switch to NIO Files and Paths
  */
 class FSFolder extends FSObject {
-    public static final String TYPE = 'Folder'
-    String osName
     Logger log = Logger.getLogger(this.class.name);
+    public static final String TYPE = 'Folder'
 
 
     FSFolder(File srcFolder, SavableObject parent, String locationName, String crawlName) {
@@ -34,24 +28,7 @@ class FSFolder extends FSObject {
 
         if (srcFolder.exists()) {
             type = TYPE
-//            name = srcFolder.getName()
-//            size = srcFolder.size()           // sse FileUtils.sizeOfDirectory(srcFolder) below
-//            path = srcFolder.absolutePath
-
-            // todo -- revisit replacing backslashes with forward slashes--just cosmetics? avoid double-backslashes in path fields for windows machines
-            if (srcFolder.parentFile) {
-                // todo -- check if such a parent is (or will be) saved? currently just saving the id of a parent without caring if it does or will exist in solr
-                parentId = SavableObject.buildId(locationName, srcFolder.parent.replaceAll('\\\\', '/'))
-            }
-            Path nioPath = srcFolder.toPath()
-            BasicFileAttributes attr = Files.readAttributes(nioPath, BasicFileAttributes.class);
-            FileTime lastAccessTime = attr.lastAccessTime()
-            lastAccessDate = new Date(lastAccessTime.toMillis())
-            FileTime lastModifyTime = attr.lastModifiedTime()
-            lastModifiedDate = new Date(lastModifyTime.toMillis())
-            createdDate = new Date(attr.creationTime().toMillis())
-            FileOwnerAttributeView ownerAttributeView = Files.getFileAttributeView(nioPath, FileOwnerAttributeView.class);
-            owner = ownerAttributeView.getOwner();
+//            Path nioPath = srcFolder.toPath()
 
             if (srcFolder.canExecute() && srcFolder.canRead()) {
                 size = FileUtils.sizeOf(srcFolder)
@@ -62,6 +39,32 @@ class FSFolder extends FSObject {
             }
 
             dedup = buildDedupString()
+
+            // todo -- revisit replacing backslashes with forward slashes--just cosmetics? avoid double-backslashes in path fields for windows machines
+            if (parent) {
+                if (parent.id) {
+                    log.debug "\t\tGetting parent id from parent Object ($parent) for this:$this"
+                    parentId = parent.id
+                } else {
+                    log.warn "FSFolder ($this) has a parent ($parent) BUT that has no id!!!? (${parent.id}) -- that makes no sense!!"
+                }
+            } else if (srcFolder.parentFile) {
+                // todo -- check if such a parent is (or will be) saved? currently just saving the id of a parent without caring if it does or will exist in solr
+                String p = srcFolder.parent
+                if (osName == null) {
+                    p = p.replaceAll('\\\\', '/')
+                } else if (osName?.contains('Windows')) {
+                    p = p.replaceAll('\\\\', '/')
+                } else {
+                    if(p.contains('\\')){
+                        log.warn "Path has a backslash ($p) -- is this a problem for solr searching??? ($this)"
+                    }
+                    log.debug "\t\tPath for os ($osName) does not need backslash replacement (??)"
+                }
+
+                parentId = SavableObject.buildId(locationName, p)
+            }
+
 
         } else {
             log.warn "Src folder ($srcFolder) is not accessible??"
@@ -252,7 +255,7 @@ class FSFolder extends FSObject {
         } else {
             log.warn "\t\tFolder (${folder.absolutePath}) does not exist!!"
         }
-        if (!object){
+        if (!object) {
             log.warn "Saved object: $object is missing/null"
         } else if (object.id == null) {
             log.warn "Saved object: $object has no id"

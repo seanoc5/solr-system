@@ -1,6 +1,6 @@
 package com.oconeco.models
 
-import com.oconeco.analysis.FolderAnalyzer
+import com.oconeco.analysis.BaseAnalyzer
 import com.oconeco.helpers.Constants
 import com.oconeco.persistence.SolrSystemClient
 import org.apache.solr.common.SolrInputDocument
@@ -19,8 +19,25 @@ class FSFolderTest extends Specification {
 
     def "should build basic FSFolder"() {
         when:
-        FSFolder fsFolder = new FSFolder(startFolder, parentFolder, locationName, crawlName )
+        FSFolder fsFolder = new FSFolder(startFolder, null, locationName, crawlName )
+//        fsFolder.addFolderDetails()
+        String pid = SavableObject.buildId(locationName, startFolder.parent)
+
+        then:
+        fsFolder.parentId == pid
+        fsFolder.parent == null
+        fsFolder.children == null
+        fsFolder.size > 1           // could test actual size, but that might change as we update test folder contents
+        fsFolder.lastModifiedDate != null
+
+        fsFolder.owner == null
+    }
+
+    def "should build basic FSFolder with folder details"() {
+        when:
+        FSFolder fsFolder = new FSFolder(startFolder, null, locationName, crawlName )
         fsFolder.addFolderDetails()
+        String pid = SavableObject.buildId(locationName, startFolder.parent)
 
         then:
         fsFolder.owner != null
@@ -28,29 +45,33 @@ class FSFolderTest extends Specification {
         fsFolder.size > 0
         fsFolder.lastModifiedDate != null
         fsFolder.lastAccessDate != null
-//        fsFolder.children.size() == 20
-//        fsFolder.countFiles == 20
-//        fsFolder.countIgnoredFiles == 1
+        fsFolder.parent == null
+        fsFolder.parentId == pid
+
+        fsFolder.children == null
     }
+
+
+    def "should build basic FSFolder with parentObject"() {
+        when:
+        FSFolder fsFolder = new FSFolder(startFolder, parentFolder, locationName, crawlName )
+        fsFolder.addFolderDetails()
+
+        then:
+        fsFolder.parent == parentFolder
+        fsFolder.parentId == parentFolder.id
+    }
+
 
     def "items should have date and size as well as unique path:size combo"() {
         given:
         FSFolder fsFolder = new FSFolder(startFolder, parentFolder, locationName, crawlName )
 
         when:
-        Map<String, Object> details = fsFolder.addFolderDetails()
-
+        String dedup = fsFolder.type + ':' + fsFolder.name + '::' + fsFolder.size
 
         then:
-//        fsFolder.children.size() == 20
-//        fsFolder.countFiles == 20
-//        fsFolder.countSubdirs == 2
-//        fsFolder.countIgnoredFiles == 1
-        fsFolder.dedup.startsWith('Folder:content::')
-        fsFolder.createdDate != null
-        fsFolder.lastAccessDate != null
-        fsFolder.lastModifiedDate != null
-        fsFolder.owner != null
+        fsFolder.dedup.startsWith(dedup)
     }
 
 
@@ -63,11 +84,12 @@ class FSFolderTest extends Specification {
         SolrInputDocument sid = fsFolder.toSolrInputDocument()
         List<String> fieldNAmes = sid.getFieldNames().toList()
         Set<String> detailKeys = details.keySet()
+        List<String> expectedKeys = ['lastAccessDate', 'createdDate', 'owner']
 
         then:
         sid != null
-        detailKeys.size() == 4
-        detailKeys.containsAll(['lastAccessDate', 'lastModifiedDate', 'createdDate', 'owner'])
+        detailKeys.size() == expectedKeys.size()
+        detailKeys.containsAll(expectedKeys)
         fieldNAmes.size() >= 15
 
     }
@@ -88,8 +110,8 @@ class FSFolderTest extends Specification {
                                       SolrSystemClient.FLD_LOCATION_NAME,
                                       SolrSystemClient.FLD_LAST_MODIFIED,
 //                                      SolrSystemClient.FLD_CHILD_FILENAMES, SolrSystemClient.FLD_CHILD_DIRNAMES,
-//                                      SolrSystemClient.FLD_DEDUP, SolrSystemClient.FLD_EXTENSION_SS,
-//                                      SolrSystemClient.FLD_IGNORED_FOLDERS,
+                                      SolrSystemClient.FLD_DEDUP,
+//                                      SolrSystemClient.FLD_IGNORED_FOLDERS, SolrSystemClient.FLD_EXTENSION_SS,
 //                                      SolrSystemClient.FLD_IGNORED_FILES
         ]
 
@@ -133,36 +155,15 @@ class FSFolderTest extends Specification {
 //    }
 
 
-/*
-    def "startFolder load with toSolrInputDocument"() {
-        given:
-        Pattern ignoreFiles = Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE]
-
-        when:
-        FSFolder fsFolder = new FSFolder(startFolder, parentFolder, locationName, crawlName)
-        def details = fsFolder.addFolderDetails()
-        List<SavableObject> children = fsFolder.buildChildrenList(ignoreFiles)
-        List<SolrInputDocument> solrDocs = fsFolder.
-//        List<SolrInputDocument> solrDocs = fsFolder.toSolrInputDocumentList()
-        def ignoredFolders = children.findAll { it.type.containsIgnoreCase('startFolder') && it.ignore == true }
-        def ignoredFiles = children.findAll { it.type.containsIgnoreCase('file') && it.ignore == true }
-
-        then:
-        fsFolder.children.size() == 23
-        solrDocs.size() == 24
-        ignoredFiles.size() == 2
-        ignoredFolders.size() == 1
-        ignoredFolders[0].name == 'ignoreMe'
-    }
-*/
 
 
-    def "load and analyze content folder"() {
+    def "load and analyze content folder with configLocate.groovy"() {
         given:
 //        File src = new File(getClass().getResource('/content').toURI())
         ConfigObject config = new ConfigSlurper().parse(getClass().getResource('/configLocate.groovy'))
-        FolderAnalyzer analyzer = new FolderAnalyzer(config)
+//        FolderAnalyzer analyzer = new FolderAnalyzer(config)
         FSFolder startFolder = new FSFolder(startFolder, parentFolder, locationName, crawlName)
+        BaseAnalyzer analyzer = new BaseAnalyzer()
 
         when:
         def results = analyzer.analyze(startFolder)
@@ -177,59 +178,25 @@ class FSFolderTest extends Specification {
         results[0] == 'content'
     }
 
-//
-//    def "check overlapping start folders"() {
-//        given:
-//        def dataSources = [
-//                localFolders: [
-//                        MyDocuments: '/home/sean/Documents',
-//                        MyDesktop  : '/home/sean/Desktop',
-//                        MyPictures : '/home/sean/Pictures',
-//                        SeanHome   : '/home/sean',
-//                ]
-//        ]
-//
-//        when:
-//        // todo -- complete thing...
-//        int foo = 2
-//
-//        then:
-//        foo == 2
-//
-//    }
-//
-//    def "crawl user docs local folders"() {
-//        given:
-//        long start = System.currentTimeMillis()
-//        long maxMem = Runtime.runtime.maxMemory()
-//        long totalMem = Runtime.runtime.totalMemory()
-//        println("Starting memory: $maxMem -- $totalMem")
-//
-//        File rootFolder = new File('/home/sean/')
-//        List<File> folders = []
-//        List<FSFolder> folderFSList = []
-//
-//        when:
-//        rootFolder.eachDirRecurse {
-//            folders << it
-//            FSFolder folderFS = new FSFolder(it)
-//
-//            folderFSList << folderFS
-////            println(it)
-//        }
-//
-//        long maxMem2 = Runtime.runtime.maxMemory()
-//        long totalMem2 = Runtime.runtime.totalMemory()
-//        println("after memory: $maxMem2 -- $totalMem2")
-//        println("difference memory: ${maxMem2 - maxMem} -- ${totalMem2 - totalMem}")
-//
-//        long end = System.currentTimeMillis()
-//        long elapsed = end - start
-//        println "Elapsed time: ${elapsed}ms (${elapsed / 1000} sec)  -- ${folders.size()}"
-//
-//        then:
-//        folders.size() > 10
-//    }
 
+    def "check overlapping start folders"() {
+        given:
+        def dataSources = [
+                localFolders: [
+                        MyDocuments: '/home/sean/Documents',
+                        MyDesktop  : '/home/sean/Desktop',
+                        MyPictures : '/home/sean/Pictures',
+                        SeanHome   : '/home/sean',
+                ]
+        ]
+
+        when:
+        // todo -- complete thing...
+        int foo = 2
+
+        then:
+        foo == 2
+
+    }
 
 }

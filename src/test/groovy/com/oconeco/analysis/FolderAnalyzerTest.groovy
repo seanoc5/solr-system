@@ -1,11 +1,4 @@
 package com.oconeco.analysis
-
-import com.oconeco.helpers.Constants
-import com.oconeco.models.FSFolder
-import spock.lang.Specification
-
-import java.util.regex.Pattern
-
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -14,6 +7,7 @@ import java.util.regex.Pattern
  */
 
 // todo -- remove? Moved responsibility to Object to use Analyzer as a helper, rather than the analyzer driving
+/*
 class FolderAnalyzerTest extends Specification {
     String locationName = 'spock'
     String crawlName = 'test'
@@ -36,6 +30,7 @@ class FolderAnalyzerTest extends Specification {
         labels[0] == 'content'
     }
 
+*/
 /*
     def "startFolder.toSolrInputDocument analysis"() {
         given:
@@ -59,6 +54,8 @@ class FolderAnalyzerTest extends Specification {
 
 
     }
-*/
+*//*
+
 
 }
+*/

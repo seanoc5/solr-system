@@ -4,6 +4,7 @@ import com.oconeco.crawler.DifferenceStatus
 import com.oconeco.persistence.SolrSystemClient
 import org.apache.log4j.Logger
 import org.apache.solr.common.SolrInputDocument
+
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -82,7 +83,6 @@ class SavableObject {
     Boolean ignore = false
 
 
-
     /**
      * placeholder 'empty' constructor -- probably should use a 'bigger' constructor
      */
@@ -126,13 +126,9 @@ class SavableObject {
     SavableObject(def thing, SavableObject parent, String locationName, String crawlName) {
 //        this(thing, parent, locationName,)
         this.thing = thing
-        if(parent) {
+        if (parent) {
             this.parent = parent
-//            if (parent?.depth) {
-                this.depth = parent.depth + 1
-//            } else {
-//                depth = 0
-//            }
+            this.depth = parent.depth + 1
         } else {
             log.debug "no valid parent given: $thing"
         }
@@ -189,7 +185,7 @@ class SavableObject {
         if (dedup) {
             log.debug "\t\tDedup already set: $dedup"
             sid.setField(SolrSystemClient.FLD_DEDUP, dedup)
-        } else if (type && name && size!=null) {
+        } else if (type && name && size != null) {
             dedup = buildDedupString()
             if (dedup) {
                 sid.setField(SolrSystemClient.FLD_DEDUP, dedup)

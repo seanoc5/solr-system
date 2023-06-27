@@ -1,10 +1,10 @@
 package misc
 
 import com.oconeco.analysis.BaseAnalyzer
-import com.oconeco.analysis.FileAnalyzer
 import com.oconeco.analysis.FileSystemAnalyzer
-import com.oconeco.analysis.FolderAnalyzer
 import com.oconeco.crawler.BaseDifferenceChecker
+//import com.oconeco.analysis.FolderAnalyzer
+
 import com.oconeco.crawler.LocalFileSystemCrawler
 import com.oconeco.crawler.SolrDifferenceChecker
 import com.oconeco.helpers.Constants
@@ -34,8 +34,8 @@ log.info "\t\tSolr Saver created: $solrClient"
 
 long numFoundPreLocation = solrClient.getDocumentCount()
 
-FolderAnalyzer folderAnalyzer = new FolderAnalyzer(config)
-FileAnalyzer fileAnalyzer = new FileAnalyzer(config)
+//FolderAnalyzer folderAnalyzer = new FolderAnalyzer(config)
+//FileAnalyzer fileAnalyzer = new FileAnalyzer(config)
 boolean compareExistingSolrFolderDocs = config.compareExistingSolrFolderDocs
 BaseDifferenceChecker differenceChecker = new SolrDifferenceChecker()
 BaseAnalyzer analyzer = new FileSystemAnalyzer(Constants.DEFAULT_FOLDERNAME_PATTERNS, Constants.DEFAULT_FILENAME_PATTERNS)

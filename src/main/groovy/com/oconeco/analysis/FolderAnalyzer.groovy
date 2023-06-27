@@ -11,16 +11,13 @@ import java.util.regex.Pattern
  * @mailto :    seanoc5@gmail.com
  * @created :   8/5/22, Friday
  * @description:
+ * @deprecated use BaseAnalyzer (descendant) instead
  */
 
 class FolderAnalyzer /*extends BaseAnalyzer*/ {
     Logger log = Logger.getLogger(this.class.name);
 
-    /**
-     * @deprecated ?? is there a real reason to track this, or just accept it as a constructor arg....
-     */
-//    ConfigObject config
-
+//    Pattern ignore
     Map<String, Pattern> namePatternsMap = Constants.DEFAULT_FOLDERNAME_PATTERNS
     Map<String, Pattern> pathPatternsMap = Constants.DEFAULT_FOLDERPATH_PATTERNS
 

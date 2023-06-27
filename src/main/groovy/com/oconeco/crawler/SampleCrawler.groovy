@@ -1,8 +1,6 @@
 package com.oconeco.crawler
 
 import com.oconeco.analysis.BaseAnalyzer
-import com.oconeco.analysis.FileAnalyzer
-import com.oconeco.analysis.FolderAnalyzer
 import com.oconeco.models.FSFile
 import com.oconeco.models.FSFolder
 import com.oconeco.models.SavableObject
@@ -38,16 +36,17 @@ class SampleCrawler {
     String osName
     BaseDifferenceChecker differenceChecker
     BaseClient persistenceClient
+    BaseAnalyzer analyzer
 
 
     SampleCrawler(String locationName, BaseClient persistenceClient, BaseDifferenceChecker diffChecker, BaseAnalyzer analyzer) {
         log.debug "${this.class.simpleName} constructor with location:$locationName, name: $crawlName"
-        this.crawlName = crawlName
+//        this.crawlName = crawlName
         this.locationName = locationName
-        osName = System.getProperty("os.name")
         // moved this from config file to here in case we start supporting remote filesystems...? (or WSL...?)
         this.differenceChecker = diffChecker
         this.persistenceClient = persistenceClient
+        this.analyzer = analyzer
     }
 
 
@@ -68,7 +67,8 @@ class SampleCrawler {
      * @param fileAnalyzer
      * @return
      */
-    Map<String, List<FSFolder>> crawlGrouping(String crawlName, File startFolder, FolderAnalyzer folderAnalyzer=null, FileAnalyzer fileAnalyzer=null) {
+    Map<String, List<FSFolder>> crawlGrouping(String crawlName, File startFolder) {
+//    Map<String, List<FSFolder>> crawlGrouping(String crawlName, File startFolder, FolderAnalyzer folderAnalyzer=null, FileAnalyzer fileAnalyzer=null) {
         Map<String, SolrDocument> existingSolrFolderDocs
         if (compareExistingSolrFolderDocs) {
             existingSolrFolderDocs = getSolrFolderDocs(crawlName)

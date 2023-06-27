@@ -1,5 +1,6 @@
 package com.oconeco.analysis
 
+import com.oconeco.helpers.Constants
 import com.oconeco.models.FSFile
 import com.oconeco.models.FSFolder
 import com.oconeco.models.SavableObject
@@ -52,8 +53,12 @@ class BaseAnalyzer {
     def folderPathMap
     def filePathMap
 
-
-    /**
+    BaseAnalyzer() {
+        this.folderNameMap = Constants.DEFAULT_FOLDERNAME_LOCATE
+        this.fileNameMap = Constants.DEFAULT_FILENAME_LOCATE
+        log.info "No arg constructor BaseAnalyzer: $this  (consider passing in basic folder & file pattern maps??)"
+    }
+/**
      * Base constructor focusing on folder and file name mapping. Key is the label to assign based on pattern match, and then analysis is the chain of analyzers to use
      * @param folderNameMap
      * @param fileNameMap

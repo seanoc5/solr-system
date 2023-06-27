@@ -83,6 +83,8 @@ class LocalFileSystemCrawlerTest extends Specification {
 
     def 'basic LocalFileSystemCrawler.crawlFolders with existing docs'() {
         given:
+//        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, mockSolrClient, differenceChecker, analyzer)
+//        Map<String, List<FSFolder>> results = crawler.crawlFolders(crawlName, startFolder.toFile(), existingSolrFolderDocs, analyzer )
         LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, mockSolrClient, differenceChecker, analyzer)
 
         when:
