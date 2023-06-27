@@ -80,41 +80,11 @@ class SavableObject {
      * Note: crawler may still include object (and maybe even content) and save it,
      * but this flag can mean it should be filtered out of search & analysis
      */
-    Boolean ignore = false
+    Boolean ignore = null
+    /** discriminator between group (e.g. folder) or item */
+    Boolean groupObject
 
 
-    /**
-     * placeholder 'empty' constructor -- probably should use a 'bigger' constructor
-     */
-//    SavableObject() {
-//        log.warn "Empty constructor SavableObject()... (developer should use a better constructor"
-//    }
-
-
-//    /**
-//     * Simplest constructor -- assumes descendent objects will add all the real details (try to use 'bigger' constructor with more details
-//     * @param thing (file, folder, bookmark, url,...)
-//     */
-//    SavableObject(def thing) {
-//        this.thing = thing
-//        log.info "Simple constructor: SavableObject(thing) [${thing.class.name}:${thing}]"
-//    }
-
-
-    /**
-     * 'minimum' constructor with thing and source name, likely want to add a depth param...
-     * @param thing - what is being created, e.g. (file, folder, bookmark, url,...)
-     * @param locationName - name source, e.g. hostname for filesystem crawls, profile for browser history/bookmarks, email account...
-     */
-/*
-    SavableObject(def thing, String locationName, String crawlName = Constants.LBL_UNKNOWN, Integer depth = null) {
-        this.thing = thing
-        this.locationName = locationName
-        this.crawlName = crawlName
-        this.depth = depth
-        log.debug "Typical constructor: SavableObject(thing, locationName, [crawlName], [depth]) -- ($thing, $locationName, $crawlName, $depth)"
-    }
-*/
 
 
     /**
@@ -223,25 +193,6 @@ class SavableObject {
     }
 
 
-    /**
-     * compare the name of the thing to regex pattern of what to ignore,
-     * @param fsFile Java
-     * @param ignoreFiles
-     * @return
-     */
-/*    String matchIgnorePattern(Pattern ignoreFiles) {
-        Matcher matcher = name =~ ignoreFiles
-        if (matcher.matches()) {
-            String firstGroupMatch = matcher.group(1)
-            matchedIgnoreText = firstGroupMatch
-            // todo - consider more complicated patterns, get all matches/groups??
-            log.info "\t\t---- IGNORE: LocalFileSystemCrawler ignoring file (${this.class.simpleName}: $name) -- matched on: '$matchedIgnoreText' -- pattern ($ignoreFiles)"
-            // todo change back to debug
-        } else {
-            log.debug "\t\tnot ignoring: $name"
-        }
-        return matchedIgnoreText
-    }*/
 
 
     /**

@@ -28,6 +28,8 @@ class ArchFile extends SavableObject {
     ArchFile(ArchiveEntry ae, SavableObject parent, String locationName, String crawlName ) {
         super(ae, parent, locationName, crawlName)
         String parentId = parent.id
+        groupObject = false
+
         if (ae.name) {
             path = FilenameUtils.getFullPathNoEndSeparator(ae.name)
             String fname = FilenameUtils.getName(ae.name)

@@ -24,7 +24,7 @@ class FSFileTest extends Specification {
     def "should create basic FSFile"() {
         when:
         FSFile fsFile = new FSFile(jsonFile, null, locationName, crawlName)
-        String pid = SavableObject.buildId(locationName, jsonFile.parentFile.path)
+        String pid = SavableObject.buildId(locationName, jsonFile.parentFile.path.replaceAll('\\\\', '/'))
 
         then:
         fsFile.id.startsWith(fsFile.locationName)
@@ -44,7 +44,7 @@ class FSFileTest extends Specification {
     def "should create basic FSFile with parentFolder"() {
         when:
         FSFile fsFile = new FSFile(jsonFile, parentFolder, locationName, crawlName)
-        String pid = SavableObject.buildId(locationName, jsonFile.parentFile.path)
+        String pid = SavableObject.buildId(locationName, jsonFile.parentFile.path.replaceAll('\\\\', '/'))
 
         then:
         fsFile.parent == parentFolder

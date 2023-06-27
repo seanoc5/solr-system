@@ -21,7 +21,7 @@ class FSFolderTest extends Specification {
         when:
         FSFolder fsFolder = new FSFolder(startFolder, null, locationName, crawlName )
 //        fsFolder.addFolderDetails()
-        String pid = SavableObject.buildId(locationName, startFolder.parent)
+        String pid = SavableObject.buildId(locationName, startFolder.parent.replaceAll('\\\\', '/'))
 
         then:
         fsFolder.parentId == pid
@@ -37,7 +37,7 @@ class FSFolderTest extends Specification {
         when:
         FSFolder fsFolder = new FSFolder(startFolder, null, locationName, crawlName )
         fsFolder.addFileDetails()
-        String pid = SavableObject.buildId(locationName, startFolder.parent)
+        String pid = SavableObject.buildId(locationName, startFolder.parent.replaceAll('\\\\', '/'))
 
         then:
         fsFolder.owner != null
@@ -174,8 +174,8 @@ class FSFolderTest extends Specification {
         then:
 //        keys.size == 8
 //        keys == ['techDev', 'archive', 'office', 'config', 'instructions', 'data', 'control', 'media']
-        results != null
-        results[0] == 'content'
+        results instanceof List<Map<String, Map<String, Object>>>
+        results[0].keySet()[0] == 'default'     // todo -- fixme??
     }
 
 

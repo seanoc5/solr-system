@@ -25,6 +25,7 @@ class FSFolder extends FSObject {
 
     FSFolder(File srcFolder, SavableObject parent, String locationName, String crawlName) {
         super(srcFolder, parent, locationName, crawlName)
+        groupObject = true
 
         if (srcFolder.exists()) {
             type = TYPE

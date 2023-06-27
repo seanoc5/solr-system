@@ -1,15 +1,15 @@
 package configs
 
+import com.oconeco.analysis.BaseAnalyzer
+
 /**
  * Basic configuration file to simulate (s)locate from linux: simple file name, location, date, size tracking
  * see alsp @link configBasicAnalysis
  */
-import com.oconeco.analysis.BaseAnalyzer
+
 import com.oconeco.helpers.Constants
-import com.oconeco.models.FSFolder
 
 import java.nio.file.LinkOption
-
 /**
  * this is a starter template that I (SoC) find useful.
  * hopefully there are some helpful examples and ideas here, but please customize to suit your interests (dear reader)
@@ -64,7 +64,8 @@ dataSources {
 
 // note: all of the labels below are optional/customizable.
 namePatterns {
-    FSFolder.TYPE = [
+//    "${FSFolder.TYPE}" = [
+    folders = [
             ignore : [pattern: Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE], analysis: [BaseAnalyzer.IGNORE]],
             default: [pattern: '', analysis: BaseAnalyzer.DEFAULT],
     ]

@@ -38,45 +38,11 @@ class FSFile extends  FSObject {
     FSFile(File f, SavableObject parent, String locationName, String crawlName) {
         super(f, parent, locationName, crawlName)
 
-        // todo -- revisit if this replacing backslashes with forward slashes helps, I had trouble querying for id with backslashes (SoC 20230603)
-//        id = SavableObject.buildId(locationName, path.replaceAll('\\\\', '/'))
         type = TYPE
-//        hidden = f.isHidden()
-//        if (hidden)
-//            log.info "\t\t~~~~processing hidden file: $f"
-//
-//        if (!this.thing) {
-//            this.thing = f
-//        }
-//        name = f.name
-//        size = f.size()
-//
-//
-//        if (depth) {
-//            this.depth = depth
-//        }
-
-
-//        lastModifiedDate = new Date(f.lastModified())
+        groupObject = false
 
         // todo -- more here -- also check FSFolder object, and analyze() method,
         extension = FilenameUtils.getExtension(f.name)
-
-//        osName = System.getProperty("os.name")
-/*
-        if (f.exists()) {
-            Path p = f.toPath()
-            BasicFileAttributes attr = Files.readAttributes(path, BasicFileAttributes.class)
-            FileTime lastAccessTime = attr.lastAccessTime()
-            lastAccessDate = new Date(lastAccessTime.toMillis())
-            FileTime lastModifyTime = attr.lastModifiedTime()
-            lastModifiedDate = new Date(lastModifyTime.toMillis())
-            createdDate = new Date(attr.creationTime().toMillis())
-            FileOwnerAttributeView ownerAttributeView = Files.getFileAttributeView(path, FileOwnerAttributeView.class)
-            owner = ownerAttributeView.getOwner()
-        } else {
-            log.warn "File: $f does not exist!! broken symlink??"
-        }*/
         log.debug "File(${this.toString()})"
     }
 

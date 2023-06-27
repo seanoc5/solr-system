@@ -25,6 +25,7 @@ class ArchFolder extends SavableObject {
 
     ArchFolder(ArchiveEntry ae, SavableObject parent, String locationName , String crawlName) {
         super(ae, parent, locationName, crawlName)
+        groupObject = true
         type = TYPE
         archive = true
         compressed=true     // todo -- add more logic here to check for archive without compression

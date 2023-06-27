@@ -130,7 +130,7 @@ class LocalFileSystemCrawler {
 //            results << currentFolder
 
             if (accessible) {
-                Matcher matcher = (it.name =~ ignoreFolders)
+                Matcher matcher = (it.name =~ ignoreFolders)        //todo -- fixme - change in analyzer
                 if (matcher.matches()) {
                     currentFolder.ignore = true
                     log.debug "\t\t----Ignorable folder:($currentFolder) -- matching part: ${matcher.group()} -- Pattern: $ignoreFolders"

@@ -8,6 +8,7 @@ import org.apache.log4j.Logger
 
 import java.util.regex.Matcher
 import java.util.regex.Pattern
+
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -18,23 +19,30 @@ import java.util.regex.Pattern
 class BaseAnalyzer {
     static final Logger log = Logger.getLogger(this.class.name);
 
-    public static final String IGNORE = 'ignore'           //for folders: save metadata with 'ignore' flag, for files don't save anything
+    public static final String IGNORE = 'ignore'
+    //for folders: save metadata with 'ignore' flag, for files don't save anything
     // default is equivalent to 'locate' in linux, just basic location/size/date information, no parsing
-    public static final String DEFAULT = 'default'           //catch all for anything not matched elsewhere (pattern typically ignored, just a placeholder)
+    public static final String DEFAULT = 'default'
+    //catch all for anything not matched elsewhere (pattern typically ignored, just a placeholder)
 
     public static final String TRACK = 'track'              //'like locate, file name, path, date, size'
     public static final String PARSE = 'parse'              //'simple TIKA-like content extraction'
     public static final List BASIC_BUNDLE = [TRACK, PARSE]              //typical content extraction
     public static final String ARCHIVE = 'archive'              //typical content extraction
-    public static final List ARCHIVE_BUNDLE = [ARCHIVE, TRACK]              //unarchive, then track, don't assume parsing (yet)
+    public static final List ARCHIVE_BUNDLE = [ARCHIVE, TRACK]
+    //unarchive, then track, don't assume parsing (yet)
 
-    public static final String SOURCE_CODE = 'sourceCode'              //beginning of source code specific analysis (more to do)
-    public static final List SOURCE_BUNDLE = [TRACK, SOURCE_CODE]              //beginning of source code specific analysis (more to do)
+    public static final String SOURCE_CODE = 'sourceCode'
+    //beginning of source code specific analysis (more to do)
+    public static final List SOURCE_BUNDLE = [TRACK, SOURCE_CODE]
+    //beginning of source code specific analysis (more to do)
 
     public static final String LOGS = 'logs'              //beginning of source code specific analysis (more to do)
-    public static final List LOGS_BUNDLE = [TRACK, LOGS]              //beginning of source code specific analysis (more to do)
+    public static final List LOGS_BUNDLE = [TRACK, LOGS]
+    //beginning of source code specific analysis (more to do)
 
-    public static final String HEAVYPARSE = 'heavyParse'    //'OCR (not immplemented yet) and other more advanced content extraction'
+    public static final String HEAVYPARSE = 'heavyParse'
+    //'OCR (not immplemented yet) and other more advanced content extraction'
 
     public static final String SEGMENT_SECTIONS = 'segmentSections' // break documents into sections/chapters
     public static final String SEGMENT_PARAGRAPHS = 'segmentParagraphs' // break documents into paragraphs
@@ -79,7 +87,7 @@ class BaseAnalyzer {
         Map<String, Object> gnm = groupNameMap[IGNORE]
         if (gnm) {
             ignoreGroup = gnm.pattern
-            this.groupNameMap = groupNameMap.findAll {it.key != IGNORE}
+            this.groupNameMap = groupNameMap.findAll { it.key != IGNORE }
             log.info "Found special ignoreGroup entry ($ignoreGroup), setting to Analyzer prop: 'ignoreGroup' and removing from groupNameMap ($groupNameMap) "
         } else {
             this.groupNameMap = groupNameMap
@@ -89,18 +97,18 @@ class BaseAnalyzer {
         Map<String, Object> inm = itemNameMap[IGNORE]
         if (inm) {
             ignoreItem = inm.pattern
-            this.itemNameMap = itemNameMap.findAll {it.key != IGNORE}
+            this.itemNameMap = itemNameMap.findAll { it.key != IGNORE }
             log.info "Found special ignoreItem entry ($ignoreItem), setting to Analyzer prop: 'ignoreItem' and removing from itemNameMap ($itemNameMap) "
         } else {
             this.itemNameMap = itemNameMap
             log.info "No Ignore ITEM entry found!! $itemNameMap"
         }
 
-        if(groupPathMap) {
+        if (groupPathMap) {
             log.info "\t\tFound groupPathMap: $groupPathMap ($this)"
             this.groupPathMap = groupPathMap
         }
-        if(itemPathMap) {
+        if (itemPathMap) {
             log.info "\t\tFound itemPathMap: $itemPathMap ($this)"
             this.itemPathMap = itemPathMap
         }
@@ -112,63 +120,57 @@ class BaseAnalyzer {
      * @param config
      * todo -- review and ensure this is accurate/current
      */
+/*
     BaseAnalyzer(ConfigObject config) {
         this.groupNameMap = config?.namePatterns?.folders
         this.itemNameMap = config?.namePatterns?.files
         this.groupPathMap = config?.pathPatterns?.folders
         this.itemPathMap = config?.pathPatterns?.files
     }
-
-
-
-    /**
-     * Check for special 'ignore group' pattern, and move it to Analyzer property
-     * the idea is that if this pattern matches, short-cirtuit any further analysis -- this is 'exclusive',
-     * other entries are not exclusive, multiple matches permissable
-     * @param groupNameMap
-     * @return
-     */
-    def extractIgnoreGroupPattern(Map<String, Map<String, Object>> groupNameMap) {
-        Map<String, Object> gnm = groupNameMap[IGNORE]
-        def rc
-        if (gnm) {
-            ignoreGroup = gnm.pattern
-            log.info "Found special ignoreGroup entry ($ignoreGroup), setting to Analyzer prop: 'ignoreGroup' and removing from groupNameMap ($groupNameMap) "
-            rc = groupNameMap.remove(IGNORE)
-        }
-        return rc
-    }
-
-
-    /**
-     * Check for special 'ignore item' pattern, and move it to Analyzer property
-     * the idea is that if this pattern matches, short-cirtuit any further analysis -- this is 'exclusive',
-     * other entries are not exclusive, multiple matches permissable
-     * @param itemNameMap
-     * @return
-     */
-    def extractIgnoreItemPattern(Map<String, Map<String, Object>> itemNameMap) {
-        def item = itemNameMap[IGNORE]
-        def rc
-        if (item) {
-            ignoreItem = item.pattern
-            log.info "Found special ignoreGroup entry ($ignoreItem), setting to Analyzer prop: 'ignoreGroup' and removing from itemNameMap ($itemNameMap) "
-            rc = itemNameMap.remove(IGNORE)
-        }
-        return rc
-    }
-
+*/
 
 
     List<String> analyze(List<SavableObject> objectList) {
         def results = []
         objectList.each { SavableObject object ->
-            def rc = analyze(object)
-            results << rc
+            if(shouldIgnore(object)){
+                log.info "\t\tNo analysis: marked as ignore, object ($object)"
+            } else {
+                def rc = analyze(object)
+                results << rc
+            }
         }
         return results
     }
 
+    boolean shouldIgnore(SavableObject object) {
+
+        if (object.ignore == null) {
+            if (object.groupObject) {
+                if (this.ignoreGroup) {
+                    object.ignore == (object.name ==~ this.ignoreGroup)
+                    log.info "\t\tprocessing a groupObject ($object), so check if this matches group name ignore (${this.ignoreGroup} "
+                } else {
+                    object.ignore = false
+                    log.info "\t\t no ignoreGroup property for this Analyzer, so setting object.ignore==false analyzer:($this) -- object:($object)"
+                }
+            } else {
+                if (this.ignoreItem) {
+                    object.ignore = (object.name ==~ this.ignoreItem)
+                    log.info "\t\tprocessing a Item Object ($object), so check if this matches group name ignore (${this.ignoreItem} -- ignore? ${object.ignore} "
+                } else {
+                    object.ignore = false
+                    log.info "\t\t no ignoreItem property for this Analyzer($this), so setting object.ignore==false -- object:($object)"
+
+                }
+            }
+            log.info "Object($object) has 'ignore' propert still null, so assuming we do NOT ignore it"
+            return object.ignore
+        } else {
+            log.debug "\t\tFound ignore flag (${object.ignore}) on onbject: $object"
+            return object.ignore
+        }
+    }
 
     List<Map<String, Map<String, Object>>> analyze(SavableObject object) {
         log.debug "analyze object: $object"
@@ -199,18 +201,18 @@ class BaseAnalyzer {
         Map<String, Map<String, Object>> results = [:]
         log.info "applyLabelMaps: $object"
         if (object.type == FSFolder.TYPE) {
-            Map<String, Map<String, Object>>  nameMap = groupNameMap
+            Map<String, Map<String, Object>> nameMap = groupNameMap
             if (nameMap) {
                 results << applyLabels(object, object.name, nameMap)
             }
 
-            Map<String, Map<String, Object>>  pathMap = groupPathMap
+            Map<String, Map<String, Object>> pathMap = groupPathMap
             if (pathMap) {
                 results << applyLabels(object, object.path, pathMap)
             }
 
         } else if (object.type == FSFile.TYPE) {
-            Map<String, Map<String, Object>>  nameMap = this.itemNameMap
+            Map<String, Map<String, Object>> nameMap = this.itemNameMap
             if (nameMap) {
                 results << applyLabels(object, object.name, nameMap)
             }
@@ -253,7 +255,8 @@ class BaseAnalyzer {
             log.info "\t\t----No matching labels found for name($name)"
             if (defaultLabel) {
                 object.labels << defaultLabel
-                matchingLabels.put(defaultLabel, labelMap.get(defaultLabel))         // todo -- revisit, hackish approach
+                matchingLabels.put(defaultLabel, labelMap.get(defaultLabel))
+                // todo -- revisit, hackish approach
 
             }
         }

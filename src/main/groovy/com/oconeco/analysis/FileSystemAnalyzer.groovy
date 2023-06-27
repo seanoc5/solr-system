@@ -21,9 +21,9 @@ class FileSystemAnalyzer extends BaseAnalyzer {
         super(folderNameMap, fileNameMap, folderPathMap, filePathMap)
     }
 
-    FileSystemAnalyzer(ConfigObject config) {
-        super(config)
-    }
+//    FileSystemAnalyzer(ConfigObject config) {
+//        super(config)
+//    }
 
     List<String> analyze(List<FSFile> fileFsList) {
         List<String> labels = []
