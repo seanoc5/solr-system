@@ -78,10 +78,11 @@ class BaseAnalyzerTest extends Specification {
         BaseAnalyzer analyzerLocate = new BaseAnalyzer(Constants.DEFAULT_FOLDERNAME_LOCATE, Constants.DEFAULT_FILENAME_LOCATE)
 
         when:
-        def resultParam = analyzerLocate.analyze(paramFS)
-        String basicKey = 'basic'
-        def resultCurrency = analyzerLocate.analyze(currencyFS)
         def resultSkipme = analyzerLocate.analyze(skipmeFS)
+        def resultParam = analyzerLocate.analyze(paramFS)
+        def resultCurrency = analyzerLocate.analyze(currencyFS)
+
+        String basicKey = 'basic'
 
         then:
         resultParam != null

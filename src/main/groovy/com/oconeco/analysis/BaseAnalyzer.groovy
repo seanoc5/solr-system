@@ -143,8 +143,15 @@ class BaseAnalyzer {
         return results
     }
 
-    boolean shouldIgnore(SavableObject object) {
 
+    /**
+     * check the object against the Analyzer and see if we should ignore.
+     * If ignore and it's a group object: still save the 'easy' metadata, but mark it as ignore, and skip any futher processing of this group (i.e. Folder)
+     * If ignore for for item, probably don't save anything, and ignore the item altogehter (i.e. File)
+     * @param object
+     * @return true if we should ignore the object
+     */
+    boolean shouldIgnore(SavableObject object) {
         if (object.ignore == null) {
             if (object.groupObject) {
                 if (this.ignoreGroup) {
@@ -176,16 +183,22 @@ class BaseAnalyzer {
         log.debug "analyze object: $object"
 
         def results = []
-        Map<String, Map<String, Object>> matchedEntries = applyLabelMaps(object)
-        results.addAll(matchedEntries)
-        matchedEntries.each { String label, Map val ->
-            def analysis = val.analysis
-            if (analysis) {
-                log.info "!!!! Apply analysis: $label->$analysis"
-            } else {
-                log.warn "Nothing to process? $label - $analysis"
+        if(shouldIgnore(object)){
+            log.info "\t\tIgnore object ($object) (skipping majority of `analyze(object)` method"
+            Map ignoreMap = ["$IGNORE":[pattern:'', analysis:[]]]           // todo -- fixme -- better coding here
+            results.addAll(ignoreMap)
+        } else {
+            Map<String, Map<String, Object>> matchedEntries = applyLabelMaps(object)
+            results.addAll(matchedEntries)
+            matchedEntries.each { String label, Map val ->
+                def analysis = val.analysis
+                if (analysis) {
+                    log.info "!!!! Apply analysis: $label->$analysis"
+                } else {
+                    log.warn "Nothing to process? $label - $analysis"
+                }
+                // todo - more code here
             }
-            // todo - more code here
         }
         return results
 
