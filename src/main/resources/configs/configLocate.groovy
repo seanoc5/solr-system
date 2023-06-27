@@ -78,7 +78,7 @@ namePatterns {
 
 pathPatterns {
     folders = [
-            work: [pattern: ~/(?i).*(lucidworks|oconeco|work)/, analysis: BaseAnalyzer.BASIC_LIST],
+            work: [pattern: ~/(?i).*(lucidworks|oconeco|work)/, analysis: BaseAnalyzer.BASIC_BUNDLE],
     ]
     files = []
 }

@@ -67,29 +67,29 @@ dataSources {
 namePatterns {
     folders = [
             ignore : [pattern: Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE], analysis: [BaseAnalyzer.IGNORE]],
-            content: [pattern: ~/(content)/, analysis: BaseAnalyzer.BASIC_LIST],
-            office : [pattern: ~/(?i).*(documents)/, analysis: BaseAnalyzer.BASIC_LIST],
-            techDev: [pattern: ~/.*(groovy|gradle|classes)/, analysis: BaseAnalyzer.BASIC_LIST],
-            system : [pattern: ~/(_global)/, analysis: BaseAnalyzer.BASIC_LIST],
+            content: [pattern: ~/(content)/, analysis: BaseAnalyzer.BASIC_BUNDLE],
+            office : [pattern: ~/(?i).*(documents)/, analysis: BaseAnalyzer.BASIC_BUNDLE],
+            techDev: [pattern: ~/.*(groovy|gradle|classes)/, analysis: BaseAnalyzer.BASIC_BUNDLE],
+            system : [pattern: ~/(_global)/, analysis: BaseAnalyzer.BASIC_BUNDLE],
             techDev: [pattern: ~/(.gradle|compile|groovy|java|main|scala|src|target|test|resources|wrapper)/, analysis: BaseAnalyzer.SOURCE_CODE],
 //            test   : [pattern: ~/(?i).*(test)/, analysis:],
-            work   : [pattern: ~/(?i).*(lucidworks|oconeco|work)/, analysis: BaseAnalyzer.BASIC_LIST],
+            work   : [pattern: ~/(?i).*(lucidworks|oconeco|work)/, analysis: BaseAnalyzer.BASIC_BUNDLE],
     ]
 
     files = [
             ignore      : [pattern: ~/(?i)([.~]*lock.*|_.*|.*\bte?mp|.*\.class|.*\.pem|skipme.*)/, analysis: BaseAnalyzer.IGNORE],
-            index       : [pattern: ~/(bash.*|csv|groovy|ics|ipynb|java|lst|md|php|py|rdf|rss|scala|sh|tab|te?xt|tsv)/, analysis: BaseAnalyzer.BASIC_LIST],
-            office      : [pattern: ~/.*(accdb|docx?|ods|odp|odt|pdf|pptx?|ps|pub|rtf|txt|vsdx?|xmind|xlsx?)/, analysis: BaseAnalyzer.BASIC_LIST],
-            instructions: [pattern: ~/(?i).*(adoc|readme.*|md)/, analysis: BaseAnalyzer.BASIC_LIST],
+            index       : [pattern: ~/(bash.*|csv|groovy|ics|ipynb|java|lst|md|php|py|rdf|rss|scala|sh|tab|te?xt|tsv)/, analysis: BaseAnalyzer.BASIC_BUNDLE],
+            office      : [pattern: ~/.*(accdb|docx?|ods|odp|odt|pdf|pptx?|ps|pub|rtf|txt|vsdx?|xmind|xlsx?)/, analysis: BaseAnalyzer.BASIC_BUNDLE],
+            instructions: [pattern: ~/(?i).*(adoc|readme.*|md)/, analysis: BaseAnalyzer.BASIC_BUNDLE],
             techDev     : [pattern: ~/.*(c|codeStyles|css|dat|go|gradlew|groovy|gradle|iml|ipynb|jar|java|javascript|js|map|mat|php|pyi?|sav|sbt|schema|sh|ts)/, analysis: BaseAnalyzer.SOURCE_CODE],
-            config      : [pattern: ~/.*(config.*|manifest.*|properties|xml|ya?ml)/, analysis: BaseAnalyzer.BASIC_LIST],
-            control     : [pattern: ~/.*(ignore|license.*|lock|pem)/, analysis: BaseAnalyzer.BASIC_LIST],
-            data        : [pattern: ~/.*(csv|jsonl?d?|lst|pbix|tab|tsv)/, analysis: BaseAnalyzer.BASIC_LIST],
-            media       : [pattern: ~/.*(avi|jpe?g|ogg|mp3|mpe?g|png|wav)/, analysis: BaseAnalyzer.BASIC_LIST],
-            logs        : [pattern: ~/.*(logs?\.?\d*)/, analysis: BaseAnalyzer.LOGS_LIST],                          // attempting to allow singular or plural (option s after log, and 0 or more digits)
-            archive     : [pattern: ~/.*(arc|cab|dmg|gz|jar|parquet|rar|zip|tar\.(bz2?|gz|Z)|war|zip)/, analysis: BaseAnalyzer.ARCHIVE_LIST],
-            compressed  : [pattern: ~/.*\.(bz2?|gz|z|Z)/, analysis: BaseAnalyzer.BASIC_LIST],                       // revisit this? something better/more efficient?
-            web         : [pattern: ~/.*(aspx?|cfm|html?|zhtml?)/, analysis: BaseAnalyzer.BASIC_LIST],
+            config      : [pattern: ~/.*(config.*|manifest.*|properties|xml|ya?ml)/, analysis: BaseAnalyzer.BASIC_BUNDLE],
+            control     : [pattern: ~/.*(ignore|license.*|lock|pem)/, analysis: BaseAnalyzer.BASIC_BUNDLE],
+            data        : [pattern: ~/.*(csv|jsonl?d?|lst|pbix|tab|tsv)/, analysis: BaseAnalyzer.BASIC_BUNDLE],
+            media       : [pattern: ~/.*(avi|jpe?g|ogg|mp3|mpe?g|png|wav)/, analysis: BaseAnalyzer.BASIC_BUNDLE],
+            logs        : [pattern: ~/.*(logs?\.?\d*)/, analysis: BaseAnalyzer.LOGS_BUNDLE],                          // attempting to allow singular or plural (option s after log, and 0 or more digits)
+            archive     : [pattern: ~/.*(arc|cab|dmg|gz|jar|parquet|rar|zip|tar\.(bz2?|gz|Z)|war|zip)/, analysis: BaseAnalyzer.ARCHIVE_BUNDLE],
+            compressed  : [pattern: ~/.*\.(bz2?|gz|z|Z)/, analysis: BaseAnalyzer.BASIC_BUNDLE],                       // revisit this? something better/more efficient?
+            web         : [pattern: ~/.*(aspx?|cfm|html?|zhtml?)/, analysis: BaseAnalyzer.BASIC_BUNDLE],
             system      : [pattern: ~/.*(_SUCCESS|bat|bin|bkup|cache|class|cookies|deb|gcc|lib|\.old|pkg|rpm|#$)/, analysis: BaseAnalyzer.TRACK]
     ]
 }
@@ -97,7 +97,7 @@ namePatterns {
 
 pathPatterns {
     folders = [
-            work: [pattern: ~/(?i).*(lucidworks|oconeco|work)/, analysis: BaseAnalyzer.BASIC_LIST],
+            work: [pattern: ~/(?i).*(lucidworks|oconeco|work)/, analysis: BaseAnalyzer.BASIC_BUNDLE],
     ]
     files = []
 }

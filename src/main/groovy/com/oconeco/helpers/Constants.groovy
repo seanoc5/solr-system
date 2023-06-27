@@ -44,19 +44,19 @@ class Constants {
 
     public static final Map<String, Map<String, Object>> DEFAULT_FILENAME_LOCATE = [
             ignore : [pattern:  ~/(?i)([.~]*lock.*|_.*|.*\bte?mp|.*\.class|.*\.pem|skipme.*)/, analysis: BaseAnalyzer.IGNORE],
-            basic : [pattern:  ~/.*(?i)(accdb|docx?|go|groovy|gradle|jar|java|javascript|js|jsonl?d?|md|ods|odp|odt|php|pptx?|rtf|schema|sh|vsdx?|xlsx?)/, analysis: BaseAnalyzer.BASIC_LIST],
+            basic : [pattern:  ~/.*(?i)(accdb|docx?|go|groovy|gradle|jar|java|javascript|js|jsonl?d?|md|ods|odp|odt|php|pptx?|rtf|schema|sh|vsdx?|xlsx?)/, analysis: BaseAnalyzer.BASIC_BUNDLE],
             default: [pattern: null, analysis: BaseAnalyzer.DEFAULT],
     ]
 
-
-    public static final Map<String, Pattern> DEFAULT_FOLDERPATH_PATTERNS = [
-            configuration: ~/.*(?i)(\/.local\/|configs)/,
-            data         : ~/.*(\/data\/).*/,
-            build           : ~/.*(\/build\/).*/,
+    /** path oriented pattern, which will 'cascade' down the label through child folders */
+    public static final Map<String, Pattern> DEFAULT_FOLDERPATH_MAP = [
+            data: [pattern: ~/.*(\/data\/).*/, analysis:BaseAnalyzer.DEFAULT],
+            build: [pattern: ~/.*(\/build\/).*/, analysis:BaseAnalyzer.BASIC_BUNDLE],
+            work: [pattern: ~/.*(\/data\/).*/, analysis:BaseAnalyzer.DEFAULT],
             work           : ~/.*\/work\/.*/,
     ]
 
-    public static final Map<String, Pattern> DEFAULT_FILEPATH_PATTERNS = [
+    public static final Map<String, Pattern> DEFAULT_FILEPATH_MAP = [
 //            configuration: ~/.*(?i)(\/.local\/|configs)/,
 //            data         : ~/.*(\/data\/).*/,
 //            build           : ~/.*(\/build\/).*/,
