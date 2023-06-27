@@ -45,37 +45,82 @@ class BaseAnalyzer {
     public static final List NLP_LIST = [TRACK, PARSE, SEGMENT_SECTIONS, SEGMENT_PARAGRAPHS, SEGMENT_SENTENCES, NLP_POS, NLP_NER]
     // tag sentences with parts of speech
 
+    Pattern ignoreItem
+    Pattern ignoreGroup
+
     // ciritical mapping for labels and analysis chain for folder and file names
-    def folderNameMap       // todo -- refactor naming, consider groupNameMap rather than folderNameMap
-    def fileNameMap         // todo -- refactor naming, consider itemNameMap rather than fileNameMap
+    def groupNameMap
+    def itemNameMap
 
     // optional additional mapping for folder & file paths
     def folderPathMap
     def filePathMap
 
     BaseAnalyzer() {
-        this.folderNameMap = Constants.DEFAULT_FOLDERNAME_LOCATE
-        this.fileNameMap = Constants.DEFAULT_FILENAME_LOCATE
+        groupNameMap = Constants.DEFAULT_FOLDERNAME_LOCATE
+        def igpEntry = extractIgnoreGroupPattern(groupNameMap)
+
+        this.itemNameMap = Constants.DEFAULT_FILENAME_LOCATE
+        def iipEntry = extractIgnoreItemPattern(Constants.DEFAULT_FILENAME_LOCATE)
         log.info "No arg constructor BaseAnalyzer: $this  (consider passing in basic folder & file pattern maps??)"
     }
+
+
+    /**
+     * Check for special 'ignore group' pattern, and move it to Analyzer property
+     * the idea is that if this pattern matches, short-cirtuit any further analysis -- this is 'exclusive',
+     * other entries are not exclusive, multiple matches permissable
+     * @param groupNameMap
+     * @return
+     */
+    def extractIgnoreGroupPattern(Map<String, Map<String, Object>> groupNameMap) {
+        Map<String, Object> gnm = groupNameMap[IGNORE]
+        def rc
+        if (gnm) {
+            ignoreGroup = gnm.pattern
+            log.info "Found special ignoreGroup entry ($ignoreGroup), setting to Analyzer prop: 'ignoreGroup' and removing from groupNameMap ($groupNameMap) "
+            rc = groupNameMap.remove(IGNORE)
+        }
+        return rc
+    }
+    /**
+     * Check for special 'ignore item' pattern, and move it to Analyzer property
+     * the idea is that if this pattern matches, short-cirtuit any further analysis -- this is 'exclusive',
+     * other entries are not exclusive, multiple matches permissable
+     * @param itemNameMap
+     * @return
+     */
+    def extractIgnoreItemPattern(Map<String, Map<String, Object>> itemNameMap) {
+        ignoreItem = itemNameMap[IGNORE]
+        def rc
+        if (ignoreItem) {
+            log.info "Found special ignoreGroup entry ($ignoreItem), setting to Analyzer prop: 'ignoreGroup' and removing from itemNameMap ($itemNameMap) "
+            rc = itemNameMap.remove(IGNORE)
+        }
+        return rc
+    }
+
+
 /**
      * Base constructor focusing on folder and file name mapping. Key is the label to assign based on pattern match, and then analysis is the chain of analyzers to use
-     * @param folderNameMap
-     * @param fileNameMap
+     * @param groupNameMap
+     * @param itemNameMap
      * @param folderPathMap
      * @param filePathMap
      */
-    BaseAnalyzer(folderNameMap, fileNameMap, folderPathMap = null, filePathMap = null) {
-        this.folderNameMap = folderNameMap
-        this.fileNameMap = fileNameMap
+    BaseAnalyzer(groupNameMap, itemNameMap, folderPathMap = null, filePathMap = null) {
+        this.groupNameMap = groupNameMap
+        def igp = extractIgnoreGroupPattern(groupNameMap)
+        this.itemNameMap = itemNameMap
+        def iip = extractIgnoreItemPattern(itemNameMap)
         this.folderPathMap = folderPathMap
         this.filePathMap = filePathMap
     }
 
 
     BaseAnalyzer(ConfigObject config) {
-        this.folderNameMap = config?.namePatterns?.folders
-        this.fileNameMap = config?.namePatterns?.files
+        this.groupNameMap = config?.namePatterns?.folders
+        this.itemNameMap = config?.namePatterns?.files
         this.folderPathMap = config?.pathPatterns?.folders
         this.filePathMap = config?.pathPatterns?.files
     }
@@ -120,7 +165,7 @@ class BaseAnalyzer {
         Map<String, Map<String, Object>> results = [:]
         log.info "applyLabelMaps: $object"
         if (object.type == FSFolder.TYPE) {
-            def nameMap = folderNameMap
+            def nameMap = groupNameMap
             if (nameMap) {
                 results << applyLabels(object, object.name, nameMap)
             }
@@ -131,7 +176,7 @@ class BaseAnalyzer {
             }
 
         } else if (object.type == FSFile.TYPE) {
-            def nameMap = fileNameMap
+            def nameMap = this.itemNameMap
             if (nameMap) {
                 results << applyLabels(object, object.name, nameMap)
             }

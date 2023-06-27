@@ -11,8 +11,8 @@ import java.util.regex.Pattern
 class BaseDifferenceCheckerTest extends Specification {
     String locationName = 'spock'
     String crawlName = 'test'
-    Pattern ignoreFiles = Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE]
-    Pattern ignoreFolders = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]
+    Pattern ignoreItems = Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE]
+    Pattern ignoreGroups = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]
 
 
     File startFolder = new File(getClass().getResource('/content').toURI())

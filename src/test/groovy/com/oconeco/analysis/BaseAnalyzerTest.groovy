@@ -30,6 +30,22 @@ class BaseAnalyzerTest extends Specification {
     FSFile skipmeFS = new FSFile(skipme, parentFolder, locationName, crawlName)
 
 
+    def "empty constructor"(){
+        when:
+        BaseAnalyzer analyzerSimple = new BaseAnalyzer()
+
+        then:
+        analyzerSimple != null
+        analyzerSimple.ignoreGroup!=null
+        analyzerSimple.ignoreItem!=null
+        analyzerSimple
+
+    }
+
+    def "analyze with ignore items"(){
+
+    }
+
     def "Analyze 3 test files"() {
         when:
         def resultParam = analyzer.analyze(paramFS)
