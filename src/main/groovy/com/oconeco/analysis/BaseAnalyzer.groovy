@@ -105,6 +105,12 @@ class BaseAnalyzer {
 
     }
 
+
+    /**
+     *
+     * @param object
+     * @return
+     */
     Map<String, Map<String, Object>> applyLabelMaps(SavableObject object) {
         Map<String, Map<String, Object>> results = [:]
         log.info "applyLabelMaps: $object"

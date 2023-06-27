@@ -37,9 +37,9 @@ class FSObject extends SavableObject {
         type = TYPE
 
         hidden = f.isHidden()
-        if (hidden)
+        if (hidden) {
             log.info "\t\t~~~~processing hidden file: $f"
-
+        }
         name = f.name
 
         lastModifiedDate = new Date(f.lastModified())

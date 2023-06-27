@@ -73,7 +73,7 @@ class LocalFileSystemCrawlerTest extends Specification {
         boolean compareExistingSolrFolderDocs = false
 
         when:
-        Map<String, List<FSFolder>> results = crawler.crawlFolders(crawlName, startFolder.toFile(), ignoreFolders, ignoreFiles, compareExistingSolrFolderDocs, )
+        Map<String, List<FSFolder>> results = crawler.crawlFolders(crawlName, startFolder.toFile(), existingSolrFolderDocs, analyzer )
 
         then:
         results != null
@@ -83,7 +83,7 @@ class LocalFileSystemCrawlerTest extends Specification {
 
     def 'basic LocalFileSystemCrawler.crawlFolders with existing docs'() {
         given:
-        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName, mockSolrClient, differenceChecker)
+        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, mockSolrClient, differenceChecker, analyzer)
 
         when:
         def results = crawler.crawlFolders(crawlName, startFolder.toFile(), existingSolrFolderDocsMocked)

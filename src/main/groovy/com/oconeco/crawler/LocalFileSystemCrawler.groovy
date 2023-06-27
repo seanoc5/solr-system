@@ -16,7 +16,6 @@ import org.apache.solr.common.SolrDocumentList
 
 import java.nio.file.Path
 import java.util.regex.Matcher
-
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -108,16 +107,16 @@ class LocalFileSystemCrawler {
     /**
      * Basic crawl functionality here, with visitor pattern
      * @param crawlName (subset of locationName/source)
-     * @param startFolder folder to start crawl
+     * @param startDir folder to start crawl
      * @param ignoreFolders regex to indicate we should save the current folder, mark as ignore, and not descend any further
      * @param ignoreFiles regex to indicate any files to not save/index
      * @return map of status counts
      */
-    Map<String, List<FSFolder>> crawlFolders(String crawlName, File startFolder, Map<String, SolrDocument> existingSolrFolderDocs, BaseAnalyzer analyzer = null) {
+    Map<String, List<FSFolder>> crawlFolders(String crawlName, File startDir, Map<String, SolrDocument> existingSolrFolderDocs, BaseAnalyzer analyzer) {
         Map<String, List<FSFolder>> results = [:].withDefault { [] }
 
-        log.info "$locationName:$crawlName -> Starting crawl of folder: ($startFolder) [existing solrFolderDocs:${existingSolrFolderDocs.size()}]"
-        Path startPath = startFolder.toPath()   // Path so we can 'relativize` to get relative depth of this crawl
+        log.info "$locationName:$crawlName -> Starting crawl of folder: ($startDir) [existing solrFolderDocs:${existingSolrFolderDocs?.size()}]"
+        Path startPath = startDir.toPath()   // Path so we can 'relativize` to get relative depth of this crawl
         FSFolder currentFolder = null
 
         def doPreDir = {
@@ -127,7 +126,7 @@ class LocalFileSystemCrawler {
             boolean accessible = f.exists() && f.canRead() && f.canExecute()
 
             int depth = getRelativeDepth(startPath, f)
-            currentFolder = new FSFolder(f, currentFolder, this.locationName, this.crawlName, depth)
+            currentFolder = new FSFolder(f, null, this.locationName, this.crawlName)
 //            results << currentFolder
 
             if (accessible) {
@@ -160,7 +159,7 @@ class LocalFileSystemCrawler {
 
         long cnt = 0
         int cntStatusFrequency = 500 // show log message every cntStatusFrequency folders
-        startFolder.traverse(options) { File folder ->
+        startDir.traverse(options) { File folder ->
             cnt++
             if (cnt % cntStatusFrequency == 0) {
                 log.info "\t\t\t$cnt) traverse folder $folder"     // should there be action here?

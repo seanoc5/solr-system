@@ -7,6 +7,7 @@ import com.oconeco.analysis.FolderAnalyzer
 import com.oconeco.crawler.BaseDifferenceChecker
 import com.oconeco.crawler.LocalFileSystemCrawler
 import com.oconeco.crawler.SolrDifferenceChecker
+import com.oconeco.helpers.Constants
 import com.oconeco.helpers.SolrCrawlArgParser
 import com.oconeco.models.FSFolder
 import com.oconeco.persistence.SolrSystemClient
@@ -37,7 +38,7 @@ FolderAnalyzer folderAnalyzer = new FolderAnalyzer(config)
 FileAnalyzer fileAnalyzer = new FileAnalyzer(config)
 boolean compareExistingSolrFolderDocs = config.compareExistingSolrFolderDocs
 BaseDifferenceChecker differenceChecker = new SolrDifferenceChecker()
-BaseAnalyzer analyzer = new FileSystemAnalyzer()
+BaseAnalyzer analyzer = new FileSystemAnalyzer(Constants.DEFAULT_FOLDERNAME_PATTERNS, Constants.DEFAULT_FILENAME_PATTERNS)
 long start = System.currentTimeMillis()
 
 crawlMap.each { String crawlName, String startPath ->
@@ -56,7 +57,7 @@ crawlMap.each { String crawlName, String startPath ->
 
     log.debug "\t\tcrawl map item with label:'$crawlName' --- and --- startpath:'$startPath'..."
     File startFolder = new File(startPath)
-    Map<String, List<FSFolder>> crawlFolders = crawler.crawlFolders(crawlName, startFolder, folderIgnorePattern, fileIgnorePattern, compareExistingSolrFolderDocs, folderAnalyzer, fileAnalyzer)
+    Map<String, List<FSFolder>> crawlFolders = crawler.crawlFolders(crawlName, startFolder,compareExistingSolrFolderDocs, analyzer)
     if(crawlFolders.updated) {
         log.info "\t\tCrawled Folders, updated:${crawlFolders?.updated?.size()} -- skipped: ${crawlFolders?.skipped?.size()}"
         long numFoundPostCrawl = crawler.getSolrDocCount(crawlName)
