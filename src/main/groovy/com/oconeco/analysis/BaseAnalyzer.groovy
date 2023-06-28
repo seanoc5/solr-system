@@ -2,13 +2,11 @@ package com.oconeco.analysis
 
 import com.oconeco.helpers.Constants
 import com.oconeco.models.FSFile
-import com.oconeco.models.FSFolder
 import com.oconeco.models.SavableObject
 import org.apache.log4j.Logger
 
 import java.util.regex.Matcher
 import java.util.regex.Pattern
-
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -168,7 +166,6 @@ class BaseAnalyzer {
                 } else {
                     object.ignore = false
                     log.info "\t\t no ignoreItem property for this Analyzer($this), so setting object.ignore==false -- object:($object)"
-
                 }
             }
             log.info "Object($object) has 'ignore' propert still null, so assuming we do NOT ignore it"
@@ -179,6 +176,13 @@ class BaseAnalyzer {
         }
     }
 
+
+    /**
+     * check "short-circuit" ignore patterns to see if we should ignore this item. If yes, skip to the end
+     * If no: apply map labels, with configured processing pipelines (analysis key in sub map)
+     * @param object SavableObject to analyze
+     * @return matching analysis map entries (pattern driven label, plus matching pattern, plus list of analysis 'steps')
+     */
     List<Map<String, Map<String, Object>>> analyze(SavableObject object) {
         log.debug "analyze object: $object"
 
@@ -206,14 +210,14 @@ class BaseAnalyzer {
 
 
     /**
-     *
-     * @param object
-     * @return
+     * Based on if SavableObject is a group/wrapper (ie. folder) or an individual item (i.e. File) check the relevant label maps and add all those labels (keys) that match (based on name regex, and optionally path regex)
+     * @param object SavableObject to check (name, optional path)
+     * @return all matching map entries, focused on entry keys which become item labels in solr (or other persistence???)
      */
     Map<String, Map<String, Object>> applyLabelMaps(SavableObject object) {
         Map<String, Map<String, Object>> results = [:]
         log.info "applyLabelMaps: $object"
-        if (object.type == FSFolder.TYPE) {
+        if (object.groupObject) {
             Map<String, Map<String, Object>> nameMap = groupNameMap
             if (nameMap) {
                 results << applyLabels(object, object.name, nameMap)
@@ -239,7 +243,13 @@ class BaseAnalyzer {
     }
 
 
-    Map<String, Map<String, Object>> applyLabels(SavableObject object, String name, Map<String, Map<String, Object>> labelMap) {
+    /**
+     * Based on if SavableObject is a group/wrapper (ie. folder) or an individual item (i.e. File) check the relevant label maps and add all those labels (keys) that match (based on name regex, and optionally path regex)
+     * @param object SavableObject to check (name, optional path)
+     * @param name explicit label to be added to object (in solr...)
+     * @param labelMap the child map which should have 'pattern' and 'analysis' values
+     * @return all matching map entries, focused on entry keys which become item labels in solr (or other persistence???)
+     */    Map<String, Map<String, Object>> applyLabels(SavableObject object, String name, Map<String, Map<String, Object>> labelMap) {
         Map<String, Map<String, Object>> matchingLabels = [:]
         log.info "applyLabels: name($name) -> object($object)"
         def defaultLabel = null
@@ -276,21 +286,6 @@ class BaseAnalyzer {
         return matchingLabels
     }
 
-//    Map<String, Map<String, Object>> applyLabelsByPath(SavableObject object, def pathMap) {
-//        def analysisSteps = []
-//        String path = object.path
-//        pathMap.each { label, mapVal ->
-//            Pattern pattern = mapVal.pattern
-//            if (path ==~ pattern) {
-//                object.labels << label
-//                analysisSteps << mapVal.analysis
-//            } else {
-//                log.debug "no match, obj($object) name($path) pattern($pattern)"
-//            }
-//        }
-//        return analysisSteps
-//
-//    }
 
     String toString() {
         String s = this.class.simpleName

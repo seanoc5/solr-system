@@ -3,7 +3,6 @@ package com.oconeco.crawler
 import com.oconeco.analysis.BaseAnalyzer
 import com.oconeco.models.FSFile
 import com.oconeco.models.FSFolder
-import com.oconeco.models.SavableObject
 import com.oconeco.persistence.BaseClient
 import com.oconeco.persistence.SolrSystemClient
 import groovy.io.FileType
@@ -14,8 +13,7 @@ import org.apache.solr.client.solrj.response.QueryResponse
 import org.apache.solr.common.SolrDocument
 import org.apache.solr.common.SolrDocumentList
 
-import java.nio.file.Path
-import java.util.regex.Matcher
+import java.nio.file.Path 
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -92,18 +90,6 @@ class LocalFileSystemCrawler {
     }
 
 
-//    Map<String, List<FSFolder>> crawlFolders(String crawlName, File startFolder, Pattern ignoreFolders, Pattern ignoreFiles, boolean compareExistingSolrFolderDocs = true, FolderAnalyzer folderAnalyzer=null, FileAnalyzer fileAnalyzer=null) {
-//        Map<String, SolrDocument> existingSolrFolderDocs
-//        if (compareExistingSolrFolderDocs) {
-//            existingSolrFolderDocs = getSolrFolderDocs(crawlName)
-//            log.debug "\t\t$crawlName) compareExistingSolrFolderDocs set to true, existingSolrFolderDocs:(${existingSolrFolderDocs.size()})"
-//        } else {
-//            log.debug "\t\t$crawlName) compareExistingSolrFolderDocs set to false, so leave existingSolrFolderDocs empty/null to skip, full read/indexing"
-//        }
-//        Map<String, List<FSFolder>> results = crawlFolders(crawlName, startFolder, ignoreFolders, ignoreFiles, existingSolrFolderDocs, folderAnalyzer, fileAnalyzer)
-//        return results
-//    }
-
     /**
      * Basic crawl functionality here, with visitor pattern
      * @param crawlName (subset of locationName/source)
@@ -130,9 +116,8 @@ class LocalFileSystemCrawler {
 //            results << currentFolder
 
             if (accessible) {
-                Matcher matcher = (it.name =~ ignoreFolders)        //todo -- fixme - change in analyzer
-                if (matcher.matches()) {
-                    currentFolder.ignore = true
+                def foo = analyzer.analyze(currentFolder)
+                if (currentFolder.ignore) {
                     log.debug "\t\t----Ignorable folder:($currentFolder) -- matching part: ${matcher.group()} -- Pattern: $ignoreFolders"
                     fvr = FileVisitResult.SKIP_SUBTREE
                 } else {
@@ -146,64 +131,62 @@ class LocalFileSystemCrawler {
             return fvr
         }
 
-        def doPostDir = { log.debug "\t\tPost dir: $it" }
+//        def doPostDir = { log.debug "\t\tPost dir: $it" }
 
-        Map options = [
-                type     : FileType.DIRECTORIES,
-                preDir   : doPreDir,
-                postDir  : doPostDir,
-                preRoot  : true,
-                postRoot : true,
-                visitRoot: true,
-        ]
+        Map options = [type   : FileType.DIRECTORIES, preDir: doPreDir, //postDir: doPostDir,
+                       preRoot: true, postRoot: true, visitRoot: true,]
 
         long cnt = 0
         int cntStatusFrequency = 500 // show log message every cntStatusFrequency folders
         startDir.traverse(options) { File folder ->
             cnt++
-            if (cnt % cntStatusFrequency == 0) {
-                log.info "\t\t\t$cnt) traverse folder $folder"     // should there be action here?
-            } else {
-                log.debug "\t\t$cnt) traverse folder $folder"     // should there be action here?
-            }
-
-            DifferenceStatus differenceStatus = differenceChecker.compareFSFolderToSavedDocMap(currentFolder, existingSolrFolderDocs)
-            boolean shouldUpdate = differenceChecker.shouldUpdate(differenceStatus)
             if (currentFolder.ignore) {
-                if(shouldUpdate) {
-                    log.info "\t\tignore Folder: $currentFolder -- but save basic folder info (with ignore flag set) for reference ($currentFolder.path)"
-                    def response = persistenceClient.saveObjects([currentFolder])
-                } else {
-                    log.debug "\t\tIgnore folder and no need for update: $currentFolder"
-                }
+                log.info "---- $cnt) Ignoring current folder: $currentFolder"
                 results.skipped << currentFolder
             } else {
+                DifferenceStatus differenceStatus = differenceChecker.compareFSFolderToSavedDocMap(currentFolder, existingSolrFolderDocs)
+                boolean shouldUpdate = differenceChecker.shouldUpdate(differenceStatus)
                 if (shouldUpdate) {
-                    List<SavableObject> folderObjects = currentFolder.buildChildrenList(ignoreFiles)
-                    log.debug "Update FSFolder:($currentFolder) -- Objects count: ${folderObjects.size()} -- diffStatus: $differenceStatus"
-                    if(analyzer){     // todo -- refactor to make folder/file analyser more elegant/readable
-                        analyzer.analyze(currentFolder)
-                        folderObjects.each{
-                            if(it.type==FSFolder.TYPE){
-                                analyzer.analyze(it)
-                            } else if(it.type== FSFile.TYPE){
-                                fileAnalyzer.analyze(it)
-                            } else {
-                                log.warn "Unknown Savable Object type??? $it"
-                            }
-                        }
-                    }
+                    def folderObjects = crawlFolderFiles(folder, currentFolder)
+                    // todo -- cleaner approach to save both folder and children?  Use folder object and it's children??? not likely a big issue....
                     folderObjects.add(currentFolder)
                     def response = persistenceClient.saveObjects(folderObjects)
-                    log.info "\t\t++++Save folder (${currentFolder.path}:${currentFolder.depth}) -- Differences:${differenceStatus.differences} -- response: $response"
+                    log.info "\t\t$cnt) ++++Save folder (${currentFolder.path}:${currentFolder.depth}) -- Differences:${differenceStatus.differences} -- response: $response"
                     results.updated << currentFolder
                 } else {
                     results.skipped << currentFolder
-                    log.debug "\t\tno need to update: $differenceStatus"
+                    log.debug "\t\t$cnt) no need to update: $differenceStatus"
                 }
             }
         }
         return results
+    }
+
+    int crawlFolderFiles(FSFolder fsFolder) {
+        int itemsAdded = 0
+        if(fsFolder.children){
+            log.warn "FSFolder ($fsFolder) already has defined 'children': ${fsFolder.children}, this seems bad!!"
+        } else {
+            log.debug "\t\tinitialize empty children list for FSFolder ($fsFolder) -- as expected "
+            fsFolder.children = []
+        }
+        
+        if (fsFolder.thing instanceof File) {
+            File folder = fsFolder.thing
+            folder.eachFile { File f ->
+                FSFile fsFile = new FSFolder(f, fsFolder, locationName, crawlName)
+                def foo = analyzer.analyze(fsFile)
+                if(fsFile.ignore){
+                    log.debug "\t\t\t\tignoring file: $fsFile"
+                } else {
+                    itemsAdded++
+                    fsFolder.children << fsFile
+                }
+                
+            }
+        } else {
+
+        }
     }
 
 
