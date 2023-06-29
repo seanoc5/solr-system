@@ -6,6 +6,7 @@ import java.nio.file.Files
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileOwnerAttributeView
 import java.nio.file.attribute.FileTime
+
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -27,27 +28,43 @@ class FSObject extends SavableObject {
 
     FSObject(File f, SavableObject parent, String locationName, String crawlName) {
         super(f, parent, locationName, crawlName)
+        type = TYPE
         name = f.name
         path = f.absolutePath
-        // todo -- revisit if this replacing backslashes with forward slashes helps, I had trouble querying for id with backslashes (SoC 20230603)
-        osName = System.getProperty("os.name")
-        if (osName.contains('Windows')) {
-            // todo -- can windows have backslashes in names?? hopefully not
-            log.warn "\t\tReplace backslashes in windows path with forward slashes"     //todo change from warn to debug after testing in Widoze
-            path = path.replaceAll('\\\\', '/')
+        if (this.crawlName) {
+            log.debug "Crawl name already set?? $crawlName"
+        } else {
+            this.crawlName = crawlName
         }
-        id = SavableObject.buildId(locationName, path)
-        type = TYPE
+        if (this.locationName) {
+            log.debug "Location name already set?? $locationName"
+        } else {
+            this.locationName = locationName
+        }
+
 
         hidden = f.isHidden()
         if (hidden) {
             log.info "\t\t~~~~processing hidden file: $f"
         }
 
-        if(osName==null){
+        // todo -- revisit if this replacing backslashes with forward slashes helps, I had trouble querying for id with backslashes (SoC 20230603)
+        if (osName) {
+            log.warn "Where did OSName get set already? $osName"
+        } else {
+            osName = System.getProperty("os.name")
+        }
+        if (osName.contains('Windows')) {
+            // todo -- can windows have backslashes in names?? hopefully not
+            log.warn "\t\tReplace backslashes in windows path with forward slashes"     //todo change from warn to debug after testing in Widoze
+            path = path.replaceAll('\\\\', '/')
+        }
+        id = SavableObject.buildId(locationName, path)
+
+        if (osName == null) {
             log.warn "OSName is null??!! $this"
             osName = System.getProperty("os.name")
-        } else {
+//        } else {
 //            log.debug "OSName: $osName"
         }
 
@@ -72,15 +89,16 @@ class FSObject extends SavableObject {
                     log.info "\t\treplacing Windows backslashes(\\)  with forward (/) in path: $p (this)"
                     p = p.replaceAll('\\\\', '/')
                 } else {
-                    if(p.contains('\\')){
+                    if (p.contains('\\')) {
                         log.warn "Path has a backslash ($p) -- is this a problem for solr searching??? ($this)"
                     }
                     log.debug "\t\tPath for os ($osName) does not need backslash replacement (??)"
                 }
-
                 parentId = SavableObject.buildId(locationName, p)
             }
 
+            // leave this as separate calls for file and folder, as file is simple size, folder needs special summing call
+//            dedup = buildDedupString()
 
 //            Path p = f.toPath()
 //            BasicFileAttributes attr = Files.readAttributes(p, BasicFileAttributes.class)
@@ -120,7 +138,7 @@ class FSObject extends SavableObject {
         lastAccessDate = new Date(lastAccessTime.toMillis())
         details.lastAccessDate = lastAccessDate
 
-        if(!lastModifiedDate){
+        if (!lastModifiedDate) {
             log.warn "No lastModifiedDate set yet?? this:$this"
             FileTime lastModifyTime = attr.lastModifiedTime()
             lastModifiedDate = new Date(lastModifyTime.toMillis())

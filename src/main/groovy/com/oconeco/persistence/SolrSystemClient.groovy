@@ -42,31 +42,12 @@ class SolrSystemClient extends BaseClient {
     public static String FLD_OWNER = "owner_s"                        // varies by operating system...
 
 
-    public static String FLD_CHILD_FILENAMES = "childFileName_ss"
-    public static String FLD_CHILD_DIRNAMES = "childDirName_ss"
-    public static String FLD_HIDDENNAME_SS = "hiddenName_ss"
     public static String FLD_HIDDEN_B = "hidden_b"
     public static String FLD_EXTENSION_SS = "extension_ss"
 
-    public static String FLD_SUBDIR_COUNT = 'subdirCount_i'
-    public static String FLD_FILE_COUNT = "fileCount_i"
-    public static String FLD_DIR_COUNT = "dirCount_i"
-
     public static String FLD_TAG_SS = "tag_ss"
     public static String FLD_LABELS = "label_ss"
-//    public static  String FLD_CHILDASSIGNED_TYPES = "childAssignedTypes_ss"
-//    public static  String FLD_SAME_NAME_COUNT = "sameNameCount_i"
-//    public static  String FLD_NAME_SIZE_S = "nameSize_s"
-//    public static  String FLD_HOSTNAME = "hostName_s"
     public static String FLD_OS_NAME = "operatingSystem_s"
-
-
-    public static String FLD_IGNORED_FILES_COUNT = 'ignoredFilesCount_i'
-    public static String FLD_IGNORED_FILES = 'ignoredFileNames_ss'
-    public static String FLD_IGNORED_FOLDERS_COUNT = 'ignoredFoldersCount_i'
-    public static String FLD_IGNORED_FOLDERS = 'ignoredFolders_ss'
-
-
 
 
     Integer SOLR_BATCH_SIZE = 5000
@@ -243,6 +224,7 @@ class SolrSystemClient extends BaseClient {
         List<SolrInputDocument> solrInputDocuments = objects.collect { it.toSolrInputDocument() }
         try {
             resp = solrClient.add(solrInputDocuments, commitWithinMS)
+            log.debug "saveObjects add response: $resp"
         } catch (SolrServerException sse) {
             log.error "Solr server exception: $sse"
         }

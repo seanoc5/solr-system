@@ -30,11 +30,11 @@ class BaseClient {
     BaseClient() {
     }
 
-    def deleteDocuments(){
-
+    def deleteDocuments() {
+        log.warn " deleteDocuments() -- Complete me!!"
     }
 
-    def saveObjects(List<SavableObject> objects){
-        log.warn "todo -- complete me"
+    def saveObjects(List<SavableObject> objects) {
+        log.warn "saveObjects(List objects) -- complete me"
     }
 }

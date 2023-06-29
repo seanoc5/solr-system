@@ -1,6 +1,7 @@
 package com.oconeco.crawler
 
 import com.oconeco.models.FSFolder
+import com.oconeco.persistence.BaseClient
 import com.oconeco.persistence.SolrSystemClient
 import org.apache.log4j.Logger
 import org.apache.solr.common.SolrDocument
@@ -9,8 +10,12 @@ import org.apache.solr.common.SolrDocument
  */
 class SolrDifferenceChecker extends BaseDifferenceChecker{
     Logger log = Logger.getLogger(this.class.name)
-//    String checkFolderFields = BaseClient.DEFAULT_FIELDS_TO_CHECK.join(' ')
-//    String checkFileFields = BaseClient.DEFAULT_FIELDS_TO_CHECK.join(' ')
+    String checkFolderFields = BaseClient.DEFAULT_FIELDS_TO_CHECK.join(' ')
+    String checkFileFields = BaseClient.DEFAULT_FIELDS_TO_CHECK.join(' ')
+
+    SolrDifferenceChecker() {
+        super()
+    }
 
     SolrDifferenceChecker(String checkFolderFields, String checkFileFields) {
         super(checkFolderFields, checkFileFields)

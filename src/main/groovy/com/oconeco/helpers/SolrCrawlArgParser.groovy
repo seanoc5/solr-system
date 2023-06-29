@@ -84,7 +84,7 @@ class SolrCrawlArgParser {
 
         def wipe = options.wipeContent
         if (wipe) {
-            log.warn "Found flag `wipeContent` which will send deletes for each datasource"
+            log.warn "\t\tFound flag `wipeContent` which will send deletes for each datasource"
             config?.wipeContent = true
         } else if (config.wipeContent) {
             log.warn "Found config file setting `wipeContent` with value (${config.wipeContent}) which might send deletes for each datasource"

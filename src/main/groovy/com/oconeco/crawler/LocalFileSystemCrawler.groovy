@@ -3,6 +3,7 @@ package com.oconeco.crawler
 import com.oconeco.analysis.BaseAnalyzer
 import com.oconeco.models.FSFile
 import com.oconeco.models.FSFolder
+import com.oconeco.models.SavableObject
 import com.oconeco.persistence.BaseClient
 import com.oconeco.persistence.SolrSystemClient
 import groovy.io.FileType
@@ -13,7 +14,8 @@ import org.apache.solr.client.solrj.response.QueryResponse
 import org.apache.solr.common.SolrDocument
 import org.apache.solr.common.SolrDocumentList
 
-import java.nio.file.Path 
+import java.nio.file.Path
+
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -27,14 +29,16 @@ import java.nio.file.Path
  */
 class LocalFileSystemCrawler {
     static log = Logger.getLogger(this.class.name);
-    String crawlName        // todo -- remove this from class, leave as arg in methods where appropriate
+//    String crawlName        // todo -- remove this from class, leave as arg in methods where appropriate
     String locationName
     String osName
     BaseDifferenceChecker differenceChecker
-    BaseClient persistenceClient
-//    String checkFolderFields = SolrSystemClient.DEFAULT_FIELDS_TO_CHECK.join(' ')
-//    String checkFileFields = SolrSystemClient.DEFAULT_FIELDS_TO_CHECK.join(' ')
     BaseAnalyzer analyzer
+    BaseClient persistenceClient
+
+    // todo -- fix these fied lists, put in constructor, or move to diff checker
+    String checkFolderFields = SolrSystemClient.DEFAULT_FIELDS_TO_CHECK.join(' ')
+    String checkFileFields = SolrSystemClient.DEFAULT_FIELDS_TO_CHECK.join(' ')
 
     LocalFileSystemCrawler(String locationName, BaseClient persistenceClient, BaseDifferenceChecker diffChecker, BaseAnalyzer analyzer) {
         log.debug "${this.class.simpleName} constructor with location:$locationName, Client($persistenceClient) DiffChecker($differenceChecker) analyzer($analyzer) "
@@ -63,7 +67,7 @@ class LocalFileSystemCrawler {
         } else if (source instanceof String) {
             startDir = new File(source)
         } else {
-            log.warn "Unknown source type (${source.class.crawlName}, trying a blind cast..."
+            log.warn "Unknown source type (${source.class.name}, trying a blind cast..."
             startDir = ((Path) source)
         }
         return startDir
@@ -101,24 +105,24 @@ class LocalFileSystemCrawler {
     Map<String, List<FSFolder>> crawlFolders(String crawlName, File startDir, Map<String, SolrDocument> existingSolrFolderDocs, BaseAnalyzer analyzer) {
         Map<String, List<FSFolder>> results = [:].withDefault { [] }
 
-        log.info "$locationName:$crawlName -> Starting crawl of folder: ($startDir) [existing solrFolderDocs:${existingSolrFolderDocs?.size()}]"
+        log.info "\t\tcrawlFolders() loc=$locationName:cn=$crawlName -> Starting crawl of folder: ($startDir) [existing solrFolderDocs:${existingSolrFolderDocs?.size()}]"
         Path startPath = startDir.toPath()   // Path so we can 'relativize` to get relative depth of this crawl
         FSFolder currentFolder = null
 
         def doPreDir = {
             File f = it
-            log.debug "\t\t====PRE dir:  $it"
+            log.info "====PRE dir:  $it"
             FileVisitResult fvr = FileVisitResult.CONTINUE
             boolean accessible = f.exists() && f.canRead() && f.canExecute()
 
             int depth = getRelativeDepth(startPath, f)
-            currentFolder = new FSFolder(f, null, this.locationName, this.crawlName)
+            currentFolder = new FSFolder(f, null, this.locationName, crawlName)
 //            results << currentFolder
 
             if (accessible) {
                 def foo = analyzer.analyze(currentFolder)
                 if (currentFolder.ignore) {
-                    log.debug "\t\t----Ignorable folder:($currentFolder) -- matching part: ${matcher.group()} -- Pattern: $ignoreFolders"
+                    log.info "\t\t----IGNORABLE folder:($currentFolder)"
                     fvr = FileVisitResult.SKIP_SUBTREE
                 } else {
                     log.debug "\t\t----Not ignorable folder: $currentFolder"
@@ -147,10 +151,10 @@ class LocalFileSystemCrawler {
                 DifferenceStatus differenceStatus = differenceChecker.compareFSFolderToSavedDocMap(currentFolder, existingSolrFolderDocs)
                 boolean shouldUpdate = differenceChecker.shouldUpdate(differenceStatus)
                 if (shouldUpdate) {
-                    def folderObjects = crawlFolderFiles(folder, currentFolder)
-                    // todo -- cleaner approach to save both folder and children?  Use folder object and it's children??? not likely a big issue....
-                    folderObjects.add(currentFolder)
-                    def response = persistenceClient.saveObjects(folderObjects)
+                    int countAdded = crawlFolderFiles(currentFolder)
+
+                    List< SavableObject> savableObjects = currentFolder.gatherSavableObjects()
+                    def response = persistenceClient.saveObjects(savableObjects)
                     log.info "\t\t$cnt) ++++Save folder (${currentFolder.path}:${currentFolder.depth}) -- Differences:${differenceStatus.differences} -- response: $response"
                     results.updated << currentFolder
                 } else {
@@ -163,30 +167,37 @@ class LocalFileSystemCrawler {
     }
 
     int crawlFolderFiles(FSFolder fsFolder) {
-        int itemsAdded = 0
-        if(fsFolder.children){
+        int countAdded = 0
+        if (fsFolder.children) {
             log.warn "FSFolder ($fsFolder) already has defined 'children': ${fsFolder.children}, this seems bad!!"
         } else {
             log.debug "\t\tinitialize empty children list for FSFolder ($fsFolder) -- as expected "
             fsFolder.children = []
         }
-        
+
+        int cnt = 0
         if (fsFolder.thing instanceof File) {
             File folder = fsFolder.thing
             folder.eachFile { File f ->
-                FSFile fsFile = new FSFolder(f, fsFolder, locationName, crawlName)
-                def foo = analyzer.analyze(fsFile)
-                if(fsFile.ignore){
-                    log.debug "\t\t\t\tignoring file: $fsFile"
+                cnt++
+                if (analyzer.shouldIgnore(f)) {
+                    log.info "\t\t----$cnt)Ignore folder file: $f"
                 } else {
-                    itemsAdded++
-                    fsFolder.children << fsFile
+                    FSFile fsFile = new FSFile(f, fsFolder, locationName, fsFolder.crawlName)
+                    def foo = analyzer.analyze(fsFile)
+                    if (fsFile.ignore) {
+                        log.debug "\t\t\t\tignoring file: $fsFile"
+                    } else {
+                        countAdded++
+                        log.debug "\t\tAdding folder($fsFolder) file:($fsFile)"
+                        fsFolder.children << fsFile
+                    }
                 }
-                
             }
         } else {
-
+            log.warn "fsFolder.thing(${fsFolder.thing}) is not a file!! bug??"
         }
+        return countAdded
     }
 
 
@@ -230,7 +241,7 @@ class LocalFileSystemCrawler {
         if (docs.size() == maxRowsReturned) {
             log.warn "getExistingFolders returned lots of rows (${docs.size()}) which equals our upper limit: ${maxRowsReturned}, this is almost certainly a problem.... ${sq}}"
         } else if (numFound == 0) {
-            log.info "No previous/existing solr docs found: $sq"
+            log.info "\t\tNo previous/existing solr docs found: $sq"
         } else {
             log.debug "\t\tGet existing solr folder docs map, size: ${docs.size()} -- Filters: ${sq.getFilterQueries()}"
         }
@@ -240,8 +251,13 @@ class LocalFileSystemCrawler {
 
 
     @Override
-    String toString() {
-        return "LocalFileSystemCrawler{" + "crawlName='" + crawlName + '\'' + ", locationName='" + locationName + '\'' + '}';
+    public String toString() {
+        return "LocalFileSystemCrawler{" +
+                "locationName='" + locationName + '\'' +
+                ", osName='" + osName + '\'' +
+                ", differenceChecker=" + differenceChecker +
+                ", persistenceClient=" + persistenceClient +
+                ", analyzer=" + analyzer +
+                '}';
     }
-
 }

@@ -7,6 +7,7 @@ import org.apache.log4j.Logger
 
 import java.util.regex.Matcher
 import java.util.regex.Pattern
+
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -82,24 +83,26 @@ class BaseAnalyzer {
      * @param filePathMap
      */
     BaseAnalyzer(Map<String, Map<String, Object>> groupNameMap, Map<String, Map<String, Object>> itemNameMap, Map<String, Map<String, Object>> groupPathMap = null, Map<String, Map<String, Object>> itemPathMap = null) {
+        log.info "BaseAnalyzer constructor(groupNameMap, itemNameMap, groupPathMap?, itemPathMap?) -> groupNameMap keys(${groupNameMap.keySet()}), itemNameMap.keys(${itemNameMap.keySet()}) "
+
         Map<String, Object> gnm = groupNameMap[IGNORE]
         if (gnm) {
             ignoreGroup = gnm.pattern
             this.groupNameMap = groupNameMap.findAll { it.key != IGNORE }
-            log.info "Found special ignoreGroup entry ($ignoreGroup), setting to Analyzer prop: 'ignoreGroup' and removing from groupNameMap ($groupNameMap) "
+            log.info "\t\tFound special ignoreGroup entry ($ignoreGroup), setting to Analyzer prop: 'ignoreGroup' and removing from groupNameMap ($groupNameMap) "
         } else {
             this.groupNameMap = groupNameMap
-            log.info "No Ignore entry found!! $groupNameMap"
+            log.warn "\t\tNo Group Ignore entry found!! $groupNameMap"
         }
 
         Map<String, Object> inm = itemNameMap[IGNORE]
         if (inm) {
             ignoreItem = inm.pattern
             this.itemNameMap = itemNameMap.findAll { it.key != IGNORE }
-            log.info "Found special ignoreItem entry ($ignoreItem), setting to Analyzer prop: 'ignoreItem' and removing from itemNameMap ($itemNameMap) "
+            log.info "\t\tFound special ignoreItem entry ($ignoreItem), setting to Analyzer prop: 'ignoreItem' and removing from itemNameMap ($itemNameMap) "
         } else {
             this.itemNameMap = itemNameMap
-            log.info "No Ignore ITEM entry found!! $itemNameMap"
+            log.warn "\t\tNo Ignore ITEM entry found!! $itemNameMap"
         }
 
         if (groupPathMap) {
@@ -110,33 +113,16 @@ class BaseAnalyzer {
             log.info "\t\tFound itemPathMap: $itemPathMap ($this)"
             this.itemPathMap = itemPathMap
         }
+
     }
 
 
-    /**
-     * extract patterns from config file
-     * @param config
-     * todo -- review and ensure this is accurate/current
-     */
-/*
-    BaseAnalyzer(ConfigObject config) {
-        this.groupNameMap = config?.namePatterns?.folders
-        this.itemNameMap = config?.namePatterns?.files
-        this.groupPathMap = config?.pathPatterns?.folders
-        this.itemPathMap = config?.pathPatterns?.files
-    }
-*/
-
-
-    List<String> analyze(List<SavableObject> objectList) {
-        def results = []
+    def analyze(List<SavableObject> objectList) {
+        List<Map<String, Map<String, Object>>> results = []
         objectList.each { SavableObject object ->
-            if(shouldIgnore(object)){
-                log.info "\t\tNo analysis: marked as ignore, object ($object)"
-            } else {
-                def rc = analyze(object)
-                results << rc
-            }
+            log.info "Analyze list (size: ${objectList.size()}) objects: $objectList"
+            List<Map<String, Map<String, Object>>> analysisResults = analyze(object)
+            results << analysisResults
         }
         return results
     }
@@ -153,28 +139,40 @@ class BaseAnalyzer {
         if (object.ignore == null) {
             if (object.groupObject) {
                 if (this.ignoreGroup) {
-                    object.ignore == (object.name ==~ this.ignoreGroup)
-                    log.info "\t\tprocessing a groupObject ($object), so check if this matches group name ignore (${this.ignoreGroup} "
+                    object.ignore = (object.name ==~ this.ignoreGroup)
+                    if (object.ignore) {
+                        log.info "\t\tIGNORE: processing a groupObject ($object), this matches group name ignore (${this.ignoreGroup} "
+                    } else {
+                        log.debug "\t\tprocess: processing a groupObject ($object), this does not match group name ignore (${this.ignoreGroup} "
+                    }
                 } else {
                     object.ignore = false
-                    log.info "\t\t no ignoreGroup property for this Analyzer, so setting object.ignore==false analyzer:($this) -- object:($object)"
+                    log.warn "\t\t no ignoreGroup property for this Analyzer, so setting object.ignore==false analyzer:($this) -- object:($object) (bug??)"
                 }
             } else {
                 if (this.ignoreItem) {
                     object.ignore = (object.name ==~ this.ignoreItem)
-                    log.info "\t\tprocessing a Item Object ($object), so check if this matches group name ignore (${this.ignoreItem} -- ignore? ${object.ignore} "
+                    if (object.ignore) {
+                        log.info "\t\tIGNORE: processing a Item Object ($object), this matches item name ignore (${this.ignoreItem} -- ignore? ${object.ignore} "
+                    } else {
+                        log.debug "\t\tprocessing a Item Object ($object),  this does NOT match item name ignore (${this.ignoreItem} -- ignore? ${object.ignore} "
+                    }
                 } else {
                     object.ignore = false
-                    log.info "\t\t no ignoreItem property for this Analyzer($this), so setting object.ignore==false -- object:($object)"
+                    log.warn "\t\t no ignoreItem property for this Analyzer($this), so setting object.ignore==false -- object:($object) (bug??)"
                 }
             }
-            log.info "Object($object) has 'ignore' propert still null, so assuming we do NOT ignore it"
+            if (object.ignore == null) {
+                log.warn "Object($object) has 'ignore' propert still null"
+            }
             return object.ignore
         } else {
-            log.debug "\t\tFound ignore flag (${object.ignore}) on onbject: $object"
+            log.warn "\t\tFound existing ignore flag (${object.ignore}) on onbject: $object (remove this, just a code/processing check during development"
             return object.ignore
         }
     }
+
+
 
 
     /**
@@ -187,9 +185,9 @@ class BaseAnalyzer {
         log.debug "analyze object: $object"
 
         def results = []
-        if(shouldIgnore(object)){
+        if (shouldIgnore(object)) {
             log.info "\t\tIgnore object ($object) (skipping majority of `analyze(object)` method"
-            Map ignoreMap = ["$IGNORE":[pattern:'', analysis:[]]]           // todo -- fixme -- better coding here
+            Map ignoreMap = ["$IGNORE": [pattern: '', analysis: []]]           // todo -- fixme -- better coding here
             results.addAll(ignoreMap)
         } else {
             Map<String, Map<String, Object>> matchedEntries = applyLabelMaps(object)
@@ -197,9 +195,9 @@ class BaseAnalyzer {
             matchedEntries.each { String label, Map val ->
                 def analysis = val.analysis
                 if (analysis) {
-                    log.info "!!!! Apply analysis: $label->$analysis"
+                    log.info "\t\t+++ -> Apply analysis: $label->$analysis -- object (${object})"
                 } else {
-                    log.warn "Nothing to process? $label - $analysis"
+                    log.warn "\t\tNothing to process? $label - $analysis"
                 }
                 // todo - more code here
             }
@@ -216,7 +214,7 @@ class BaseAnalyzer {
      */
     Map<String, Map<String, Object>> applyLabelMaps(SavableObject object) {
         Map<String, Map<String, Object>> results = [:]
-        log.info "applyLabelMaps: $object"
+        log.debug "\t\tapplyLabelMaps: $object"
         if (object.groupObject) {
             Map<String, Map<String, Object>> nameMap = groupNameMap
             if (nameMap) {
@@ -249,9 +247,10 @@ class BaseAnalyzer {
      * @param name explicit label to be added to object (in solr...)
      * @param labelMap the child map which should have 'pattern' and 'analysis' values
      * @return all matching map entries, focused on entry keys which become item labels in solr (or other persistence???)
-     */    Map<String, Map<String, Object>> applyLabels(SavableObject object, String name, Map<String, Map<String, Object>> labelMap) {
+     */
+    Map<String, Map<String, Object>> applyLabels(SavableObject object, String name, Map<String, Map<String, Object>> labelMap) {
         Map<String, Map<String, Object>> matchingLabels = [:]
-        log.info "applyLabels: name($name) -> object($object)"
+        log.debug "\t\tapplyLabels: name($name) -> object($object)"
         def defaultLabel = null
         labelMap.each { label, mapVal ->
             log.debug "\t\tLabel($label) - map($mapVal)"
@@ -263,7 +262,7 @@ class BaseAnalyzer {
                     String s = matcher.group(1)
                     object.labels << label
                     matchingLabels.put(label, mapVal)
-                    log.info "\t\tMatch: $label name($name) -- matches str($s)) =~ pattern($pattern) "
+                    log.debug "\t\tMatch: $label name($name) -- matches str($s)) =~ pattern($pattern) "
                 } else {
                     log.debug "no match, obj($object) name($name) LABEL($label)::pattern($pattern)"
                 }
@@ -275,7 +274,7 @@ class BaseAnalyzer {
         if (matchingLabels) {
             log.debug "found matching label, no need for default"
         } else {
-            log.info "\t\t----No matching labels found for name($name)"
+            log.debug "\t\t----No matching labels found for name($name)"
             if (defaultLabel) {
                 object.labels << defaultLabel
                 matchingLabels.put(defaultLabel, labelMap.get(defaultLabel))
@@ -287,7 +286,15 @@ class BaseAnalyzer {
     }
 
 
-    String toString() {
-        String s = this.class.simpleName
+    @Override
+    public String toString() {
+        return "BaseAnalyzer{" +
+                "ignoreItem=" + ignoreItem +
+                ", ignoreGroup=" + ignoreGroup +
+                ", groupNameMap.keyset=" + groupNameMap.keySet() +
+                ", itemNameMap.keyset=" + itemNameMap.keySet() +
+                ", groupPathMap.keyset=" + groupPathMap?.keySet() +
+                ", itemPathMap.keyset=" + itemPathMap?.keySet() +
+                '}';
     }
 }

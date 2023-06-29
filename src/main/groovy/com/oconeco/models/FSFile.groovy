@@ -40,6 +40,8 @@ class FSFile extends  FSObject {
 
         type = TYPE
         groupObject = false
+        size = f.size()
+        dedup = buildDedupString()
 
         // todo -- more here -- also check FSFolder object, and analyze() method,
         extension = FilenameUtils.getExtension(f.name)

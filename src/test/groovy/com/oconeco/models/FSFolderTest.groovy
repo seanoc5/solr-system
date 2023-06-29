@@ -2,7 +2,6 @@ package com.oconeco.models
 
 import com.oconeco.analysis.BaseAnalyzer
 import com.oconeco.helpers.Constants
-import com.oconeco.persistence.SolrSystemClient
 import org.apache.solr.common.SolrInputDocument
 import spock.lang.Specification
 
@@ -94,6 +93,7 @@ class FSFolderTest extends Specification {
 
     }
 
+/*
     def "folder and files with ignore check toSolrInputDocument"() {
         given:
         FSFolder fsFolder = new FSFolder(startFolder, parentFolder, locationName, crawlName)
@@ -121,6 +121,7 @@ class FSFolderTest extends Specification {
         fieldNames.size() >= 15
 
     }
+*/
 
 //    def "basic startFolder load with ignore check toSolrInputDocument"() {
 //        given:

@@ -101,3 +101,12 @@ https://en.wikipedia.org/wiki/List_of_archive_formats
 There is a nice Solr interface available at:
 https://github.com/mrseanr/solr-admin-pro
 It is more solr admin than user query/browsing, but still quite nice.
+
+
+
+
+### temp notes
+#### Intellij run timings (very rough)
+run    crawlFileSystem: 8   seconds
+debug  crawlFileSystem: 417 seconds (7 min  ) -- with lots of break points 
+debug2 crawlFileSystem: 10  seconds (.16 min) -- with 0 break points 
