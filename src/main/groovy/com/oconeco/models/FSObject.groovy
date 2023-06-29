@@ -116,12 +116,6 @@ class FSObject extends SavableObject {
     }
 
 
-//    List<SolrInputDocument> gatherSolrInputDocs(FSObject fsfile, String locationName = Constants.LBL_UNKNOWN, String crawlName = Constants.LBL_UNKNOWN, Integer depth = null) {
-//        ArchiveInputStream aiszip = ArchiveUtils.getArchiveInputStream(fsfile)
-//        List<SolrInputDocument> sidList = gatherSolrInputDocs(aiszip, locationName, crawlName, depth)
-//        return sidList
-//    }
-
 
     def addFileDetails() {
         Map<String, Object> details = [:]

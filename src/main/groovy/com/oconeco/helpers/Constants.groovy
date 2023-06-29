@@ -24,7 +24,7 @@ class Constants {
     ]
     public static final Map<String, Map<String, Object>> DEFAULT_FOLDERNAME_LOCATE = [
             ignore : [pattern: Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE], analysis: [com.oconeco.analysis.BaseAnalyzer.IGNORE]],
-            default: [pattern: null, analysis: com.oconeco.analysis.BaseAnalyzer.DEFAULT],
+            default: [pattern: null, analysis: [com.oconeco.analysis.BaseAnalyzer.DEFAULT]],
     ]
 
 

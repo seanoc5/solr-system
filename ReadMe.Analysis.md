@@ -1,6 +1,7 @@
 ## Process & Overview
-- Locate - track folders and files
-- Full Crawl folders  (~once per week)
+- BASIC : Locate - track folders and files
+  - quick and simple: like locatedb in linux 
+- DEFAULT : Crawl folders  (daily or more -- )
   - track folder metadata
     - name
     - size

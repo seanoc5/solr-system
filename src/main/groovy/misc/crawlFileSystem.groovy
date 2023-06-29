@@ -39,8 +39,8 @@ crawlMap.each { String crawlName, String startPath ->
     log.info "Crawl name: $crawlName -- start path: $startPath -- location: $locationName "
 
     LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, solrClient, differenceChecker, analyzer)
-    long numFoundPreCrawl = crawler.getSolrDocCount(crawlName)
-    log.info "\t\t====Solr Doc Count before crawl(loc=$locationName: cs=$crawlName): $numFoundPreCrawl"
+    def numFoundPreCrawl = crawler.getSolrDocCount(crawlName)
+    log.debug "\t\t====Solr Doc Count before crawl(loc=$locationName: cs=$crawlName): $numFoundPreCrawl"
 
     // !!!!!!!!! CLEAR specific crawl if arg/config indicates !!!!!!!!!!!
     if(config.wipeContent==true) {
@@ -49,14 +49,14 @@ crawlMap.each { String crawlName, String startPath ->
         log.info "\t\tDelete results map: $deleteResults"
     }
 
-    log.debug "\t\tcrawl map item with label:'$crawlName' --- and --- startpath:'$startPath'..."
     File startDir = new File(startPath)
-    def existingSolrDocs = crawler.getSolrFolderDocs(crawlName)
-    Map<String, List<FSFolder>> crawlFolders = crawler.crawlFolders(crawlName, startDir, existingSolrDocs, analyzer)
+    def existingFolderSolrDocs = crawler.getSolrFolderDocs(crawlName)
+    log.info "\t\tcrawl map item with label:'$crawlName' - startpath:'$startPath' -- numFound preCrawl: $numFoundPreCrawl -- existingSolrFolderDocs: ${existingFolderSolrDocs.size()}"
+    Map<String, List<FSFolder>> crawlFolders = crawler.crawlFolders(crawlName, startDir, existingFolderSolrDocs, analyzer)
     if(crawlFolders.updated) {
         log.info "\t\tCrawled Folders, updated:${crawlFolders?.updated?.size()} -- skipped: ${crawlFolders?.skipped?.size()}"
-        long numFoundPostCrawl = crawler.getSolrDocCount(crawlName)
-        log.info "\t\t====crawl($crawlName): Solr Doc Count preCrawl ($numFoundPreCrawl) after $numFoundPostCrawl"
+            LinkedHashMap<String, Long>  solrResults = crawler.getSolrDocCount(crawlName)
+        log.info "\t\t====crawl($crawlName): Solr Doc Count preCrawl:($numFoundPreCrawl) -> after:($solrResults)"
     } else {
         log.info "\t\t----no folders updated $locationName:$crawlName, skipped count:${crawlFolders?.skipped?.size()} --  Solr Doc Count preCrawl ($numFoundPreCrawl) assume the same after no updates..."
     }

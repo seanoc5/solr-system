@@ -84,6 +84,7 @@ class SavableObject {
     /** discriminator between group (e.g. folder) or item */
     Boolean groupObject
 
+    Map<String, Map<String, Object>> matchedLabels = [:]
 
 
 
@@ -94,7 +95,6 @@ class SavableObject {
      * @param parent - depth of thing relative to start (calling code will provide this)
      */
     SavableObject(def thing, SavableObject parent, String locationName, String crawlName) {
-//        this(thing, parent, locationName,)
         this.thing = thing
         if (parent) {
             this.parent = parent

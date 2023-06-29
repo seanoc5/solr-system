@@ -1,5 +1,8 @@
 # Notes on crawling process/logic -- complex version
 
+# NOTE -- likely outdated/incorrect 
+consider removing, or heavily editing 
+
 ## File and Folder wrapper objects 
 
 **Note**: this assumes everthing is Local Filesystem

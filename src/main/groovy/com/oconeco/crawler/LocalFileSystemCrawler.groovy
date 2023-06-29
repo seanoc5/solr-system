@@ -76,8 +76,11 @@ class LocalFileSystemCrawler {
 
     def getSolrDocCount(String crawlName = '', String q = '*:*', String filterQuery = '') {
         SolrQuery solrQuery = new SolrQuery(q)
-        solrQuery.setFields('')
-        solrQuery.setRows(0)
+        solrQuery.setFields('*')
+        solrQuery.setRows(1)
+        solrQuery.setFacet(true)
+        solrQuery.setFacetMinCount(1)
+        solrQuery.addFacetField(SolrSystemClient.FLD_TYPE)
         if (locationName) {
             solrQuery.addFilterQuery("${SolrSystemClient.FLD_LOCATION_NAME}:\"$locationName\"")
         }
@@ -89,8 +92,15 @@ class LocalFileSystemCrawler {
         }
         QueryResponse response = persistenceClient.query(solrQuery)
         long numFound = response.results.getNumFound()
+        def facets = response.getFacetField(SolrSystemClient.FLD_TYPE)
         log.debug "\t\tLocalFSCrawler getSolrDocCount: $numFound -- $this"
-        return numFound
+        Map map = [numFound: numFound]
+        facets.getValues()?.each {
+            String field = it.name
+            long cnt = it.count
+            map.put(field, cnt)
+        }
+        return map
     }
 
 
@@ -152,8 +162,10 @@ class LocalFileSystemCrawler {
                 boolean shouldUpdate = differenceChecker.shouldUpdate(differenceStatus)
                 if (shouldUpdate) {
                     int countAdded = crawlFolderFiles(currentFolder)
+                    List doAnalysisresults = analyzer.doAnalysis(currentFolder)
+                    log.debug "\t\tdoAnalysisresults: $doAnalysisresults to currentFolder: $currentFolder"
 
-                    List< SavableObject> savableObjects = currentFolder.gatherSavableObjects()
+                    List<SavableObject> savableObjects = currentFolder.gatherSavableObjects()
                     def response = persistenceClient.saveObjects(savableObjects)
                     log.info "\t\t$cnt) ++++Save folder (${currentFolder.path}:${currentFolder.depth}) -- Differences:${differenceStatus.differences} -- response: $response"
                     results.updated << currentFolder
@@ -183,14 +195,20 @@ class LocalFileSystemCrawler {
                 if (analyzer.shouldIgnore(f)) {
                     log.info "\t\t----$cnt)Ignore folder file: $f"
                 } else {
-                    FSFile fsFile = new FSFile(f, fsFolder, locationName, fsFolder.crawlName)
-                    def foo = analyzer.analyze(fsFile)
-                    if (fsFile.ignore) {
-                        log.debug "\t\t\t\tignoring file: $fsFile"
+                    SavableObject child = null
+                    if (f.isDirectory()) {
+                        child = new FSFolder(f, fsFolder, locationName, fsFolder.crawlName)
+                    } else {
+                        child = new FSFile(f, fsFolder, locationName, fsFolder.crawlName)
+                    }
+
+                    def foo = analyzer.analyze(child)
+                    if (child.ignore) {
+                        log.debug "\t\t\t\tignoring child: $child"
                     } else {
                         countAdded++
-                        log.debug "\t\tAdding folder($fsFolder) file:($fsFile)"
-                        fsFolder.children << fsFile
+                        log.debug "\t\tAdding child:($child) to folder($fsFolder)"
+                        fsFolder.children << child
                     }
                 }
             }

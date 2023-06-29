@@ -28,7 +28,7 @@ class BaseAnalyzer {
     public static final String PARSE = 'parse'              //'simple TIKA-like content extraction'
     public static final List BASIC_BUNDLE = [TRACK, PARSE]              //typical content extraction
     public static final String ARCHIVE = 'archive'              //typical content extraction
-    public static final List ARCHIVE_BUNDLE = [ARCHIVE, TRACK]
+    public static final List ARCHIVE_BUNDLE = [ARCHIVE, TRACK]      // apply (un)ARCHIVE first, to then apply track to items in archive
     //unarchive, then track, don't assume parsing (yet)
 
     public static final String SOURCE_CODE = 'sourceCode'
@@ -51,6 +51,8 @@ class BaseAnalyzer {
     public static final String NLP_NER = 'nlpNER'           // tag sentences with parts of speech
     /** tag sentences with parts of speech */
     public static final List NLP_BUNDLE = [TRACK, PARSE, SEGMENT_SECTIONS, SEGMENT_PARAGRAPHS, SEGMENT_SENTENCES, NLP_POS, NLP_NER]
+    public static final String LABEL_MATCH = 'LabelMatch'
+    public static final String NO_MATCH = 'no match'
 
     /** special patterns to short-circuit further processing */
     Pattern ignoreItem
@@ -173,128 +175,179 @@ class BaseAnalyzer {
     }
 
 
-
-
     /**
      * check "short-circuit" ignore patterns to see if we should ignore this item. If yes, skip to the end
      * If no: apply map labels, with configured processing pipelines (analysis key in sub map)
      * @param object SavableObject to analyze
      * @return matching analysis map entries (pattern driven label, plus matching pattern, plus list of analysis 'steps')
      */
-    List<Map<String, Map<String, Object>>> analyze(SavableObject object) {
+    Map<String, Map<String, Object>> analyze(SavableObject object) {
         log.debug "analyze object: $object"
-
-        def results = []
-        if (shouldIgnore(object)) {
-            log.info "\t\tIgnore object ($object) (skipping majority of `analyze(object)` method"
-            Map ignoreMap = ["$IGNORE": [pattern: '', analysis: []]]           // todo -- fixme -- better coding here
-            results.addAll(ignoreMap)
-        } else {
-            Map<String, Map<String, Object>> matchedEntries = applyLabelMaps(object)
-            results.addAll(matchedEntries)
-            matchedEntries.each { String label, Map val ->
-                def analysis = val.analysis
-                if (analysis) {
-                    log.info "\t\t+++ -> Apply analysis: $label->$analysis -- object (${object})"
-                } else {
-                    log.warn "\t\tNothing to process? $label - $analysis"
-                }
-                // todo - more code here
-            }
-        }
-        return results
-
-    }
-
-
-    /**
-     * Based on if SavableObject is a group/wrapper (ie. folder) or an individual item (i.e. File) check the relevant label maps and add all those labels (keys) that match (based on name regex, and optionally path regex)
-     * @param object SavableObject to check (name, optional path)
-     * @return all matching map entries, focused on entry keys which become item labels in solr (or other persistence???)
-     */
-    Map<String, Map<String, Object>> applyLabelMaps(SavableObject object) {
-        Map<String, Map<String, Object>> results = [:]
-        log.debug "\t\tapplyLabelMaps: $object"
-        if (object.groupObject) {
-            Map<String, Map<String, Object>> nameMap = groupNameMap
-            if (nameMap) {
-                results << applyLabels(object, object.name, nameMap)
-            }
-
-            Map<String, Map<String, Object>> pathMap = groupPathMap
-            if (pathMap) {
-                results << applyLabels(object, object.path, pathMap)
-            }
-
-        } else if (object.type == FSFile.TYPE) {
-            Map<String, Map<String, Object>> nameMap = this.itemNameMap
-            if (nameMap) {
-                results << applyLabels(object, object.name, nameMap)
-            }
-
-            Map<String, Map<String, Object>> pathMap = itemPathMap
-            if (pathMap) {
-                results << applyLabels(object, object.path, nameMap)
-            }
-        }
-        return results
-    }
-
-
-    /**
-     * Based on if SavableObject is a group/wrapper (ie. folder) or an individual item (i.e. File) check the relevant label maps and add all those labels (keys) that match (based on name regex, and optionally path regex)
-     * @param object SavableObject to check (name, optional path)
-     * @param name explicit label to be added to object (in solr...)
-     * @param labelMap the child map which should have 'pattern' and 'analysis' values
-     * @return all matching map entries, focused on entry keys which become item labels in solr (or other persistence???)
-     */
-    Map<String, Map<String, Object>> applyLabels(SavableObject object, String name, Map<String, Map<String, Object>> labelMap) {
-        Map<String, Map<String, Object>> matchingLabels = [:]
-        log.debug "\t\tapplyLabels: name($name) -> object($object)"
-        def defaultLabel = null
-        labelMap.each { label, mapVal ->
-            log.debug "\t\tLabel($label) - map($mapVal)"
-            Pattern pattern = mapVal.pattern
-            if (pattern) {
-                Matcher matcher = pattern.matcher(name)
-//                if (name ==~ pattern) {
-                if (matcher.matches()) {
-                    String s = matcher.group(1)
-                    object.labels << label
-                    matchingLabels.put(label, mapVal)
-                    log.debug "\t\tMatch: $label name($name) -- matches str($s)) =~ pattern($pattern) "
-                } else {
-                    log.debug "no match, obj($object) name($name) LABEL($label)::pattern($pattern)"
-                }
+        if (object) {
+//        def results = []
+            if (shouldIgnore(object)) {
+                log.info "\t\tIgnore object ($object) (skipping majority of `analyze(object)` method"
+                Map valMap = [pattern: '', analysis: [] ]
+                valMap.put(LABEL_MATCH, NO_MATCH)
+                Map ignoreMap = ["$IGNORE": valMap]
+                object.matchedLabels = ignoreMap
             } else {
-                log.debug "no pattern, label: $label -- pattern($pattern)"
-                defaultLabel = label
+                object.matchedLabels = applyLabelMaps(object)
+//            results.addAll(matchedEntries)
+                object.matchedLabels.each { String label, Map labelMatchMap ->
+                    def analysis = labelMatchMap.analysis
+                    if (analysis) {
+                        log.debug "\t\t++++ -> Apply analysis: $label->$analysis -- object (${object}) -- matched on: ${labelMatchMap.get(LABEL_MATCH)}"
+                        // todo - move me to after "shouldUpdate'
+//                    def rc = this.doAnalysis(label, object)
+//                    log.info "\t\tdoAnalysis($label) results: $rc"
+                    } else {
+                        log.warn "\t\tNothing to process? $label - $analysis"
+                    }
+                    // todo - more code here
+                }
             }
-        }
-        if (matchingLabels) {
-            log.debug "found matching label, no need for default"
         } else {
-            log.debug "\t\t----No matching labels found for name($name)"
-            if (defaultLabel) {
-                object.labels << defaultLabel
-                matchingLabels.put(defaultLabel, labelMap.get(defaultLabel))
-                // todo -- revisit, hackish approach
-
-            }
+            log.warn "Null SavableObject($object) -- bug??? nothing to analyze here"
         }
-        return matchingLabels
+
+        return object?.matchedLabels
+    }
+
+    def doAnalysis(SavableObject object) {
+        def results = []
+        if (object) {
+            log.info "iterate through each matched label entry, and call doAnalysis(label, object)"
+            object.matchedLabels.each {
+                def foo = doAnalysis(it.key, object)
+                results << foo
+            }
+        } else {
+            log.warn "No valid object in doAnalysis(object:$object) -- nothing to do here... bug??"
+        }
+        return results
     }
 
 
-    @Override
-    public String toString() {
-        return "BaseAnalyzer{" +
-                "ignoreItem=" + ignoreItem +
-                ", ignoreGroup=" + ignoreGroup +
-                ", groupNameMap.keyset=" + groupNameMap.keySet() +
-                ", itemNameMap.keyset=" + itemNameMap.keySet() +
-                ", groupPathMap.keyset=" + groupPathMap?.keySet() +
-                ", itemPathMap.keyset=" + itemPathMap?.keySet() +
-                '}';
+        def doAnalysis(String analysisName, SavableObject object) {
+            // todo -- complete me
+            String msg = "\t\tTODO: Do analysis: $analysisName (${analysisName}) on object:($object) -- complete me!!"
+            log.info msg
+//        switch (analysis.toLowerCase()):
+            switch (analysisName) {
+                case 'default':
+                    log.info "Do analysis named '$analysisName' on object $object"
+                    break
+                case 'basic':
+                    log.info "Do analysis named '$analysisName' on object $object"
+                    break
+                case 'default':
+                    log.info "Do analysis named 'default' on object $object"
+                    break
+                case 'ignore':
+                    log.warn "Do analysis named '$analysisName' on object $object -- ATTENTION: should probably never get to doAnalysis() on an 'ignored' object...."
+                    break
+                default:
+                    log.warn "No match in swtich, falling back to  default analysis on object $object"
+                    break
+            }
+
+            return msg
+        }
+
+
+/**
+ * Based on if SavableObject is a group/wrapper (ie. folder) or an individual item (i.e. File) check the relevant label maps and add all those labels (keys) that match (based on name regex, and optionally path regex)
+ * @param object SavableObject to check (name, optional path)
+ * @return all matching map entries, focused on entry keys which become item labels in solr (or other persistence???)
+ */
+        Map<String, Map<String, Object>> applyLabelMaps(SavableObject object) {
+            Map<String, Map<String, Object>> results = [:]
+            log.debug "\t\tapplyLabelMaps: $object"
+            if (object.groupObject) {
+                Map<String, Map<String, Object>> nameMap = groupNameMap
+                if (nameMap) {
+                    results << applyLabels(object, object.name, nameMap)
+                }
+
+                Map<String, Map<String, Object>> pathMap = groupPathMap
+                if (pathMap) {
+                    results << applyLabels(object, object.path, pathMap)
+                }
+
+            } else if (object.type == FSFile.TYPE) {
+                Map<String, Map<String, Object>> nameMap = this.itemNameMap
+                if (nameMap) {
+                    results << applyLabels(object, object.name, nameMap)
+                }
+
+                Map<String, Map<String, Object>> pathMap = itemPathMap
+                if (pathMap) {
+                    results << applyLabels(object, object.path, nameMap)
+                }
+            }
+            return results
+        }
+
+
+/**
+ * Based on if SavableObject is a group/wrapper (ie. folder) or an individual item (i.e. File) check the relevant label maps and add all those labels (keys) that match (based on name regex, and optionally path regex)
+ * @param object SavableObject to check (name, optional path)
+ * @param name explicit label to be added to object (in solr...)
+ * @param labelMap the child map which should have 'pattern' and 'analysis' values
+ * @return all matching map entries, focused on entry keys which become item labels in solr (or other persistence???)
+ */
+        Map<String, Map<String, Object>> applyLabels(SavableObject object, String name, Map<String, Map<String, Object>> labelMap) {
+            Map<String, Map<String, Object>> matchingLabels = [:]
+            log.debug "\t\tapplyLabels: name($name) -> object($object)"
+            def defaultLabel = null
+            labelMap.each { label, mapVal ->
+                log.debug "\t\tLabel($label) - map($mapVal)"
+                Pattern pattern = mapVal.pattern
+                if (pattern) {
+                    Matcher matcher = pattern.matcher(name)
+//                if (name ==~ pattern) {
+                    if (matcher.matches()) {
+                        String s = matcher.group(1)
+                        object.labels << label
+                        mapVal.put(LABEL_MATCH, s)
+                        matchingLabels.put(label, mapVal)
+                        log.debug "\t\tMatch: $label name($name) -- matches str($s)) =~ pattern($pattern) "
+                    } else {
+                        log.debug "no match, obj($object) name($name) LABEL($label)::pattern($pattern)"
+                    }
+                } else {
+                    log.debug "no pattern, label: $label -- pattern($pattern)"
+                    defaultLabel = label
+                }
+            }
+            if (matchingLabels.size() > 0) {
+                log.debug "found matching label, no need for default"
+            } else {
+                log.debug "\t\t----No matching labels found for name($name)"
+                if (defaultLabel) {
+                    object.labels << defaultLabel
+                    Map map = labelMap.get(defaultLabel)
+                    map.put(LABEL_MATCH, NO_MATCH)
+                    matchingLabels.put(defaultLabel, map)
+                    // todo -- revisit, hackish approach
+
+                }
+            }
+            return matchingLabels
+        }
+
+
+        @Override
+        public String toString() {
+            return "BaseAnalyzer{" +
+                    "ignoreItem=" + ignoreItem +
+                    ", ignoreGroup=" + ignoreGroup +
+                    ", groupNameMap.keyset=" + groupNameMap.keySet() +
+                    ", itemNameMap.keyset=" + itemNameMap.keySet() +
+                    ", groupPathMap.keyset=" + groupPathMap?.keySet() +
+                    ", itemPathMap.keyset=" + itemPathMap?.keySet() +
+                    '}';
+        }
+
     }
-}
