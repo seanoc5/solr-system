@@ -1,6 +1,6 @@
 package com.oconeco.crawler
 
-import com.oconeco.analysis.BaseAnalyzer
+
 import com.oconeco.analysis.FileSystemAnalyzer
 import com.oconeco.helpers.Constants
 import com.oconeco.models.FSFolder
@@ -34,7 +34,7 @@ class LocalFileSystemCrawlerTest extends Specification {
     FSFolder startFSFolder = new FSFolder(startFile, null, locationName, crawlName)
     Map<String, SolrDocument> existingSolrFolderDocsMocked = mockSolrFolderDocs([startFSFolder])
     BaseDifferenceChecker differenceChecker = new BaseDifferenceChecker()
-    BaseAnalyzer analyzer = new FileSystemAnalyzer(Constants.DEFAULT_FOLDERNAME_LOCATE, Constants.DEFAULT_FILENAME_LOCATE)
+    FileSystemAnalyzer analyzer = new FileSystemAnalyzer(Constants.DEFAULT_FOLDERNAME_LOCATE, Constants.DEFAULT_FILENAME_LOCATE)
 
 //    def "basic localhost crawl of 'content' resource startFolder"() {
 //        given:

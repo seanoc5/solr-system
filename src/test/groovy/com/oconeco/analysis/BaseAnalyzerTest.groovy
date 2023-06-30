@@ -86,21 +86,26 @@ class BaseAnalyzerTest extends Specification {
 
         then:
         resultParam != null
-        resultParam instanceof List
+        resultParam instanceof Map<Map<String, Object>>
         resultParam.size() == 1
-        resultParam[0] instanceof Map<String, Map<String, Object>>
-        resultParam[0].keySet().contains(basicKey)
-        resultParam[0].get(basicKey).keySet().toList() == ['pattern', 'analysis']
-        resultParam[0].get(basicKey).get('pattern') != null
-        resultParam[0].get(basicKey).get('analysis') == ['track', 'parse']
+        resultParam instanceof   Map<String, Map<String, Object>>
+//        (resultParam.get(basicKey) insta)
+        resultParam.get(basicKey).keySet().toList().containsAll(['pattern', 'analysis', 'LabelMatch'])
+        resultParam.get(basicKey).get('pattern') != null
 
         resultCurrency.size() == 1
 
-        resultSkipme != null
+        resultSkipme.size() == 1
+        resultSkipme.ignore.size() == 3
+        resultSkipme.ignore.pattern ==''
+        resultSkipme.ignore.analysis.size() ==0
+        resultSkipme.ignore.get(BaseAnalyzer.LABEL_MATCH) == BaseAnalyzer.NO_MATCH
+
 
         paramFS.labels != null
         paramFS.labels.size() == 1
         paramFS.labels[0] == basicKey          // todo - change this to last label without a pattern
+
         currencyFS.labels[0] == 'default'
 
         skipmeFS.labels.size() == 0

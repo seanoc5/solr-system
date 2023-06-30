@@ -5,6 +5,7 @@ import com.oconeco.models.FSFolder
 import com.oconeco.persistence.SolrSystemClient
 import org.apache.log4j.Logger
 import org.apache.solr.common.SolrDocument
+
 /**
  * codify what qualifies as a difference worthy of 're-indexing'
  */
@@ -14,7 +15,7 @@ class BaseDifferenceChecker {
     String checkFileFields
 
     BaseDifferenceChecker() {
-        this.checkFolderFields =SolrSystemClient.DEFAULT_FIELDS_TO_CHECK.join(' ')
+        this.checkFolderFields = SolrSystemClient.DEFAULT_FIELDS_TO_CHECK.join(' ')
         this.checkFileFields = SolrSystemClient.DEFAULT_FIELDS_TO_CHECK.join(' ')
     }
 
@@ -46,6 +47,16 @@ class BaseDifferenceChecker {
         } else {
             log.warn "No valid FSFolder($fsfolder) given as argument, this is likely a bug!!?! "
         }
+        if (fsfolder.differenceStatus) {
+            if (fsfolder.differenceStatus == differenceStatus) {
+                log.debug "\t\tsame differenceStatus, no replace/update for object:($fsfolder)"
+            } else {
+                log.warn "FSFolder ($fsfolder) already has a differenceStatus:($fsfolder.differenceStatus) -- NOT replacing with current differenceStatus:($differenceStatus)"
+            }
+        } else {
+            log.info "\t\tsetting differenceStatus:($differenceStatus) for object:($fsfolder)"
+            fsfolder.differenceStatus = differenceStatus
+        }
         return differenceStatus
     }
 
@@ -63,7 +74,7 @@ class BaseDifferenceChecker {
             log.warn "$msg: folder:$fsfolder - existingSolrDoc: $existingSolrDoc"
             similarities << msg
         } else if (!existingSolrDoc) {
-             msg = "existingSolrDoc is null"
+            msg = "existingSolrDoc is null"
             log.debug "$msg: folder:$fsfolder"
             status.noMatchingSavedDoc = true
         } else {
@@ -82,7 +93,7 @@ class BaseDifferenceChecker {
             Date fsLastModified = fsfolder.lastModifiedDate
             Date solrLastModified = existingSolrDoc.getFirstValue(SolrSystemClient.FLD_LAST_MODIFIED)
             if (fsLastModified == solrLastModified) {
-                 msg = "FSFolder and Solr doc have SAME last modified date: $solrLastModified"
+                msg = "FSFolder and Solr doc have SAME last modified date: $solrLastModified"
                 status.similarities << msg
                 status.differentLastModifieds = false
                 status.sourceIsNewer = false
@@ -101,7 +112,7 @@ class BaseDifferenceChecker {
                 status.sourceIsNewer = false
             }
 
-            Long solrSize = (Long)existingSolrDoc.getFirstValue(SolrSystemClient.FLD_SIZE)
+            Long solrSize = (Long) existingSolrDoc.getFirstValue(SolrSystemClient.FLD_SIZE)
             if (fsfolder.size == solrSize) {
                 msg = "Same sizes, fsfolder: ${fsfolder.size} != solr: $solrSize"
                 log.debug msg

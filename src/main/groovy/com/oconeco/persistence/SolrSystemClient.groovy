@@ -48,6 +48,10 @@ class SolrSystemClient extends BaseClient {
     public static String FLD_TAG_SS = "tag_ss"
     public static String FLD_LABELS = "label_ss"
     public static String FLD_OS_NAME = "operatingSystem_s"
+//    public static String FLD_ = ""
+    public static String FLD_MATCHED_LABELS = "matchedLabels_ss"
+//    public static String FLD_ = ""
+//    public static String FLD_ = ""
 
 
     Integer SOLR_BATCH_SIZE = 5000

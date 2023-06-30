@@ -12,7 +12,7 @@ import org.apache.solr.common.SolrInputDocument
  * @description:
  */
 
-class SavableObject {
+abstract class SavableObject {
     Logger log = Logger.getLogger(this.class.name);
     /** the source thing (File, Folder, bookmark, email, todo, browser history,...) */
     def thing
@@ -141,16 +141,19 @@ class SavableObject {
             log.warn "No modified date for savableObject: $this"
         }
 
-        if (hidden)
+        if (hidden) {
             sid.setField(SolrSystemClient.FLD_HIDDEN_B, hidden)
+        }
 
         sid.setField(SolrSystemClient.FLD_LABELS, labels)
 
-        if (tags)
+        if (tags) {
             sid.setField(SolrSystemClient.FLD_TAG_SS, tags)
+        }
 
-        if (parentId)
+        if (parentId) {
             sid.setField(SolrSystemClient.FLD_PARENT_ID, parentId)
+        }
 
         if (dedup) {
             log.debug "\t\tDedup already set: $dedup"
@@ -165,6 +168,10 @@ class SavableObject {
             }
         } else {
             log.warn "\t\t.....Cannot reliably build a dedup string, missing type:$type, or name:$name, or size:$size"
+        }
+
+        if(matchedLabels){
+            sid.setField(SolrSystemClient.FLD_MATCHED_LABELS, matchedLabels.toString())
         }
 
         return sid

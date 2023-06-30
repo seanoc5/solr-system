@@ -161,7 +161,8 @@ class LocalFileSystemCrawler {
                 DifferenceStatus differenceStatus = differenceChecker.compareFSFolderToSavedDocMap(currentFolder, existingSolrFolderDocs)
                 boolean shouldUpdate = differenceChecker.shouldUpdate(differenceStatus)
                 if (shouldUpdate) {
-                    int countAdded = crawlFolderFiles(currentFolder)
+                    def folderResults = crawlFolderFiles(currentFolder)
+                    log.debug "\t\tcrawlFolderFiles results:($folderResults)"
                     List doAnalysisresults = analyzer.doAnalysis(currentFolder)
                     log.debug "\t\tdoAnalysisresults: $doAnalysisresults to currentFolder: $currentFolder"
 
@@ -178,7 +179,8 @@ class LocalFileSystemCrawler {
         return results
     }
 
-    int crawlFolderFiles(FSFolder fsFolder) {
+    def crawlFolderFiles(FSFolder fsFolder) {
+        Map results = [:]
         int countAdded = 0
         if (fsFolder.children) {
             log.warn "FSFolder ($fsFolder) already has defined 'children': ${fsFolder.children}, this seems bad!!"
@@ -192,30 +194,27 @@ class LocalFileSystemCrawler {
             File folder = fsFolder.thing
             folder.eachFile { File f ->
                 cnt++
-                if (analyzer.shouldIgnore(f)) {
-                    log.info "\t\t----$cnt)Ignore folder file: $f"
+                SavableObject child = null
+                if (f.isDirectory()) {
+                    child = new FSFolder(f, fsFolder, locationName, fsFolder.crawlName)
                 } else {
-                    SavableObject child = null
-                    if (f.isDirectory()) {
-                        child = new FSFolder(f, fsFolder, locationName, fsFolder.crawlName)
-                    } else {
-                        child = new FSFile(f, fsFolder, locationName, fsFolder.crawlName)
-                    }
+                    child = new FSFile(f, fsFolder, locationName, fsFolder.crawlName)
+                }
 
-                    def foo = analyzer.analyze(child)
-                    if (child.ignore) {
-                        log.debug "\t\t\t\tignoring child: $child"
-                    } else {
-                        countAdded++
-                        log.debug "\t\tAdding child:($child) to folder($fsFolder)"
-                        fsFolder.children << child
-                    }
+                Map<String, Map<String, Object>> aResults = analyzer.analyze(child)
+                results.put(f, aResults)
+                if (child.ignore) {
+                    log.debug "\t\t\t\tignoring child: $child -- analyzer results:($aResults)"
+                } else {
+                    countAdded++
+                    log.debug "\t\tAdding child:($child) to folder($fsFolder)-- analyzer results:($aResults)"
+                    fsFolder.children << child
                 }
             }
         } else {
             log.warn "fsFolder.thing(${fsFolder.thing}) is not a file!! bug??"
         }
-        return countAdded
+        return results
     }
 
 

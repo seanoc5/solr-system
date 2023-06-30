@@ -115,6 +115,13 @@ class FSObject extends SavableObject {
         log.debug "File(${this.toString()})"
     }
 
+    /**
+     * basic action 'track' for FileSystem object: addFileDetails()
+     * @return results addFileDetails (still developing, so return dynamic 'def')
+     */
+    def track(){
+        addFileDetails()
+    }
 
 
     def addFileDetails() {
