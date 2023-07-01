@@ -1,7 +1,4 @@
 package configs
-
-import com.oconeco.analysis.BaseAnalyzer
-
 /**
  * Basic configuration file to simulate (s)locate from linux: simple file name, location, date, size tracking
  * see alsp @link configBasicAnalysis
@@ -66,13 +63,13 @@ dataSources {
 namePatterns {
 //    "${FSFolder.TYPE}" = [
     folders = [
-            ignore : [pattern: Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE], analysis: [BaseAnalyzer.IGNORE]],
-            default: [pattern: '', analysis: BaseAnalyzer.DEFAULT],
+            ignore : [pattern: Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE], analysis: [Constants.IGNORE]],
+            default: [pattern: '', analysis: Constants.DEFAULT],
     ]
 
     files = [
-            ignore      : [pattern: ~/(?i)([.~]*lock.*|_.*|.*\bte?mp|.*\.class|.*\.pem|skipme.*)/, analysis: BaseAnalyzer.IGNORE],
-            default: [pattern: ~/.*/, analysis: BaseAnalyzer.DEFAULT],
+            ignore      : [pattern: ~/(?i)([.~]*lock.*|_.*|.*\bte?mp|.*\.class|.*\.pem|skipme.*)/, analysis: Constants.IGNORE],
+            default: [pattern: ~/.*/, analysis: Constants.DEFAULT],
     ]
 }
 

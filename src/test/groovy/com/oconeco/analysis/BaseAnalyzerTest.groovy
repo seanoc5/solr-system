@@ -99,7 +99,7 @@ class BaseAnalyzerTest extends Specification {
         resultSkipme.ignore.size() == 3
         resultSkipme.ignore.pattern ==''
         resultSkipme.ignore.analysis.size() ==0
-        resultSkipme.ignore.get(BaseAnalyzer.LABEL_MATCH) == BaseAnalyzer.NO_MATCH
+        resultSkipme.ignore.get(Constants.LABEL_MATCH) == Constants.NO_MATCH
 
 
         paramFS.labels != null

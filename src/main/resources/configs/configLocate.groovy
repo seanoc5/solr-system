@@ -4,7 +4,7 @@ package configs
  * Basic configuration file to simulate (s)locate from linux: simple file name, location, date, size tracking
  * see alsp @link configBasicAnalysis
  */
-import com.oconeco.analysis.BaseAnalyzer
+
 import com.oconeco.helpers.Constants
 
 import java.nio.file.LinkOption
@@ -64,13 +64,13 @@ dataSources {
 // note: all of the labels below are optional/customizable.
 namePatterns {
     folders = [
-            ignore : [pattern: Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE], analysis: [BaseAnalyzer.IGNORE]],
-            default: [pattern: ~/.*/, analysis: BaseAnalyzer.DEFAULT],
+            ignore : [pattern: Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE], analysis: [Constants.IGNORE]],
+            default: [pattern: ~/.*/, analysis: Constants.DEFAULT],
     ]
 
     files = [
-            ignore      : [pattern: ~/(?i)([.~]*lock.*|_.*|.*\bte?mp|.*\.class|.*\.pem|skipme.*)/, analysis: BaseAnalyzer.IGNORE],
-            default: [pattern: ~/.*/, analysis: BaseAnalyzer.DEFAULT],
+            ignore      : [pattern: ~/(?i)([.~]*lock.*|_.*|.*\bte?mp|.*\.class|.*\.pem|skipme.*)/, analysis: Constants.IGNORE],
+            default: [pattern: ~/.*/, analysis: Constants.DEFAULT],
     ]
 }
 

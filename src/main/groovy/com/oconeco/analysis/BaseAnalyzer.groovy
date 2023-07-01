@@ -18,28 +18,6 @@ import java.util.regex.Pattern
 class BaseAnalyzer {
     static final Logger log = Logger.getLogger(this.class.name);
 
-    public static final String IGNORE = 'ignore'
-    //for folders: save metadata with 'ignore' flag, for files don't save anything
-    // default is equivalent to 'locate' in linux, just basic location/size/date information, no parsing
-    public static final String DEFAULT = 'default'
-    //catch all for anything not matched elsewhere (pattern typically ignored, just a placeholder)
-
-    public static final String TRACK = 'track'              //'like locate, file name, path, date, size'
-    public static final String PARSE = 'parse'              //'simple TIKA-like content extraction'
-    public static final List BASIC_BUNDLE = [TRACK, PARSE]              //typical content extraction
-    public static final String ARCHIVE = 'archive'              //typical content extraction
-    public static final List ARCHIVE_BUNDLE = [ARCHIVE, TRACK]      // apply (un)ARCHIVE first, to then apply track to items in archive
-    //unarchive, then track, don't assume parsing (yet)
-
-    public static final String SOURCE_CODE = 'sourceCode'
-    //beginning of source code specific analysis (more to do)
-    public static final List SOURCE_BUNDLE = [TRACK, SOURCE_CODE]
-    //beginning of source code specific analysis (more to do)
-
-    public static final String LOGS = 'logs'              //beginning of source code specific analysis (more to do)
-    public static final List LOGS_BUNDLE = [TRACK, LOGS]
-    //beginning of source code specific analysis (more to do)
-
     public static final String HEAVYPARSE = 'heavyParse'
     //'OCR (not immplemented yet) and other more advanced content extraction'
 
@@ -50,9 +28,7 @@ class BaseAnalyzer {
     public static final String NLP_POS = 'nlpPOS'           // tag sentences with parts of speech
     public static final String NLP_NER = 'nlpNER'           // tag sentences with parts of speech
     /** tag sentences with parts of speech */
-    public static final List NLP_BUNDLE = [TRACK, PARSE, SEGMENT_SECTIONS, SEGMENT_PARAGRAPHS, SEGMENT_SENTENCES, NLP_POS, NLP_NER]
-    public static final String LABEL_MATCH = 'LabelMatch'
-    public static final String NO_MATCH = 'no match'
+    public static final List NLP_BUNDLE = [Constants.TRACK, Constants.PARSE, SEGMENT_SECTIONS, SEGMENT_PARAGRAPHS, SEGMENT_SENTENCES, NLP_POS, NLP_NER]
 
     /** special patterns to short-circuit further processing */
     Pattern ignoreItem
@@ -87,20 +63,20 @@ class BaseAnalyzer {
     BaseAnalyzer(Map<String, Map<String, Object>> groupNameMap, Map<String, Map<String, Object>> itemNameMap, Map<String, Map<String, Object>> groupPathMap = null, Map<String, Map<String, Object>> itemPathMap = null) {
         log.info "BaseAnalyzer constructor(groupNameMap, itemNameMap, groupPathMap?, itemPathMap?) -> groupNameMap keys(${groupNameMap.keySet()}), itemNameMap.keys(${itemNameMap.keySet()}) "
 
-        Map<String, Object> gnm = groupNameMap[IGNORE]
+        Map<String, Object> gnm = groupNameMap[Constants.IGNORE]
         if (gnm) {
             ignoreGroup = gnm.pattern
-            this.groupNameMap = groupNameMap.findAll { it.key != IGNORE }
+            this.groupNameMap = groupNameMap.findAll { it.key != Constants.IGNORE }
             log.info "\t\tFound special ignoreGroup entry ($ignoreGroup), setting to Analyzer prop: 'ignoreGroup' and removing from groupNameMap ($groupNameMap) "
         } else {
             this.groupNameMap = groupNameMap
             log.warn "\t\tNo Group Ignore entry found!! $groupNameMap"
         }
 
-        Map<String, Object> inm = itemNameMap[IGNORE]
+        Map<String, Object> inm = itemNameMap[Constants.IGNORE]
         if (inm) {
             ignoreItem = inm.pattern
-            this.itemNameMap = itemNameMap.findAll { it.key != IGNORE }
+            this.itemNameMap = itemNameMap.findAll { it.key != Constants.IGNORE }
             log.info "\t\tFound special ignoreItem entry ($ignoreItem), setting to Analyzer prop: 'ignoreItem' and removing from itemNameMap ($itemNameMap) "
         } else {
             this.itemNameMap = itemNameMap
@@ -142,11 +118,16 @@ class BaseAnalyzer {
         if (object.ignore == null) {
             if (object.groupObject) {
                 if (this.ignoreGroup) {
-                    object.ignore = (object.name ==~ this.ignoreGroup)
+                    Matcher matcher = (object.name =~ this.ignoreGroup)
+                    object.ignore = matcher.matches()
                     if (object.ignore) {
+                        String match = matcher.group(1)
+                        object.labels << Constants.IGNORE
+                        Map ml = [(Constants.IGNORE):[pattern:this.ignoreGroup, (Constants.LABEL_MATCH):match]]
+                        object.matchedLabels = ml
                         log.info "\t\tIGNORE: processing a groupObject ($object), this matches group name ignore (${this.ignoreGroup} "
                     } else {
-                        log.debug "\t\tprocess: processing a groupObject ($object), this does not match group name ignore (${this.ignoreGroup} "
+                        log.debug "\t\tprocess: processing a groupObject ($object), this does NOT match group name ignore (${this.ignoreGroup} "
                     }
                 } else {
                     object.ignore = false
@@ -156,9 +137,9 @@ class BaseAnalyzer {
                 if (this.ignoreItem) {
                     object.ignore = (object.name ==~ this.ignoreItem)
                     if (object.ignore) {
-                        log.info "\t\tIGNORE: processing a Item Object ($object), this matches item name ignore (${this.ignoreItem} -- ignore? ${object.ignore} "
+                        log.info "\t\tIGNORE: processing an Item Object ($object), this matches item name ignore (${this.ignoreItem} -- ignore? ${object.ignore} "
                     } else {
-                        log.debug "\t\tprocessing a Item Object ($object),  this does NOT match item name ignore (${this.ignoreItem} -- ignore? ${object.ignore} "
+                        log.debug "\t\tprocessing an Item Object ($object),  this does NOT match item name ignore (${this.ignoreItem} -- ignore? ${object.ignore} "
                     }
                 } else {
                     object.ignore = false
@@ -188,10 +169,7 @@ class BaseAnalyzer {
 //        def results = []
             if (shouldIgnore(object)) {
                 log.info "\t\tIgnore object ($object) (skipping majority of `analyze(object)` method"
-                Map valMap = [pattern: '', analysis: []]
-                valMap.put(LABEL_MATCH, NO_MATCH)
-//                Map ignoreMap = ["$IGNORE".toString(): valMap]
-                Map ignoreMap = ['ignore': valMap]
+                Map ignoreMap = [(Constants.IGNORE): [pattern: '', analysis: [], (Constants.LABEL_MATCH):Constants.NO_MATCH]]
                 object.matchedLabels = ignoreMap
             } else {
                 object.matchedLabels = applyLabelMaps(object)
@@ -199,7 +177,7 @@ class BaseAnalyzer {
                 object.matchedLabels.each { String label, Map labelMatchMap ->
                     def analysis = labelMatchMap.analysis
                     if (analysis) {
-                        log.debug "\t\t++++ -> Apply analysis: $label->$analysis -- object (${object}) -- matched on: ${labelMatchMap.get(LABEL_MATCH)}"
+                        log.debug "\t\t++++ -> Apply analysis: $label->$analysis -- object (${object}) -- matched on: ${labelMatchMap.get(Constants.LABEL_MATCH)}"
                         // todo - move me to after "shouldUpdate'
 //                    def rc = this.doAnalysis(label, object)
 //                    log.info "\t\tdoAnalysis($label) results: $rc"
@@ -263,7 +241,7 @@ class BaseAnalyzer {
                 log.warn "Do analysis named '$analysisName' on object $object -- ATTENTION: should probably never get to doAnalysis() on an 'ignored' object...."
                 break
             default:
-                log.warn "$NO_MATCH in swtich, falling back to  default analysis on object $object"
+                log.warn "$Constants.NO_MATCH in swtich, falling back to  default analysis on object $object"
                 break
         }
 
@@ -325,11 +303,11 @@ class BaseAnalyzer {
                 if (matcher.matches()) {
                     String s = matcher.group(1)
                     object.labels << label
-                    mapVal.put(LABEL_MATCH, s)
+                    mapVal.put(Constants.LABEL_MATCH, s)
                     matchingLabels.put(label, mapVal)
                     log.debug "\t\tMatch: $label name($name) -- matches str($s)) =~ pattern($pattern) "
                 } else {
-                    log.debug "$NO_MATCH, obj($object) name($name) LABEL($label)::pattern($pattern)"
+                    log.debug "$Constants.NO_MATCH, obj($object) name($name) LABEL($label)::pattern($pattern)"
                 }
             } else {
                 log.debug "no pattern, label: $label -- pattern($pattern)"
@@ -343,7 +321,7 @@ class BaseAnalyzer {
             if (defaultLabel) {
                 object.labels << defaultLabel
                 Map map = labelMap.get(defaultLabel)
-                map.put(LABEL_MATCH, NO_MATCH)
+                map.put(Constants.LABEL_MATCH, Constants.NO_MATCH)
                 matchingLabels.put(defaultLabel, map)
                 // todo -- revisit, hackish approach
 

@@ -1,6 +1,5 @@
 package com.oconeco.crawler
 
-
 import com.oconeco.analysis.FileSystemAnalyzer
 import com.oconeco.helpers.Constants
 import com.oconeco.models.FSFolder
@@ -11,7 +10,6 @@ import org.apache.solr.common.SolrDocumentList
 import spock.lang.Specification
 
 import java.nio.file.Path
-import java.util.regex.Pattern
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -20,12 +18,12 @@ import java.util.regex.Pattern
  */
 
 class LocalFileSystemCrawlerTest extends Specification {
-    Logger log = Logger.getLogger(this.class.name);
+    Logger log = Logger.getLogger(this.class.name)
     String locationName = 'spock'
     String crawlName = 'test'
-    Pattern ignoreFolders = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]
-    Pattern ignoreFiles = Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE]
-    Path startFolder = Path.of(getClass().getResource('/content').toURI());
+//    Pattern ignoreFolders = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]
+//    Pattern ignoreFiles = Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE]
+    Path startFolder = Path.of(getClass().getResource('/content').toURI())
 //    SolrSystemClient client = Stub(SolrSystemClient.class)      //Mock()          // new SolrSystemClient()
 //    SolrSystemClient client =  new SolrSystemClient('')
     SolrSystemClient client =  new SolrSystemClient('http://oldie:8983/solr/solr_system')
@@ -68,6 +66,9 @@ class LocalFileSystemCrawlerTest extends Specification {
 
     def 'basic LocalFileSystemCrawler.crawlFolders no existing docs'() {
         given:
+        def a1 = Constants.DEFAULT_FOLDERNAME_LOCATE
+        def a2 = Constants.DEFAULT_FILENAME_LOCATE
+        FileSystemAnalyzer analyzer1 = new FileSystemAnalyzer(a1,a2 )
 //        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName, client, differenceChecker)
         LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, client, differenceChecker, analyzer)
 //        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName)
@@ -79,8 +80,8 @@ class LocalFileSystemCrawlerTest extends Specification {
 
         then:
         results != null
-        results.updated.size == 4
-        results.skipped.size == 1
+        results.updated.size() == 4
+        results.skipped.size() == 1
 
     }
 
