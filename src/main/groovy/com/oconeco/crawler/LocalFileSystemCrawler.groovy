@@ -178,8 +178,8 @@ class LocalFileSystemCrawler {
         return results
     }
 
-    def crawlFolderFiles(FSFolder fsFolder, BaseAnalyzer analyzer) {
-        Map results = [:]
+    Map<String, Map<String, Object>> crawlFolderFiles(FSFolder fsFolder, BaseAnalyzer analyzer) {
+        Map<String, Map<String, Object>> results = [:]
         int countAdded = 0
         if (fsFolder.children) {
             log.warn "FSFolder ($fsFolder) already has defined 'children': ${fsFolder.children}, this seems bad!!"
