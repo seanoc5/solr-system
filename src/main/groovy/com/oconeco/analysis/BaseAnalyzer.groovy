@@ -135,9 +135,14 @@ class BaseAnalyzer {
                 }
             } else {
                 if (this.ignoreItem) {
-                    object.ignore = (object.name ==~ this.ignoreItem)
+                    Matcher matcher = (object.name =~ this.ignoreItem)
+                    object.ignore = matcher.matches()
                     if (object.ignore) {
-                        log.info "\t\tIGNORE: processing an Item Object ($object), this matches item name ignore (${this.ignoreItem} -- ignore? ${object.ignore} "
+                        String match = matcher.group(1)
+                        log.info "\t\tIGNORE: processing an Item Object ($object), this matches item name ignore (${this.ignoreItem} -- match:$match "
+                        object.labels << Constants.IGNORE
+                        Map ml = [(Constants.IGNORE):[pattern:this.ignoreItem, (Constants.LABEL_MATCH):match]]
+                        object.matchedLabels = ml
                     } else {
                         log.debug "\t\tprocessing an Item Object ($object),  this does NOT match item name ignore (${this.ignoreItem} -- ignore? ${object.ignore} "
                     }
@@ -305,9 +310,9 @@ class BaseAnalyzer {
                     object.labels << label
                     mapVal.put(Constants.LABEL_MATCH, s)
                     matchingLabels.put(label, mapVal)
-                    log.debug "\t\tMatch: $label name($name) -- matches str($s)) =~ pattern($pattern) "
+                    log.info "\t\tMatch: $label name($name) -- matches str($s)) =~ pattern($pattern) "
                 } else {
-                    log.debug "$Constants.NO_MATCH, obj($object) name($name) LABEL($label)::pattern($pattern)"
+                    log.debug "${Constants.NO_MATCH}, obj($object) name($name) LABEL($label)::pattern($pattern)"
                 }
             } else {
                 log.debug "no pattern, label: $label -- pattern($pattern)"
@@ -317,7 +322,7 @@ class BaseAnalyzer {
         if (matchingLabels.size() > 0) {
             log.debug "found matching label, no need for default"
         } else {
-            log.debug "\t\t----No matching labels found for name($name)"
+            log.info "\t\t----No matching labels found for name($name)"
             if (defaultLabel) {
                 object.labels << defaultLabel
                 Map map = labelMap.get(defaultLabel)

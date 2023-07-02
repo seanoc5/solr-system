@@ -1,6 +1,6 @@
 package com.oconeco.helpers
 
-import com.oconeco.analysis.BaseAnalyzer
+
 import java.util.regex.Pattern
 
 class Constants {
@@ -9,6 +9,23 @@ class Constants {
     public static final String LBL_CRAWL = 'crawl'
     public static final String LBL_IGNORE = 'ignore'
     public static final String LBL_UNKNOWN = 'unknown'
+
+    public static final String IGNORE = 'ignore'
+    public static final List<String> IGNORE_BUNDLE = [IGNORE]
+    public static final String DEFAULT = 'default'
+    public static final String TRACK = 'track'
+    public static final List<String> TRACK_BUNDLE = [TRACK]
+    public static final String PARSE = 'parse'
+    public static final String BASIC = 'basic'
+    public static final List<String> BASIC_BUNDLE = [TRACK, PARSE]
+    public static final String ARCHIVE = 'archive'
+    public static final List<String> ARCHIVE_BUNDLE = [ARCHIVE, TRACK]
+    public static final String SOURCE_CODE = 'sourceCode'
+    public static final List<String> SOURCE_BUNDLE = [TRACK, SOURCE_CODE]
+    public static final String LOGS = 'logs'
+    public static final List<String> LOGS_BUNDLE = [TRACK, LOGS]
+    public static final String LABEL_MATCH = 'LabelMatch'
+    public static final String NO_MATCH = 'no match'
 
     public static final Map<String, Pattern> DEFAULT_FOLDERNAME_PATTERNS = [
             ignore       : ~/.*(?i)(csv|\.gradle.?|\.m2|snapshots?|caches?|chrome|deleteme.*|flatpack|git|github|google-chrome|ignore.*|never_index|node_modules|packages?|Partitions|pkgs?|plugins?|repo|repository|skins?|skipme.*|svn|target|te?mp|vscode)/,
@@ -23,7 +40,8 @@ class Constants {
     ]
     public static final Map<String, Map<String, Object>> DEFAULT_FOLDERNAME_LOCATE = [
             ignore: [pattern: DEFAULT_FOLDERNAME_PATTERNS[LBL_IGNORE], analysis: TRACK_BUNDLE],          // track ignored folders, but do not descend/crawl
-            default: [pattern: DEFAULT_FOLDERNAME_PATTERNS, analysis: BASIC_BUNDLE]
+            test: [pattern:~/(test.*)/, analysis: BASIC_BUNDLE],
+            (DEFAULT): [pattern:null, analysis: TRACK_BUNDLE],
     ]
 //    public static final Map<String, Map<String, Object>> DEFAULT_FOLDERNAME_LOCATE = [
 //            (BaseAnalyzer.IGNORE) : [pattern: DEFAULT_FOLDERNAME_PATTERNS[LBL_IGNORE], analysis: [BaseAnalyzer.TRACK_BUNDLE]],          // track ignored folders, but do not descend/crawl
@@ -66,21 +84,4 @@ class Constants {
 work: ~/.*\/work\/.*/,
     ]
 
-
-    public static final String IGNORE = 'ignore'
-    public static final String IGNORE_BUNDLE = ['ignore']
-    public static final String DEFAULT = 'default'
-    public static final String TRACK = 'track'
-    public static final String TRACK_BUNDLE = ['TRACK']
-    public static final String PARSE = 'parse'
-    public static final String BASIC = 'basic'
-    public static final List BASIC_BUNDLE = [TRACK, PARSE]
-    public static final String ARCHIVE = 'archive'
-    public static final List ARCHIVE_BUNDLE = [ARCHIVE, TRACK]
-    public static final String SOURCE_CODE = 'sourceCode'
-    public static final List SOURCE_BUNDLE = [TRACK, SOURCE_CODE]
-    public static final String LOGS = 'logs'
-    public static final List LOGS_BUNDLE = [TRACK, LOGS]
-    public static final String LABEL_MATCH = 'LabelMatch'
-    public static final String NO_MATCH = 'no match'
 }

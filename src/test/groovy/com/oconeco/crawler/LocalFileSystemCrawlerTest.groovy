@@ -66,12 +66,10 @@ class LocalFileSystemCrawlerTest extends Specification {
 
     def 'basic LocalFileSystemCrawler.crawlFolders no existing docs'() {
         given:
-        def a1 = Constants.DEFAULT_FOLDERNAME_LOCATE
-        def a2 = Constants.DEFAULT_FILENAME_LOCATE
-        FileSystemAnalyzer analyzer1 = new FileSystemAnalyzer(a1,a2 )
-//        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName, client, differenceChecker)
-        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, client, differenceChecker, analyzer)
-//        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, crawlName)
+        Map<String, Map<String, Object>> folderLabels = Constants.DEFAULT_FOLDERNAME_LOCATE
+        Map<String, Map<String, Object>> fileLabels = Constants.DEFAULT_FILENAME_LOCATE
+        FileSystemAnalyzer analyzer1 = new FileSystemAnalyzer(folderLabels,fileLabels )
+        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, client, differenceChecker)
         Map<String, SolrDocument> existingSolrFolderDocs = null
         boolean compareExistingSolrFolderDocs = false
 
@@ -81,6 +79,13 @@ class LocalFileSystemCrawlerTest extends Specification {
         then:
         results != null
         results.updated.size() == 4
+        results.updated[0].name == 'content'
+        results.updated[0].labels == ['default']
+        results.updated[0].matchedLabels.get('default').analysis == [Constants.TRACK]
+
+        results.updated[1].name == 'testsub'
+        results.updated[2].name == 'subfolder2'
+
         results.skipped.size() == 1
 
     }
@@ -90,7 +95,7 @@ class LocalFileSystemCrawlerTest extends Specification {
         given:
 //        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, client, differenceChecker, analyzer)
 //        Map<String, List<FSFolder>> results = crawler.crawlFolders(crawlName, startFolder.toFile(), existingSolrFolderDocs, analyzer )
-        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, client, differenceChecker, analyzer)
+        LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, client, differenceChecker)
 
         when:
         def results = crawler.crawlFolders(crawlName, startFolder.toFile(), existingSolrFolderDocsMocked, analyzer)
@@ -98,6 +103,9 @@ class LocalFileSystemCrawlerTest extends Specification {
 
         then:
         results != null
+        results.skipped.size()==1
+        results.current.size()==1
+        results.updated.size()==3
 
     }
 

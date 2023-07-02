@@ -33,21 +33,20 @@ class LocalFileSystemCrawler {
     String locationName
     String osName
     BaseDifferenceChecker differenceChecker
-    BaseAnalyzer analyzer
+//    BaseAnalyzer analyzer
     BaseClient persistenceClient
 
     // todo -- fix these fied lists, put in constructor, or move to diff checker
     String checkFolderFields = SolrSystemClient.DEFAULT_FIELDS_TO_CHECK.join(' ')
     String checkFileFields = SolrSystemClient.DEFAULT_FIELDS_TO_CHECK.join(' ')
 
-    LocalFileSystemCrawler(String locationName, BaseClient persistenceClient, BaseDifferenceChecker diffChecker, BaseAnalyzer analyzer) {
-        log.debug "${this.class.simpleName} constructor with location:$locationName, Client($persistenceClient) DiffChecker($differenceChecker) analyzer($analyzer) "
+    LocalFileSystemCrawler(String locationName, BaseClient persistenceClient, BaseDifferenceChecker diffChecker) {
+        log.debug "${this.class.simpleName} constructor with location:$locationName, Client($persistenceClient) DiffChecker($differenceChecker)"
         this.locationName = locationName
         osName = System.getProperty("os.name")
         // moved this from config file to here in case we start supporting remote filesystems...? (or WSL...?)
         this.differenceChecker = diffChecker
         this.persistenceClient = persistenceClient
-        this.analyzer = analyzer
     }
 
 
@@ -161,7 +160,7 @@ class LocalFileSystemCrawler {
                 DifferenceStatus differenceStatus = differenceChecker.compareFSFolderToSavedDocMap(currentFolder, existingSolrFolderDocs)
                 boolean shouldUpdate = differenceChecker.shouldUpdate(differenceStatus)
                 if (shouldUpdate) {
-                    def folderResults = crawlFolderFiles(currentFolder)
+                    def folderResults = crawlFolderFiles(currentFolder, analyzer)
                     log.debug "\t\tcrawlFolderFiles results:($folderResults)"
                     List doAnalysisresults = analyzer.doAnalysis(currentFolder)
                     log.debug "\t\tdoAnalysisresults: $doAnalysisresults to currentFolder: $currentFolder"
@@ -171,15 +170,15 @@ class LocalFileSystemCrawler {
                     log.info "\t\t$cnt) ++++Save folder (${currentFolder.path}:${currentFolder.depth}) -- Differences:${differenceStatus.differences} -- response: $response"
                     results.updated << currentFolder
                 } else {
-                    results.skipped << currentFolder
-                    log.debug "\t\t$cnt) no need to update: $differenceStatus"
+                    results.current << currentFolder
+                    log.debug "\t\t$cnt) no need to update: $differenceStatus -- persistence ad source are current"
                 }
             }
         }
         return results
     }
 
-    def crawlFolderFiles(FSFolder fsFolder) {
+    def crawlFolderFiles(FSFolder fsFolder, BaseAnalyzer analyzer) {
         Map results = [:]
         int countAdded = 0
         if (fsFolder.children) {

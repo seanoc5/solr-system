@@ -38,7 +38,7 @@ long start = System.currentTimeMillis()
 crawlMap.each { String crawlName, String startPath ->
     log.info "Crawl name: $crawlName -- start path: $startPath -- location: $locationName "
 
-    LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, solrClient, differenceChecker, analyzer)
+    LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, solrClient, differenceChecker)
     def numFoundPreCrawl = crawler.getSolrDocCount(crawlName)
     log.debug "\t\t====Solr Doc Count before crawl(loc=$locationName: cs=$crawlName): $numFoundPreCrawl"
 
