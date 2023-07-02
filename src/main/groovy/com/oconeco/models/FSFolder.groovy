@@ -60,4 +60,12 @@ class FSFolder extends FSObject {
         list.addAll(this)
         return list
     }
+
+    List<FSFile> gatherArchiveFiles(){
+        List<FSFile> archiveFiles = []
+        if(children){
+            children.findAll {it.archive}
+        }
+        return archiveFiles
+    }
 }

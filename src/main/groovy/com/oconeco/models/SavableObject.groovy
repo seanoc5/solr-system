@@ -40,6 +40,8 @@ abstract class SavableObject {
     Date lastModifiedDate
     Date lastAccessDate
 
+    String content = null
+
     boolean hidden = false
 
     /** link to parent (if any) */
@@ -153,6 +155,10 @@ abstract class SavableObject {
 
         if (parentId) {
             sid.setField(SolrSystemClient.FLD_PARENT_ID, parentId)
+        }
+
+        if(content){
+            sid.setField(SolrSystemClient.FLD_CONTENT_BODY, content)
         }
 
         if (dedup) {

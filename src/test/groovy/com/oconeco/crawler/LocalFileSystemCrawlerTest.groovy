@@ -5,7 +5,6 @@ import com.oconeco.helpers.Constants
 import com.oconeco.models.FSFile
 import com.oconeco.models.FSFolder
 import com.oconeco.models.FSObject
-import com.oconeco.models.SavableObject
 import com.oconeco.persistence.SolrSystemClient
 import org.apache.log4j.Logger
 import org.apache.solr.common.SolrDocument
@@ -13,7 +12,6 @@ import org.apache.solr.common.SolrDocumentList
 import spock.lang.Specification
 
 import java.nio.file.Path
-
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -73,29 +71,34 @@ class LocalFileSystemCrawlerTest extends Specification {
         results.skipped.size() == 1
         results.current.size() == 1
         results.updated.size() == 3
-
     }
 
 
     def 'process archives in content folder'() {
         given:
         LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, client, differenceChecker)
-        List<FSFile> archiveFSFiles = []
-        List<SavableObject> archiveItems = []
+//        List<FSFile> archiveFSFiles = []
+//        List<SavableObject> archiveItems = []
 
         when:
-        Map<String, Map<String, Object>> crawlREsults = crawler.crawlFolderFiles(startFSFolder, analyzer)
-        def archiveFiles = startFSFolder.children.each {FSObject fsObject ->
-            def archives = crawlFiles.findAll {FSObject obj -> obj.archive}
-            return archives
+        Map<String, Map<String, Object>> crawlResults = crawler.crawlFolderFiles(startFSFolder, analyzer)
+        def archiveFiles = startFSFolder.children.findAll {FSObject fsObject ->
+            fsObject.archive
         }
+        FSFile testzip = archiveFiles[0]
+        def testzipEntries = testzip.gatherArchiveEntries()
+        FSFile fuzzy = archiveFiles[1]
+        def fuzzyEntries = fuzzy.gatherArchiveEntries()
+
 
         then:
-        archiveFSFiles[0]!=null
-
+        archiveFiles.size() == 5
+        testzipEntries.size() == 5
+        fuzzyEntries.size() == 123
 //        archiveItems.size() == 174
-
     }
+
+
 
 
 //    def 'check folders that need updating'() {

@@ -2,8 +2,14 @@ package com.oconeco.analysis
 
 import com.oconeco.helpers.Constants
 import com.oconeco.models.FSFile
+import com.oconeco.models.FSObject
 import com.oconeco.models.SavableObject
 import org.apache.log4j.Logger
+import org.apache.tika.exception.TikaException
+import org.apache.tika.metadata.Metadata
+import org.apache.tika.parser.AutoDetectParser
+import org.apache.tika.parser.Parser
+import org.apache.tika.sax.BodyContentHandler
 
 import java.util.regex.Matcher
 import java.util.regex.Pattern
@@ -43,6 +49,10 @@ class BaseAnalyzer {
     Map<String, Map<String, Object>> groupPathMap
     Map<String, Map<String, Object>> itemPathMap
 
+    Parser tikaParser = null
+    BodyContentHandler tikaBodyHandler = null
+
+
     /**
      * Create a basic analyzer with default group and item maps (ignore and default entries only)
      * todo -- is this valid? least surprise issues? blank constructor intitializing default values...??
@@ -60,7 +70,9 @@ class BaseAnalyzer {
      * @param folderPathMap
      * @param filePathMap
      */
-    BaseAnalyzer(Map<String, Map<String, Object>> groupNameMap, Map<String, Map<String, Object>> itemNameMap, Map<String, Map<String, Object>> groupPathMap = null, Map<String, Map<String, Object>> itemPathMap = null) {
+    BaseAnalyzer(Map<String, Map<String, Object>> groupNameMap, Map<String, Map<String, Object>> itemNameMap,
+                 Map<String, Map<String, Object>> groupPathMap = null, Map<String, Map<String, Object>> itemPathMap = null,
+                 AutoDetectParser tikaParser = null, BodyContentHandler tikaBodyHandler = null) {
         log.info "BaseAnalyzer constructor(groupNameMap, itemNameMap, groupPathMap?, itemPathMap?) -> groupNameMap keys(${groupNameMap.keySet()}), itemNameMap.keys(${itemNameMap.keySet()}) "
 
         Map<String, Object> gnm = groupNameMap[Constants.IGNORE]
@@ -92,7 +104,19 @@ class BaseAnalyzer {
             this.itemPathMap = itemPathMap
         }
 
+        if (tikaParser) {
+            this.tikaParser = tikaParser
+        }
+        if (tikaBodyHandler) {
+            this.tikaBodyHandler = tikaBodyHandler
+        }
+
     }
+
+
+//    BaseAnalyzer(Map<String, Map<String, Object>> groupNameMap, Map<String, Map<String, Object>> itemNameMap, Map<String, Map<String, Object>> groupPathMap = null, Map<String, Map<String, Object>> itemPathMap = null,
+//                 AutoDetectParser parser = null, BodyContentHandler handler = null) {
+//    }
 
 
     def analyze(List<SavableObject> objectList) {
@@ -123,7 +147,7 @@ class BaseAnalyzer {
                     if (object.ignore) {
                         String match = matcher.group(1)
                         object.labels << Constants.IGNORE
-                        Map ml = [(Constants.IGNORE):[pattern:this.ignoreGroup, (Constants.LABEL_MATCH):match]]
+                        Map ml = [(Constants.IGNORE): [pattern: this.ignoreGroup, (Constants.LABEL_MATCH): match]]
                         object.matchedLabels = ml
                         log.info "\t\tIGNORE: processing a groupObject ($object), this matches group name ignore (${this.ignoreGroup} "
                     } else {
@@ -141,7 +165,7 @@ class BaseAnalyzer {
                         String match = matcher.group(1)
                         log.info "\t\tIGNORE: processing an Item Object ($object), this matches item name ignore (${this.ignoreItem} -- match:$match "
                         object.labels << Constants.IGNORE
-                        Map ml = [(Constants.IGNORE):[pattern:this.ignoreItem, (Constants.LABEL_MATCH):match]]
+                        Map ml = [(Constants.IGNORE): [pattern: this.ignoreItem, (Constants.LABEL_MATCH): match]]
                         object.matchedLabels = ml
                     } else {
                         log.debug "\t\tprocessing an Item Object ($object),  this does NOT match item name ignore (${this.ignoreItem} -- ignore? ${object.ignore} "
@@ -174,7 +198,7 @@ class BaseAnalyzer {
 //        def results = []
             if (shouldIgnore(object)) {
                 log.info "\t\tIgnore object ($object) (skipping majority of `analyze(object)` method"
-                Map ignoreMap = [(Constants.IGNORE): [pattern: '', analysis: [], (Constants.LABEL_MATCH):Constants.NO_MATCH]]
+                Map ignoreMap = [(Constants.IGNORE): [pattern: '', analysis: [], (Constants.LABEL_MATCH): Constants.NO_MATCH]]
                 object.matchedLabels = ignoreMap
             } else {
                 object.matchedLabels = applyLabelMaps(object)
@@ -184,8 +208,8 @@ class BaseAnalyzer {
                     if (analysis) {
                         log.debug "\t\t++++ -> Apply analysis: $label->$analysis -- object (${object}) -- matched on: ${labelMatchMap.get(Constants.LABEL_MATCH)}"
                         // todo - move me to after "shouldUpdate'
-//                    def rc = this.doAnalysis(label, object)
-//                    log.info "\t\tdoAnalysis($label) results: $rc"
+                        def rc = this.doAnalysis(label, object)
+                        log.info "\t\tdoAnalysis($label) results: $rc"
                     } else {
                         log.warn "\t\tNothing to process? $label - $analysis"
                     }
@@ -227,30 +251,30 @@ class BaseAnalyzer {
      * @return
      */
     def doAnalysis(String analysisName, SavableObject object) {
-        // todo -- complete me
-        String msg = "\t\tTODO: Do analysis: $analysisName (${analysisName}) on object:($object) -- complete me!!"
-        log.info msg
-//        switch (analysis.toLowerCase()):
-        switch (analysisName) {
-            case 'default':
-//                object.add
+        def results = null
+        log.info "Analysis ($analysisName) on object:($object)"
+        switch (analysisName.toLowerCase()) {
+            case 'track':
                 log.info "Do analysis named '$analysisName' on object $object"
+                results = this.track(object)
                 break
-            case 'basic':
+            case 'parse':
                 log.info "Do analysis named '$analysisName' on object $object"
+                results = this.parse(object)
                 break
-            case 'default':
-                log.info "Do analysis named 'default' on object $object"
-                break
+//            case 'default':
+//                log.info "Do analysis named 'default' on object $object"
+//                break
             case 'ignore':
                 log.warn "Do analysis named '$analysisName' on object $object -- ATTENTION: should probably never get to doAnalysis() on an 'ignored' object...."
                 break
             default:
                 log.warn "$Constants.NO_MATCH in swtich, falling back to  default analysis on object $object"
+                results = this.track(object)
                 break
         }
-
-        return msg
+        log.debug "\t\tResults $results (for analysis:$analysisName on object:$object)"
+        return results
     }
 
 
@@ -335,6 +359,48 @@ class BaseAnalyzer {
         return matchingLabels
     }
 
+    def track(SavableObject object) {
+        def results = null
+        if (object instanceof FSObject) {
+            FSObject fso = object
+            results = fso.addFileDetails()
+        }
+        return results
+    }
+
+
+    def parse(SavableObject object) {
+        String content
+        Metadata metadata
+        if(tikaBodyHandler && tikaParser) {
+            try (InputStream inputStream = object.thing.newInputStream()) {
+                if (inputStream) {
+                    metadata = new Metadata();
+                    tikaParser.parse(inputStream, tikaBodyHandler, metadata);
+
+                    if (metadata) {
+                        log.info "metadata: $metadata"
+                    } else {
+                        log.warn "No metadata? $srcfile -- meta: $metadata"
+                    }
+                    content = handler.toString()
+                    if (content) {
+                        object.content = content
+                        log.info "Content, size(${content.size()}"
+                    } else {
+                        log.info "No content....!!!"
+                    }
+                } else {
+                    log.info "No input Stream?)"
+                }
+            } catch (TikaException tikaException) {
+                log.error "Tika exception: $tikaException"
+            }
+            return [content: content, metadata: metadata]
+        } else {
+            log.warn "No tikaParser($tikaParser) or tikaBodyHandler:($tikaBodyHandler), no parsing possible"
+        }
+    }
 
     @Override
     public String toString() {

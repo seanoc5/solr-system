@@ -40,7 +40,7 @@ class BaseAnalyzerTest extends Specification {
         analyzer.ignoreGroup != null
         analyzer.ignoreItem != null
         analyzer.itemNameMap.keySet().size() == 2
-        analyzer.groupNameMap.keySet().size() == 1
+        analyzer.groupNameMap.keySet().size() == 2
         analyzer.groupPathMap == null
         analyzer.itemPathMap == null
     }
@@ -54,7 +54,7 @@ class BaseAnalyzerTest extends Specification {
         analyzer.ignoreGroup != null
         analyzer.ignoreItem != null
         analyzer.itemNameMap.keySet().size() == 2
-        analyzer.groupNameMap.keySet().size() == 1
+        analyzer.groupNameMap.keySet().size() == 2
         analyzer.groupPathMap == null
         analyzer.itemPathMap == null
     }
@@ -68,7 +68,7 @@ class BaseAnalyzerTest extends Specification {
         analyzer.ignoreGroup != null
         analyzer.ignoreItem != null
         analyzer.itemNameMap.keySet().size() == 2
-        analyzer.groupNameMap.keySet().size() == 1
+        analyzer.groupNameMap.keySet().size() == 2
         analyzer.groupPathMap == Constants.DEFAULT_FOLDERPATH_MAP
         analyzer.itemPathMap == Constants.DEFAULT_FILEPATH_MAP
     }
@@ -82,7 +82,7 @@ class BaseAnalyzerTest extends Specification {
         def resultParam = analyzerLocate.analyze(paramFS)
         def resultCurrency = analyzerLocate.analyze(currencyFS)
 
-        String basicKey = 'basic'
+        String parseKey = 'parse'
 
         then:
         resultParam != null
@@ -90,8 +90,8 @@ class BaseAnalyzerTest extends Specification {
         resultParam.size() == 1
         resultParam instanceof   Map<String, Map<String, Object>>
 //        (resultParam.get(basicKey) insta)
-        resultParam.get(basicKey).keySet().toList().containsAll(['pattern', 'analysis', 'LabelMatch'])
-        resultParam.get(basicKey).get('pattern') != null
+        resultParam.get(parseKey).keySet().toList().containsAll(['pattern', 'analysis', 'LabelMatch'])
+        resultParam.get(parseKey).get('pattern') != null
 
         resultCurrency.size() == 1
 
@@ -104,7 +104,7 @@ class BaseAnalyzerTest extends Specification {
 
         paramFS.labels != null
         paramFS.labels.size() == 1
-        paramFS.labels[0] == basicKey          // todo - change this to last label without a pattern
+        paramFS.labels[0] == parseKey          // todo - change this to last label without a pattern
 
         currencyFS.labels[0] == 'default'
 
@@ -116,15 +116,28 @@ class BaseAnalyzerTest extends Specification {
     def "Analyze list of files"() {
         given:
         BaseAnalyzer analyzerLocate = new BaseAnalyzer(Constants.DEFAULT_FOLDERNAME_LOCATE, Constants.DEFAULT_FILENAME_LOCATE)
+        List<SavableObject> fileFsList = [paramFS, currencyFS, skipmeFS]
 
         when:
-        List<SavableObject> fileFsList = [paramFS, currencyFS, skipmeFS]
         def results = analyzerLocate.analyze(fileFsList)
 
         then:
         results != null
         results instanceof List
         results.size() == 3
+    }
+
+    def "check doAnalysis calls"(){
+        given:
+        BaseAnalyzer analyzerLocate = new BaseAnalyzer(Constants.DEFAULT_FOLDERNAME_LOCATE, Constants.DEFAULT_FILENAME_LOCATE)
+        List<SavableObject> fileFsList = [paramFS, currencyFS, skipmeFS]
+
+        when:
+        def results = analyzerLocate.analyze(fileFsList)
+
+        then:
+        results != null
+
     }
 
 //    def "TestAnalyze"() {

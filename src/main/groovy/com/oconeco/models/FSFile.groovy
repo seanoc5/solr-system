@@ -46,6 +46,10 @@ class FSFile extends  FSObject {
         // todo -- more here -- also check FSFolder object, and analyze() method,
         extension = FilenameUtils.getExtension(f.name)
         log.debug "File(${this.toString()})"
+        archive = isArchive()
+        if(archive){
+            log.debug "\t\tfound archive file: $this"
+        }
     }
 
 

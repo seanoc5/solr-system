@@ -93,68 +93,6 @@ class FSFolderTest extends Specification {
 
     }
 
-/*
-    def "folder and files with ignore check toSolrInputDocument"() {
-        given:
-        FSFolder fsFolder = new FSFolder(startFolder, parentFolder, locationName, crawlName)
-        fsFolder.addFileDetails()
-        fsFolder.buildChildrenList(Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE])
-
-        when:
-        def sid = fsFolder.toSolrInputDocument()
-        List<String> fieldNames = sid.getFieldNames().toList()
-        List<String> expectedNames = [SolrSystemClient.FLD_ID, SolrSystemClient.FLD_TYPE,
-                                      SolrSystemClient.FLD_NAME_S, SolrSystemClient.FLD_NAME_T, SolrSystemClient.FLD_PATH_S, SolrSystemClient.FLD_PATH_T,
-                                      SolrSystemClient.FLD_CRAWL_NAME, SolrSystemClient.FLD_LOCATION_NAME, SolrSystemClient.FLD_DEDUP,
-                                      SolrSystemClient.FLD_SIZE, SolrSystemClient.FLD_DEPTH,
-                                      SolrSystemClient.FLD_LOCATION_NAME,
-                                      SolrSystemClient.FLD_LAST_MODIFIED,
-//                                      SolrSystemClient.FLD_CHILD_FILENAMES, SolrSystemClient.FLD_CHILD_DIRNAMES,
-                                      SolrSystemClient.FLD_DEDUP,
-//                                      SolrSystemClient.FLD_IGNORED_FOLDERS, SolrSystemClient.FLD_EXTENSION_SS,
-//                                      SolrSystemClient.FLD_IGNORED_FILES
-        ]
-
-        then:
-        sid != null
-        fieldNames.containsAll(expectedNames)
-        fieldNames.size() >= 15
-
-    }
-*/
-
-//    def "basic startFolder load with ignore check toSolrInputDocument"() {
-//        given:
-//        File src = new File(getClass().getResource('/content').toURI())
-//
-//        when:
-//        FSFolder startFolder = new FSFolder(src, 1, ignoreFiles, ignoreFolders)
-//        SolrInputDocument sid = startFolder.toSolrInputDocument()
-//        List<SolrInputDocument> sidList = startFolder.toSolrInputDocumentList()
-//        SolrInputDocument sidFolder = sidList[0]
-//        String folderName = sidFolder.getField('name_s').value
-//        SolrInputDocument sidSolrxml = sidList.find {
-//            it.getField('name_s').value == 'solrconfig.xml'
-//        }
-//        String xmlName = sidSolrxml.getField('name_s').value
-//
-//        then:
-//        sid instanceof SolrInputDocument
-//        sid.size() == 9
-//
-//        sidList instanceof List<SolrInputDocument>
-//        sidList.size() == 21
-//        sidFolder.getFieldValues('type_s')[0] == 'Folder'
-//        // test 'uniqify' value
-//        sidFolder.getField(SolrSystemClient.FLD_NAME_SIZE_S).value == 'content:1305281'
-//
-//
-//        sidSolrxml.getFieldValues('type_s')[0] == 'File'
-//        sidSolrxml.getField(SolrSystemClient.FLD_NAME_SIZE_S).value == 'solrconfig.xml:62263'
-//
-//        xmlName == 'solrconfig.xml'
-//    }
-
 
 
 

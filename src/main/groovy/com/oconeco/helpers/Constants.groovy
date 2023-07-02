@@ -1,6 +1,5 @@
 package com.oconeco.helpers
 
-
 import java.util.regex.Pattern
 
 class Constants {
@@ -16,14 +15,17 @@ class Constants {
     public static final String TRACK = 'track'
     public static final List<String> TRACK_BUNDLE = [TRACK]
     public static final String PARSE = 'parse'
-    public static final String BASIC = 'basic'
-    public static final List<String> BASIC_BUNDLE = [TRACK, PARSE]
-    public static final String ARCHIVE = 'archive'
-    public static final List<String> ARCHIVE_BUNDLE = [ARCHIVE, TRACK]
+//    public static final String BASIC = 'basic'
+    public static final List<String> PARSE_BUNDLE = [TRACK, PARSE]
+
     public static final String SOURCE_CODE = 'sourceCode'
     public static final List<String> SOURCE_BUNDLE = [TRACK, SOURCE_CODE]
     public static final String LOGS = 'logs'
     public static final List<String> LOGS_BUNDLE = [TRACK, LOGS]
+
+    public static final String ARCHIVE = 'archive'
+    public static final List<String> ARCHIVE_BUNDLE = [ARCHIVE, TRACK]          // currently handling ARCHIVE in crawler, and processing each archive file as a separate group (to avoid OOME...?)
+
     public static final String LABEL_MATCH = 'LabelMatch'
     public static final String NO_MATCH = 'no match'
 
@@ -39,15 +41,10 @@ class Constants {
             system       : ~/.*(?i)(class|sbt|sbt-\d.*|runtime)/,
     ]
     public static final Map<String, Map<String, Object>> DEFAULT_FOLDERNAME_LOCATE = [
-            ignore: [pattern: DEFAULT_FOLDERNAME_PATTERNS[LBL_IGNORE], analysis: TRACK_BUNDLE],          // track ignored folders, but do not descend/crawl
-            test: [pattern:~/(test.*)/, analysis: BASIC_BUNDLE],
-            (DEFAULT): [pattern:null, analysis: TRACK_BUNDLE],
+            (IGNORE) : [pattern: DEFAULT_FOLDERNAME_PATTERNS[LBL_IGNORE], analysis: TRACK_BUNDLE],          // track ignored folders, but do not descend/crawl
+            'test' : [pattern: ~/(test.*)/, analysis: TRACK_BUNDLE],
+            (TRACK): [pattern: null, analysis: TRACK_BUNDLE],
     ]
-//    public static final Map<String, Map<String, Object>> DEFAULT_FOLDERNAME_LOCATE = [
-//            (BaseAnalyzer.IGNORE) : [pattern: DEFAULT_FOLDERNAME_PATTERNS[LBL_IGNORE], analysis: [BaseAnalyzer.TRACK_BUNDLE]],          // track ignored folders, but do not descend/crawl
-//            (BaseAnalyzer.DEFAULT): [pattern: null, analysis: [BaseAnalyzer.BASIC_BUNDLE]],
-//    ]
-
 
     public static final Map<String, Pattern> DEFAULT_FILENAME_PATTERNS = [
             ignore       : ~/(?i)([.~]*lock.*|_.*|.*\bte?mp|.*\.class|.*\.pem|skipme.*)/,
@@ -65,15 +62,20 @@ class Constants {
 
     public static final Map<String, Map<String, Object>> DEFAULT_FILENAME_LOCATE = [
             (IGNORE) : [pattern: ~/(?i)([.~]*lock.*|_.*|.*\bte?mp|.*\.class|.*\.pem|skipme.*)/, analysis: IGNORE_BUNDLE],
-            (BASIC)  : [pattern: ~/.*(?i)(accdb|docx?|go|groovy|gradle|jar|java|javascript|js|jsonl?d?|md|ods|odp|odt|php|pptx?|rtf|schema|sh|vsdx?|xlsx?)/,
-                        analysis: BASIC_BUNDLE],
-            (DEFAULT): [pattern: null, analysis: TRACK_BUNDLE],
+            (PARSE)  : [pattern: ~/.*(?i)(accdb|docx?|go|groovy|gradle|jar|java|javascript|js|jsonl?d?|md|ods|odp|odt|php|pptx?|rtf|schema|sh|vsdx?|xlsx?)/, analysis: TRACK_BUNDLE],
+            (TRACK): [pattern: null, analysis: TRACK_BUNDLE],
+    ]
+
+    public static final Map<String, Map<String, Object>> DEFAULT_FILENAME_PARSE = [
+            (IGNORE) : [pattern: ~/(?i)([.~]*lock.*|_.*|.*\bte?mp|.*\.class|.*\.pem|skipme.*)/, analysis: IGNORE_BUNDLE],
+            (PARSE)  : [pattern: ~/.*(?i)(accdb|docx?|go|groovy|gradle|jar|java|javascript|js|jsonl?d?|md|ods|odp|odt|php|pptx?|rtf|schema|sh|vsdx?|xlsx?)/, analysis: PARSE_BUNDLE],
+            (TRACK): [pattern: null, analysis: PARSE_BUNDLE],
     ]
 
     /** path oriented pattern, which will 'cascade' down the label through child folders */
     public static final Map<String, Pattern> DEFAULT_FOLDERPATH_MAP = [
-            data : [pattern: ~/.*(\/data\/).*/, analysis: BASIC_BUNDLE],
-            build: [pattern: ~/.*(\/build\/).*/, analysis: BASIC_BUNDLE],
+            data : [pattern: ~/.*(\/data\/).*/, analysis: PARSE_BUNDLE],
+            build: [pattern: ~/.*(\/build\/).*/, analysis: PARSE_BUNDLE],
             work : [pattern: ~/.*(\/data\/).*/, analysis: SOURCE_BUNDLE],
     ]
 
