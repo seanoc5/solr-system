@@ -1,7 +1,10 @@
 package misc
 
 import groovy.io.FileType
-import org.apache.log4j.Logger
+
+//import org.apache.log4j.Logger
+
+import org.apache.logging.log4j.core.Logger
 import org.apache.tika.exception.TikaException
 import org.apache.tika.metadata.Metadata
 import org.apache.tika.parser.AutoDetectParser
