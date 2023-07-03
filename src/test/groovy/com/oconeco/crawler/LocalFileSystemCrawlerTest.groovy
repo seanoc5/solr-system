@@ -9,8 +9,6 @@ import com.oconeco.persistence.SolrSystemClient
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 
-//import org.apache.log4j.Logger
-
 import org.apache.solr.common.SolrDocument
 import org.apache.solr.common.SolrDocumentList
 import spock.lang.Specification
@@ -25,7 +23,7 @@ import java.nio.file.Path
  */
 
 class LocalFileSystemCrawlerTest extends Specification {
-//    Logger log = Logger.getLogger(this.class.name)
+//    Logger log = LogManager.getLogger(this.class.name)
     Logger log = LogManager.getLogger()
     String locationName = 'spock'
     String crawlName = 'test'

@@ -1,4 +1,10 @@
 package misc
+
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.core.Logger
+import org.apache.solr.client.solrj.SolrClient
+import org.apache.solr.client.solrj.SolrQuery
+
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -7,18 +13,20 @@ package misc
  */
 
 
-import org.apache.log4j.Logger
-import org.apache.solr.client.solrj.SolrClient
-import org.apache.solr.client.solrj.SolrQuery
+//import org.apache.logging.log4j.core.Logger
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.core.Logger
+
 import org.apache.solr.client.solrj.impl.HttpSolrClient
 import org.apache.solr.client.solrj.response.QueryResponse
 import org.apache.solr.common.SolrDocumentList
 
-final Logger log = Logger.getLogger(this.class.name);
+//final Logger log = LogManager.getLogger(this.class.name);
+Logger log = LogManager.getLogger(this.class.name);
 
 log.info "Starting ${this.class.name}..."
 
-String host = 'localhost'
+String host = 'oldie'
 int port = 8983
 String collection = 'solr_system'
 String baseUrl = "http://$host:$port/solr/$collection"

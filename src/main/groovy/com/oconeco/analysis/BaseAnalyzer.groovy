@@ -4,9 +4,13 @@ import com.oconeco.helpers.Constants
 import com.oconeco.models.FSFile
 import com.oconeco.models.FSObject
 import com.oconeco.models.SavableObject
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.core.Logger
 import org.apache.tika.exception.TikaException
 import org.apache.tika.metadata.Metadata
+
+//import org.apache.logging.log4j.core.Logger
+
 import org.apache.tika.parser.AutoDetectParser
 import org.apache.tika.parser.Parser
 import org.apache.tika.sax.BodyContentHandler
@@ -22,7 +26,7 @@ import java.util.regex.Pattern
  */
 
 class BaseAnalyzer {
-    static final Logger log = Logger.getLogger(this.class.name);
+    static final Logger log = LogManager.getLogger(this.class.name);
 
     public static final String HEAVYPARSE = 'heavyParse'
     //'OCR (not immplemented yet) and other more advanced content extraction'
@@ -209,7 +213,7 @@ class BaseAnalyzer {
                         log.debug "\t\t++++ -> Apply analysis: $label->$analysis -- object (${object}) -- matched on: ${labelMatchMap.get(Constants.LABEL_MATCH)}"
                         // todo - move me to after "shouldUpdate'
                         def rc = this.doAnalysis(label, object)
-                        log.info "\t\tdoAnalysis($label) results: $rc"
+                        log.debug "\t\tdoAnalysis($label) results: $rc"
                     } else {
                         log.warn "\t\tNothing to process? $label - $analysis"
                     }
@@ -261,6 +265,10 @@ class BaseAnalyzer {
             case 'parse':
                 log.info "Do analysis named '$analysisName' on object $object"
                 results = this.parse(object)
+                String mime = results?.metadata?.get('Content-Type')
+                if(mime){
+                    object.mimeType = mime
+                }
                 break
 //            case 'default':
 //                log.info "Do analysis named 'default' on object $object"
@@ -384,7 +392,7 @@ class BaseAnalyzer {
                     } else {
                         log.warn "No metadata? $srcfile -- meta: $metadata"
                     }
-                    content = handler.toString()
+                    content = tikaBodyHandler.toString()
                     if (content) {
                         object.content = content
                         log.info "Content, size(${content.size()}"

@@ -8,7 +8,7 @@ import com.oconeco.persistence.BaseClient
 import com.oconeco.persistence.SolrSystemClient
 import groovy.io.FileType
 import groovy.io.FileVisitResult
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
 import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.client.solrj.response.QueryResponse
 import org.apache.solr.common.SolrDocument
@@ -28,7 +28,7 @@ import java.nio.file.Path
  * review if there is a benefit to having a persistent crawler over multiple folders/names in a given location/source
  */
 class LocalFileSystemCrawler {
-    static log = Logger.getLogger(this.class.name);
+    static log = LogManager.getLogger(this.class.name);
 //    String crawlName        // todo -- remove this from class, leave as arg in methods where appropriate
     String locationName
     String osName

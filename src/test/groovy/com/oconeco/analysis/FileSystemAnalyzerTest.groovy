@@ -31,6 +31,12 @@ class FileSystemAnalyzerTest extends Specification {
 
         then:
         goFile != null
+        goFile.extension=='go'
+        goFile.mimeType=='text/plain; charset=ISO-8859-1'
+        goFile.labels.size()==1
+        goFile.labels[0]=='parse'
+        goFile.metadata.size()==4
+
         docFile != null
 
     }

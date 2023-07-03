@@ -2,15 +2,14 @@ package misc
 
 import groovy.io.FileType
 
-//import org.apache.log4j.Logger
-
 import org.apache.logging.log4j.core.Logger
+import org.apache.logging.log4j.LogManager
 import org.apache.tika.exception.TikaException
 import org.apache.tika.metadata.Metadata
 import org.apache.tika.parser.AutoDetectParser
 import org.apache.tika.sax.BodyContentHandler
 
-Logger log = Logger.getLogger(this.class.name);
+Logger log = LogManager.getLogger(this.class.name);
 
 AutoDetectParser parser = new AutoDetectParser();
 BodyContentHandler handler = new BodyContentHandler(-1);

@@ -1,6 +1,7 @@
 package com.oconeco.content.structure
 
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.core.Logger
 
 /**
  * Class to split content
@@ -10,9 +11,7 @@ import org.apache.log4j.Logger
  *
  */
 class ContentSplitter {
-
-    static Logger log = Logger.getLogger("ContentSplitter");
-//    static Logger log = Logger.getLogger(this.class.name);
+    static Logger log = LogManager.getLogger("ContentSplitter");
 
     /**
      * split big text into paragraphs by regex

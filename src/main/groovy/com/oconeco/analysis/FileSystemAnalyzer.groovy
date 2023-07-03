@@ -1,6 +1,8 @@
 package com.oconeco.analysis
 
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.core.Logger
+import org.apache.logging.log4j.LogManager
+
 import org.apache.tika.parser.Parser
 import org.apache.tika.sax.BodyContentHandler
 /**
@@ -11,7 +13,7 @@ import org.apache.tika.sax.BodyContentHandler
  */
 
 class FileSystemAnalyzer extends BaseAnalyzer {
-    Logger log = Logger.getLogger(this.class.name)
+    Logger log = LogManager.getLogger(this.class.name)
 
     FileSystemAnalyzer(folderNameMap, fileNameMap, folderPathMap = null, filePathMap = null, Parser parser = null, BodyContentHandler handler = null) {
         super(folderNameMap, fileNameMap, folderPathMap, filePathMap, parser, handler)

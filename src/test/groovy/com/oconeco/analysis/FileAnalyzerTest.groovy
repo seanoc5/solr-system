@@ -3,7 +3,7 @@
 //import com.oconeco.helpers.Constants
 //import com.oconeco.models.FSFile
 //import com.oconeco.models.FSFolder
-//import org.apache.log4j.Logger
+//import org.apache.logging.log4j.core.Logger
 //import spock.lang.Specification
 //
 //import java.util.regex.Pattern
@@ -16,7 +16,7 @@
 // */
 //
 //class FileAnalyzerTest extends Specification {
-//    Logger log = Logger.getLogger(this.class.name);
+//    Logger log = LogManager.getLogger(this.class.name);
 //    String locationName = 'spock'
 //    String crawlName = 'test'
 //

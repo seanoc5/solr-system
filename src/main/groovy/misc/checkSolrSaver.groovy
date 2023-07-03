@@ -2,9 +2,10 @@ package misc
 
 
 import com.oconeco.persistence.SolrSystemClient
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.core.Logger
+import org.apache.logging.log4j.LogManager
 
-Logger log = Logger.getLogger(this.class.name);
+Logger log = LogManager.getLogger(this.class.name);
 SolrSystemClient solrSaver  = new SolrSystemClient("http://oldie:8983/solr")
 def clusterStatus= solrSaver.getClusterStatus()
 

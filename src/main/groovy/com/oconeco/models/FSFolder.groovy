@@ -2,7 +2,9 @@ package com.oconeco.models
 
 
 import org.apache.commons.io.FileUtils
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.core.Logger
+
 import org.apache.solr.common.SolrInputDocument
 /**
  * @author :    sean
@@ -17,7 +19,7 @@ import org.apache.solr.common.SolrInputDocument
  * todo -- switch to NIO Files and Paths
  */
 class FSFolder extends FSObject {
-    Logger log = Logger.getLogger(this.class.name);
+    Logger log = LogManager.getLogger(this.class.name);
     public static final String TYPE = 'Folder'
 
 

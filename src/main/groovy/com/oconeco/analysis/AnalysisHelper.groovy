@@ -1,7 +1,8 @@
 package com.oconeco.analysis
 
 import com.google.common.math.Quantiles
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.core.Logger
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.analysis.TokenStream
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer
@@ -15,7 +16,7 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute
  * quite likely there are better existing libraries/solutions, but this is the developer thinking through options...
  */
 class AnalysisHelper {
-    static final Logger log = Logger.getLogger(this.class.name)
+    static final Logger log = LogManager.getLogger(this.class.name)
     /**
      * 0 percent differnce indicates any terms that were filtered out for minimum frequency, 100 means any that occured in one but not the other
      */

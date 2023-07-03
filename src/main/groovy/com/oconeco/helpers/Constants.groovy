@@ -68,7 +68,8 @@ class Constants {
 
     public static final Map<String, Map<String, Object>> DEFAULT_FILENAME_PARSE = [
             (IGNORE) : [pattern: ~/(?i)([.~]*lock.*|_.*|.*\bte?mp|.*\.class|.*\.pem|skipme.*)/, analysis: IGNORE_BUNDLE],
-            (PARSE)  : [pattern: ~/.*(?i)(accdb|docx?|go|groovy|gradle|jar|java|javascript|js|jsonl?d?|md|ods|odp|odt|php|pptx?|rtf|schema|sh|vsdx?|xlsx?)/, analysis: PARSE_BUNDLE],
+            (PARSE)  : [pattern: ~/.*(?i)(accdb|docx?|go|groovy|gradle|jar|java|javascript|js|jsonl?d?|md|ods|odp|odt|php|pptx?|rtf|schema|sh|vsdx?|xlsx?)/,
+                        analysis: PARSE_BUNDLE],
             (TRACK): [pattern: null, analysis: PARSE_BUNDLE],
     ]
 

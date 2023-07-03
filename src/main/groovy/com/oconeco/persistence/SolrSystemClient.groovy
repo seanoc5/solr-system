@@ -2,7 +2,8 @@ package com.oconeco.persistence
 
 
 import com.oconeco.models.SavableObject
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.core.Logger
 import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.client.solrj.SolrRequest
 import org.apache.solr.client.solrj.SolrServerException
@@ -22,7 +23,7 @@ import org.apache.tika.sax.BodyContentHandler
  * Looking at helper class to save solr_system (file crawl to start with content to solr
  */
 class SolrSystemClient extends BaseClient {
-    public static final Logger log = Logger.getLogger(this.class.name)
+    public final Logger log = LogManager.getLogger(this.class.name)
 
     /** upper limit of 'big' queries, e.g. folder lists for a gven crawl */
     public static int MAX_ROWS_RETURNED = 100000

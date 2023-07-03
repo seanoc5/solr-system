@@ -12,9 +12,11 @@ import com.oconeco.helpers.Constants
 import com.oconeco.helpers.SolrCrawlArgParser
 import com.oconeco.models.FSFolder
 import com.oconeco.persistence.SolrSystemClient
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.core.Logger
+import org.apache.logging.log4j.LogManager
 
-Logger log = Logger.getLogger(this.class.name);
+
+Logger log = LogManager.getLogger(this.class.name);
 log.info "Start ${this.class.name}, with args: $args"
 
 // call the arg parser to read the config and return a merged config

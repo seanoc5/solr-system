@@ -1,14 +1,16 @@
 package com.oconeco.crawler
 
 import com.oconeco.models.SavableObject
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.core.Logger
+import org.apache.logging.log4j.LogManager
+
 import org.apache.solr.common.SolrDocument
 
 /**
  * Small class to record differences
  */
 class DifferenceStatus {
-    Logger log = Logger.getLogger(this.class.name);
+    Logger log = LogManager.getLogger(this.class.name);
     SavableObject object
     SolrDocument solrDocument
 

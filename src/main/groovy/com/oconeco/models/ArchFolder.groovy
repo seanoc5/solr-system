@@ -5,7 +5,9 @@ import org.apache.commons.compress.archivers.ArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.io.FilenameUtils
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.core.Logger
+import org.apache.logging.log4j.LogManager
+
 import org.apache.solr.common.SolrInputDocument
 /**
  * @author :    sean
@@ -19,7 +21,7 @@ import org.apache.solr.common.SolrInputDocument
  * handles both basic information from the filesystem, and analysis results from some process
  */
 class ArchFolder extends SavableObject {
-    Logger log = Logger.getLogger(this.class.name)
+    Logger log = LogManager.getLogger(this.class.name)
     public static final String TYPE = 'ArchFolder'
     String owner
 

@@ -8,7 +8,8 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.apache.commons.io.FilenameUtils
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.core.Logger
 
 import java.nio.file.Files
 import java.util.regex.Pattern
@@ -20,7 +21,7 @@ import java.util.regex.Pattern
  */
 
 class ArchiveUtils {
-    static final Logger log = Logger.getLogger(this.class.name)
+    static final Logger log = LogManager.getLogger(this.class.name)
 
     static ArchiveInputStream getArchiveInputStream (File archiveFile) throws IOException {
         log.debug "\t\tProcess archive file: $archiveFile"

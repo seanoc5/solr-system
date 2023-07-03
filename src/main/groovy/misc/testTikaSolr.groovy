@@ -1,9 +1,10 @@
 package misc
 
 import groovy.io.FileType
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.core.Logger
 import org.apache.solr.client.solrj.SolrClient
-import org.apache.solr.client.solrj.impl.HttpSolrClient
+import org.apache.solr.client.solrj.impl.Http2SolrClient
 import org.apache.solr.client.solrj.response.UpdateResponse
 import org.apache.solr.common.SolrInputDocument
 import org.apache.tika.exception.TikaException
@@ -11,16 +12,18 @@ import org.apache.tika.metadata.Metadata
 import org.apache.tika.parser.AutoDetectParser
 import org.apache.tika.sax.BodyContentHandler
 
-Logger log = Logger.getLogger(this.class.name);
+Logger log = LogManager.getLogger(this.class.name);
+//Logger log = LogManager.getLogger(this.class.name);
 
 AutoDetectParser parser = new AutoDetectParser();
 BodyContentHandler handler = new BodyContentHandler(-1);
-File srcDir = new File("/home/sean/work/oconeco/wealth-view/bea/emails")
+File srcDir = new File(getClass().getResource('/content/').toURI())
 String host = 'localhost'
 int port = 8983
 String collection = 'research'
 String baseUrl = "http://$host:$port/solr/$collection"
-SolrClient solrClient = new HttpSolrClient(baseUrl)
+SolrClient solrClient = new Http2SolrClient.Builder(baseUrl).build()
+
 
 srcDir.eachFileRecurse(FileType.FILES) { File srcfile ->
     log.info "File: $srcfile"

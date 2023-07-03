@@ -3,14 +3,16 @@ package com.oconeco.crawler
 
 import com.oconeco.models.FSFolder
 import com.oconeco.persistence.SolrSystemClient
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.core.Logger
+
 import org.apache.solr.common.SolrDocument
 
 /**
  * codify what qualifies as a difference worthy of 're-indexing'
  */
 class BaseDifferenceChecker {
-    Logger log = Logger.getLogger(this.class.name)
+    Logger log = LogManager.getLogger(this.class.name)
     String checkFolderFields
     String checkFileFields
 

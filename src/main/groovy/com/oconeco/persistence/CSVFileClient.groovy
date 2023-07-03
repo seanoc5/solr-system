@@ -1,10 +1,12 @@
 package com.oconeco.persistence
 
 import com.oconeco.models.SavableObject
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.core.Logger
+import org.apache.logging.log4j.LogManager
+
 
 class CSVFileClient {
-    Logger log = Logger.getLogger(this.class.name);
+    Logger log = LogManager.getLogger(this.class.name);
 
     public static String FLD_ID = 'id'
     public static String FLD_LAST_MODIFIED = "lastModified_dt"        // pdate dynamic field

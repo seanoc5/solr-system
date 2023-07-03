@@ -1,6 +1,7 @@
 package misc.old
 
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.core.Logger
+import org.apache.logging.log4j.LogManager
 
 import java.util.regex.Matcher
 import java.util.regex.Pattern
@@ -9,7 +10,7 @@ import java.util.regex.Pattern
  * Parse a file listing via `ls`, e.g. ls -alR / > ~/work/data/fileLists/mylist.lst
  */
 
-Logger log = Logger.getLogger(this.class.name);
+Logger log = LogManager.getLogger(this.class.name);
 
 Map<String, Integer> months = [
         'Jan':1, 'Feb': 2, 'Mar':3, "Apr":4,

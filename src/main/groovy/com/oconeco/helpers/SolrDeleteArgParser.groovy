@@ -3,7 +3,8 @@ package com.oconeco.helpers
 
 import groovy.cli.picocli.CliBuilder
 import groovy.cli.picocli.OptionAccessor
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.core.Logger
 
 /**
  * @author :    sean
@@ -17,7 +18,7 @@ import org.apache.log4j.Logger
  * probably can be deprecated or removed, but leaving for now
  */
 class SolrDeleteArgParser {
-    static final Logger log = Logger.getLogger(this.class.name)
+    static final Logger log = LogManager.getLogger(this.class.name)
     public static OptionAccessor parse(String toolName, String[] args) {
         CliBuilder cli = new CliBuilder(usage: "${toolName}.groovy --config=configLocate.groovy", width: 160)
         cli.with {

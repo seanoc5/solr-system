@@ -2,12 +2,12 @@
 //
 //import com.oconeco.helpers.Constants
 //import com.oconeco.models.FSFolder
-//import org.apache.log4j.Logger
+//import org.apache.logging.log4j.core.Logger
 //
 //import java.nio.file.Path
 //import java.util.regex.Pattern
 //
-//Logger log = Logger.getLogger(this.class.name);
+//Logger log = LogManager.getLogger(this.class.name);
 //
 //File contentDir = new File(getClass().getResource('/content').toURI())
 //def startPath = contentDir.toPath()

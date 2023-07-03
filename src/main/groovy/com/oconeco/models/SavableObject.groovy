@@ -2,7 +2,8 @@ package com.oconeco.models
 
 import com.oconeco.crawler.DifferenceStatus
 import com.oconeco.persistence.SolrSystemClient
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.core.Logger
 import org.apache.solr.common.SolrInputDocument
 import org.apache.tika.metadata.Metadata
 /**
@@ -13,7 +14,7 @@ import org.apache.tika.metadata.Metadata
  */
 
 abstract class SavableObject {
-    Logger log = Logger.getLogger(this.class.name);
+    Logger log = LogManager.getLogger(this.class.name);
     /** the source thing (File, Folder, bookmark, email, todo, browser history,...) */
     def thing
     /** absolute file path for files/folders, or other unique id for other descendants -- set by descendant object/implementation */

@@ -8,7 +8,9 @@ import org.apache.commons.compress.archivers.ArchiveInputStream
 import org.apache.commons.compress.archivers.jar.JarArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.io.FilenameUtils
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.core.Logger
+import org.apache.logging.log4j.LogManager
+
 import org.apache.solr.common.SolrInputDocument
 
 import java.util.regex.Pattern
@@ -24,7 +26,7 @@ import java.util.regex.Pattern
  * handles both basic information from the filesystem, and analysis results from some process
  */
 class FSFile extends  FSObject {
-    Logger log = Logger.getLogger(this.class.name)
+    Logger log = LogManager.getLogger(this.class.name)
     public static final String TYPE = 'File'
     String extension
     String mimeType

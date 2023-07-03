@@ -1,6 +1,7 @@
 package com.oconeco.models
 
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.core.Logger
 
 import java.nio.file.Files
 import java.nio.file.attribute.BasicFileAttributes
@@ -19,7 +20,7 @@ import java.nio.file.attribute.FileTime
  * structure for handling information about a filesystem object,
  */
 class FSObject extends SavableObject {
-    Logger log = Logger.getLogger(this.class.name)
+    Logger log = LogManager.getLogger(this.class.name)
     public static final String TYPE = 'FSObject'
 
     String owner

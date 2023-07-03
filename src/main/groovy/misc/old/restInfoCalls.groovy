@@ -4,9 +4,9 @@ package misc.old
 //import com.squareup.okhttp.Request
 //import com.squareup.okhttp.Response
 //import groovy.json.JsonSlurper
-//import org.apache.log4j.Logger
+//import org.apache.logging.log4j.core.Logger
 //
-//Logger log = Logger.getLogger(this.class.name);
+//Logger log = LogManager.getLogger(this.class.name);
 //
 //log.info "Start ${this.class.name}"
 //
