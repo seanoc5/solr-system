@@ -4,7 +4,7 @@ import com.oconeco.crawler.DifferenceStatus
 import com.oconeco.persistence.SolrSystemClient
 import org.apache.log4j.Logger
 import org.apache.solr.common.SolrInputDocument
-
+import org.apache.tika.metadata.Metadata
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -70,6 +70,7 @@ abstract class SavableObject {
 
     /** a string that should catch duplicate entries this thing, and hence */
     String dedup = null
+    Metadata metadata
 
     // these may not be applicable for all, but perhaps enough to move into this base object
     String mimeType
@@ -159,6 +160,9 @@ abstract class SavableObject {
 
         if(content){
             sid.setField(SolrSystemClient.FLD_CONTENT_BODY, content)
+        }
+        if(metadata){
+            sid.setField(SolrSystemClient.FLD_METADATA, metadata)
         }
 
         if (dedup) {

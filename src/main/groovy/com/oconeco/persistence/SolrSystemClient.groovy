@@ -35,7 +35,6 @@ class SolrSystemClient extends BaseClient {
     public static String FLD_PATH_T = 'path_txt_en'
     public static String FLD_NAME_S = 'name_s'
     public static String FLD_NAME_T = 'name_txt_en'
-    public static String FLD_CONTENT_BODY = 'content_txt_en'
 
     public static String FLD_CREATED_DATE = "createdDate_dt"          // pdate dynamic field
     // todo - improve owner name extraction/ETL
@@ -50,6 +49,10 @@ class SolrSystemClient extends BaseClient {
     public static String FLD_OS_NAME = "operatingSystem_s"
 //    public static String FLD_ = ""
     public static String FLD_MATCHED_LABELS = "matchedLabels_ss"
+
+    public static String FLD_CONTENT_BODY = 'content_txt_en'
+    public static String FLD_METADATA = 'metadata_txt_en'
+
 //    public static String FLD_ = ""
 //    public static String FLD_ = ""
 
