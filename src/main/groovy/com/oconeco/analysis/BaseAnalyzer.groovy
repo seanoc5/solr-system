@@ -380,6 +380,7 @@ class BaseAnalyzer {
 
                     if (metadata) {
                         log.info "metadata: $metadata"
+                        object.metadata = metadata
                     } else {
                         log.warn "No metadata? $srcfile -- meta: $metadata"
                     }
