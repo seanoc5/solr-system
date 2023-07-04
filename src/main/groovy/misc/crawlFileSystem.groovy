@@ -34,7 +34,7 @@ long numFoundPreLocation = solrClient.getDocumentCount()
 
 //boolean compareExistingSolrFolderDocs = config.compareExistingSolrFolderDocs
 BaseDifferenceChecker differenceChecker = new SolrDifferenceChecker()
-BaseAnalyzer analyzer = new FileSystemAnalyzer(Constants.DEFAULT_FOLDERNAME_LOCATE, Constants.DEFAULT_FILENAME_PARSE)
+BaseAnalyzer analyzer = new FileSystemAnalyzer(Constants.DEFAULT_FOLDERNAME_LOCATE, Constants.DEFAULT_FILENAME_PARSE, null, null, )
 long start = System.currentTimeMillis()
 
 crawlMap.each { String crawlName, String startPath ->

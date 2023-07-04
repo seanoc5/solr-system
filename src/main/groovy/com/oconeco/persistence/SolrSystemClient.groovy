@@ -1,6 +1,5 @@
 package com.oconeco.persistence
 
-
 import com.oconeco.models.SavableObject
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.core.Logger
@@ -14,11 +13,7 @@ import org.apache.solr.client.solrj.response.QueryResponse
 import org.apache.solr.client.solrj.response.UpdateResponse
 import org.apache.solr.common.SolrInputDocument
 import org.apache.solr.common.util.NamedList
-import org.apache.tika.config.TikaConfig
 import org.apache.tika.detect.Detector
-import org.apache.tika.parser.AutoDetectParser
-import org.apache.tika.parser.Parser
-import org.apache.tika.sax.BodyContentHandler
 /**
  * Looking at helper class to save solr_system (file crawl to start with content to solr
  */
@@ -60,13 +55,13 @@ class SolrSystemClient extends BaseClient {
 
     Integer SOLR_BATCH_SIZE = 5000
     Integer MIN_FILE_SIZE = 10
-    Long MAX_CONTENT_SIZE = 1024 * 1000 * 10 // (10 MB of text?)
+    Integer MAX_CONTENT_SIZE = 1024 * 1000 * 10 // (10 MB of text?)
     Http2SolrClient solrClient
 
     Detector detector = null
-    Parser parser = null
-    BodyContentHandler handler = null
-    TikaConfig tikaConfig
+//    Parser parser = null
+//    BodyContentHandler handler = null
+//    TikaConfig tikaConfig
 
     /**
      * Create helper with a (non-thread safe???) solrClient that is configured for the solr server AND collection
@@ -76,23 +71,27 @@ class SolrSystemClient extends BaseClient {
     SolrSystemClient(String baseSolrUrl) {
         log.debug "Constructor baseSolrUrl:$baseSolrUrl"
         buildSolrClient(baseSolrUrl)
+//        parser = new AutoDetectParser()
+//        handler = new BodyContentHandler(MAX_CONTENT_SIZE)
     }
 
-    SolrSystemClient(String baseSolrUrl, String hostName) {
+/*    SolrSystemClient(String baseSolrUrl, String hostName) {
 //        this(baseSolrUrl)
         log.debug "\t\tConstructor baseSolrUrl:$baseSolrUrl --- Host/machine name:$hostName --- WITHOUT tika"
         buildSolrClient(baseSolrUrl)
-    }
+    }*/
 
+/*
     SolrSystemClient(String baseSolrUrl, String hostName, TikaConfig tikaConfig) {
 //        this(baseSolrUrl, dataSourceName)
         log.info "\t\tConstructor baseSolrUrl:$baseSolrUrl --- CrawlName:$hostName --- with TIKA config: $tikaConfig"
         buildSolrClient(baseSolrUrl)
-        this.tikaConfig = tikaConfig
-        detector = tikaConfig.getDetector()
-        parser = new AutoDetectParser()
-        handler = new BodyContentHandler()
+//        this.tikaConfig = tikaConfig
+//        detector = tikaConfig.getDetector()
+//        parser = new AutoDetectParser()
+//        handler = new BodyContentHandler()
     }
+*/
 
     public void buildSolrClient(String baseSolrUrl) {
         log.info "\t\tBuild solr client with baseSolrUrl: $baseSolrUrl"

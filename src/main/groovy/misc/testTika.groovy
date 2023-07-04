@@ -32,7 +32,7 @@ srcDir.eachFileRecurse(FileType.FILES) { File srcfile ->
         }
         String content = handler.toString()
         if(content) {
-            log.info "Content, size(${content.size()}"
+            log.debug "Content, size(${content.size()})"
         } else {
             log.info "No content....!!!"
         }

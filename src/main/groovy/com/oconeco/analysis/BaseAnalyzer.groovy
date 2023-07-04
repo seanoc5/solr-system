@@ -62,7 +62,7 @@ class BaseAnalyzer {
      * todo -- is this valid? least surprise issues? blank constructor intitializing default values...??
      */
     BaseAnalyzer() {
-        this(Constants.DEFAULT_FOLDERNAME_LOCATE, Constants.DEFAULT_FILENAME_LOCATE)
+        this(Constants.DEFAULT_FOLDERNAME_LOCATE, Constants.DEFAULT_FILENAME_LOCATE, null, null, null, null)
         log.info "No arg constructor BaseAnalyzer: $this  (consider passing in basic folder & file pattern maps??)"
     }
 
@@ -83,7 +83,7 @@ class BaseAnalyzer {
         if (gnm) {
             ignoreGroup = gnm.pattern
             this.groupNameMap = groupNameMap.findAll { it.key != Constants.IGNORE }
-            log.info "\t\tFound special ignoreGroup entry ($ignoreGroup), setting to Analyzer prop: 'ignoreGroup' and removing from groupNameMap ($groupNameMap) "
+            log.debug "\t\tFound special ignoreGroup entry ($ignoreGroup), setting to Analyzer prop: 'ignoreGroup' and removing from groupNameMap ($groupNameMap) "
         } else {
             this.groupNameMap = groupNameMap
             log.warn "\t\tNo Group Ignore entry found!! $groupNameMap"
@@ -93,7 +93,7 @@ class BaseAnalyzer {
         if (inm) {
             ignoreItem = inm.pattern
             this.itemNameMap = itemNameMap.findAll { it.key != Constants.IGNORE }
-            log.info "\t\tFound special ignoreItem entry ($ignoreItem), setting to Analyzer prop: 'ignoreItem' and removing from itemNameMap ($itemNameMap) "
+            log.debug "\t\tFound special ignoreItem entry ($ignoreItem), setting to Analyzer prop: 'ignoreItem' and removing from itemNameMap ($itemNameMap) "
         } else {
             this.itemNameMap = itemNameMap
             log.warn "\t\tNo Ignore ITEM entry found!! $itemNameMap"
@@ -110,9 +110,13 @@ class BaseAnalyzer {
 
         if (tikaParser) {
             this.tikaParser = tikaParser
+        } else{
+            this.tikaParser =  new AutoDetectParser();
         }
         if (tikaBodyHandler) {
             this.tikaBodyHandler = tikaBodyHandler
+        } else {
+            this.tikaBodyHandler = new BodyContentHandler(-1);
         }
 
     }
@@ -195,6 +199,9 @@ class BaseAnalyzer {
     Map<String, Map<String, Object>> analyze(SavableObject object) {
         log.debug "analyze object: $object"
         if (object) {
+            if(object.archive){
+                log.info "\t\tArchive File: $object"
+            }
 //        def results = []
             if (shouldIgnore(object)) {
                 log.info "\t\tIgnore object ($object) (skipping majority of `analyze(object)` method"
@@ -340,7 +347,7 @@ class BaseAnalyzer {
                     object.labels << label
                     mapVal.put(Constants.LABEL_MATCH, s)
                     matchingLabels.put(label, mapVal)
-                    log.info "\t\tMatch: $label name($name) -- matches str($s)) =~ pattern($pattern) "
+                    log.debug "\t\tMatch: $label name($name) -- matches str($s)) =~ pattern($pattern) "
                 } else {
                     log.debug "${Constants.NO_MATCH}, obj($object) name($name) LABEL($label)::pattern($pattern)"
                 }
@@ -352,7 +359,7 @@ class BaseAnalyzer {
         if (matchingLabels.size() > 0) {
             log.debug "found matching label, no need for default"
         } else {
-            log.info "\t\t----No matching labels found for name($object)"
+            log.debug "\t\t----No matching labels found for name($object)"
             if (defaultLabel) {
                 object.labels << defaultLabel
                 Map map = labelMap.get(defaultLabel)
@@ -370,6 +377,8 @@ class BaseAnalyzer {
         if (object instanceof FSObject) {
             FSObject fso = object
             results = fso.addFileDetails()
+        } else {
+            log.warn "Object:($object) is not instance of SavableObject, how did this happen"
         }
         return results
     }
@@ -385,7 +394,7 @@ class BaseAnalyzer {
                     tikaParser.parse(inputStream, tikaBodyHandler, metadata);
 
                     if (metadata) {
-                        log.info "metadata: $metadata"
+                        log.debug "metadata: $metadata"
                         object.metadata = metadata
                     } else {
                         log.warn "No metadata? $srcfile -- meta: $metadata"
@@ -393,15 +402,17 @@ class BaseAnalyzer {
                     content = tikaBodyHandler.toString()
                     if (content) {
                         object.content = content
-                        log.info "Content, size(${content.size()}"
+                        log.debug "\t\tContent, size(${content.size()})"
                     } else {
-                        log.info "No content....!!!"
+                        log.warn "No content....!!!"
                     }
                 } else {
-                    log.info "No input Stream?)"
+                    log.warn "No input Stream?)"
                 }
+            } catch (NoSuchFieldError nsfe) {
+                log.error "Tika exception: $nsfe -- object:${object}"
             } catch (TikaException tikaException) {
-                log.error "Tika exception: $tikaException"
+                log.error "Tika exception: $tikaException -- object:${object}"
             }
             return [content: content, metadata: metadata]
         } else {
