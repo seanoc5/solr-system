@@ -118,10 +118,6 @@ class BaseAnalyzer {
     }
 
 
-//    BaseAnalyzer(Map<String, Map<String, Object>> groupNameMap, Map<String, Map<String, Object>> itemNameMap, Map<String, Map<String, Object>> groupPathMap = null, Map<String, Map<String, Object>> itemPathMap = null,
-//                 AutoDetectParser parser = null, BodyContentHandler handler = null) {
-//    }
-
 
     def analyze(List<SavableObject> objectList) {
         List<Map<String, Map<String, Object>>> results = []
@@ -209,11 +205,13 @@ class BaseAnalyzer {
 //            results.addAll(matchedEntries)
                 object.matchedLabels.each { String label, Map labelMatchMap ->
                     def analysis = labelMatchMap.analysis
-                    if (analysis) {
-                        log.debug "\t\t++++ -> Apply analysis: $label->$analysis -- object (${object}) -- matched on: ${labelMatchMap.get(Constants.LABEL_MATCH)}"
-                        // todo - move me to after "shouldUpdate'
-                        def rc = this.doAnalysis(label, object)
-                        log.debug "\t\tdoAnalysis($label) results: $rc"
+                    if (analysis instanceof List) {
+                        analysis.each { String analysisName ->
+                            log.debug "\t\t++++ -> Apply analysis: $label->$analysisName -- object (${object}) -- matched on: ${labelMatchMap.get(Constants.LABEL_MATCH)}"
+                            // todo - move me to after "shouldUpdate'
+                            def rc = this.doAnalysis(analysisName, object)
+                            log.debug "\t\tdoAnalysis($label) results: $rc"
+                        }
                     } else {
                         log.warn "\t\tNothing to process? $label - $analysis"
                     }
@@ -256,14 +254,14 @@ class BaseAnalyzer {
      */
     def doAnalysis(String analysisName, SavableObject object) {
         def results = null
-        log.info "Analysis ($analysisName) on object:($object)"
+        log.debug "\t\tAnalysis ($analysisName) on object:($object)"
         switch (analysisName.toLowerCase()) {
             case 'track':
-                log.info "Do analysis named '$analysisName' on object $object"
+                log.debug "\t\tDo analysis named '$analysisName' on object $object"
                 results = this.track(object)
                 break
             case 'parse':
-                log.info "Do analysis named '$analysisName' on object $object"
+                log.debug "\t\tDo analysis named '$analysisName' on object $object"
                 results = this.parse(object)
                 String mime = results?.metadata?.get('Content-Type')
                 if(mime){
@@ -274,10 +272,10 @@ class BaseAnalyzer {
 //                log.info "Do analysis named 'default' on object $object"
 //                break
             case 'ignore':
-                log.warn "Do analysis named '$analysisName' on object $object -- ATTENTION: should probably never get to doAnalysis() on an 'ignored' object...."
+                log.debug "\t\tignore object $object"
                 break
             default:
-                log.warn "$Constants.NO_MATCH in swtich, falling back to  default analysis on object $object"
+                log.warn "${Constants.NO_MATCH} in swtich, falling back to  default analysis on object $object"
                 results = this.track(object)
                 break
         }
@@ -354,7 +352,7 @@ class BaseAnalyzer {
         if (matchingLabels.size() > 0) {
             log.debug "found matching label, no need for default"
         } else {
-            log.info "\t\t----No matching labels found for name($name)"
+            log.info "\t\t----No matching labels found for name($object)"
             if (defaultLabel) {
                 object.labels << defaultLabel
                 Map map = labelMap.get(defaultLabel)

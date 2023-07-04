@@ -62,14 +62,21 @@ class Constants {
 
     public static final Map<String, Map<String, Object>> DEFAULT_FILENAME_LOCATE = [
             (IGNORE) : [pattern: ~/(?i)([.~]*lock.*|_.*|.*\bte?mp|.*\.class|.*\.pem|skipme.*)/, analysis: IGNORE_BUNDLE],
-            (PARSE)  : [pattern: ~/.*(?i)(accdb|docx?|go|groovy|gradle|jar|java|javascript|js|jsonl?d?|md|ods|odp|odt|php|pptx?|rtf|schema|sh|vsdx?|xlsx?)/, analysis: TRACK_BUNDLE],
+            (PARSE)  : [pattern: ~/.*(?i)(accdb|docx?|go|groovy|gradle|jar|java|javascript|js|jsonl?d?|md|ods|odp|odt|php|pptx?|rtf|schema|sh|vsdx?|xlsx?)/, analysis: PARSE_BUNDLE],
             (TRACK): [pattern: null, analysis: TRACK_BUNDLE],
     ]
 
     public static final Map<String, Map<String, Object>> DEFAULT_FILENAME_PARSE = [
             (IGNORE) : [pattern: ~/(?i)([.~]*lock.*|_.*|.*\bte?mp|.*\.class|.*\.pem|skipme.*)/, analysis: IGNORE_BUNDLE],
-            (PARSE)  : [pattern: ~/.*(?i)(accdb|docx?|go|groovy|gradle|jar|java|javascript|js|jsonl?d?|md|ods|odp|odt|php|pptx?|rtf|schema|sh|vsdx?|xlsx?)/,
-                        analysis: PARSE_BUNDLE],
+            office       : [pattern: ~/.*\.(?i)(accdb|docx?|ods|odp|odt|pptx?|rtf|vsdx?|xlsx?)/,analysis: PARSE_BUNDLE],
+            system       : [pattern: ~/.*(\.(?i)(bin|deb|lib|pkg|rpm)|(gcc.*))/,analysis: PARSE_BUNDLE],
+            web          : [pattern: ~/.*(?i)(html?)/,analysis: PARSE_BUNDLE],
+            instructions : [pattern: ~'(?i).*(adoc|readme.*|md)',analysis: PARSE_BUNDLE],
+            techDev      : [pattern: ~/.*(?i)(c|css|go|groovy|gradle|jar|java|javascript|js|php|schema|sh)/,analysis: PARSE_BUNDLE],
+            config       : [pattern: ~/.*(?i)(cfg|config.*|pem|properties|xml|yaml)/,analysis: PARSE_BUNDLE],
+            data         : [pattern: ~/.*(?i)(csv|jsonl?d?|lst|tab)/,analysis: PARSE_BUNDLE],
+            media        : [pattern: ~/.*(?i)(avi|jpe?g|ogg|mp3|mpe?g|wav)/,analysis: PARSE_BUNDLE],
+            communication: [pattern: ~/.*(?i)(eml|vcf)/,analysis: PARSE_BUNDLE],
             (TRACK): [pattern: null, analysis: PARSE_BUNDLE],
     ]
 

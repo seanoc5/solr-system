@@ -3,6 +3,7 @@ package com.oconeco.crawler
 import com.oconeco.analysis.BaseAnalyzer
 import com.oconeco.models.FSFile
 import com.oconeco.models.FSFolder
+import com.oconeco.models.FSObject
 import com.oconeco.models.SavableObject
 import com.oconeco.persistence.BaseClient
 import com.oconeco.persistence.SolrSystemClient
@@ -169,6 +170,15 @@ class LocalFileSystemCrawler {
                     def response = persistenceClient.saveObjects(savableObjects)
                     log.info "\t\t$cnt) ++++Save folder (${currentFolder.path}:${currentFolder.depth}) -- Differences:${differenceStatus.differences} -- response: $response"
                     results.updated << currentFolder
+
+                    def archiveFiles = currentFolder.children.each { FSObject fsObject ->
+                        if (fsObject.archive) {
+                            List<SavableObject> archEntries = fsObject.gatherArchiveEntries()
+                            def responseArch = persistenceClient.saveObjects(savableObjects)
+                            log.debug "\t\tSolr response saving archive entries: $responseArch"
+                        }
+                    }
+
                 } else {
                     results.current << currentFolder
                     log.debug "\t\t$cnt) no need to update: $differenceStatus -- persistence ad source are current"

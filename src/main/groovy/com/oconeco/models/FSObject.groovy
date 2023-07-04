@@ -57,7 +57,7 @@ class FSObject extends SavableObject {
         }
         if (osName.contains('Windows')) {
             // todo -- can windows have backslashes in names?? hopefully not
-            log.warn "\t\tReplace backslashes in windows path with forward slashes"     //todo change from warn to debug after testing in Widoze
+            log.debug "\t\tReplace backslashes in windows path with forward slashes"     //todo change from warn to debug after testing in Widoze
             path = path.replaceAll('\\\\', '/')
         }
         id = SavableObject.buildId(locationName, path)

@@ -106,9 +106,9 @@ class BaseAnalyzerTest extends Specification {
         paramFS.labels.size() == 1
         paramFS.labels[0] == parseKey          // todo - change this to last label without a pattern
 
-        currencyFS.labels[0] == 'default'
+        currencyFS.labels[0] == Constants.TRACK
 
-        skipmeFS.labels.size() == 0
+        skipmeFS.labels.size() == 1
         skipmeFS.ignore == true
     }
 

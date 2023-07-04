@@ -40,21 +40,21 @@ class LocalFileSystemCrawlerTest extends Specification {
     def 'basic LocalFileSystemCrawler.crawlFolders no existing docs'() {
         given:
         Map<String, Map<String, Object>> folderLabels = Constants.DEFAULT_FOLDERNAME_LOCATE
-        Map<String, Map<String, Object>> fileLabels = Constants.DEFAULT_FILENAME_LOCATE
-        FileSystemAnalyzer analyzer1 = new FileSystemAnalyzer(folderLabels, fileLabels)
+        Map<String, Map<String, Object>> fileLabels = Constants.DEFAULT_FILENAME_PARSE
+        FileSystemAnalyzer analyzerParsing = new FileSystemAnalyzer(folderLabels, fileLabels)
         LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, client, differenceChecker)
         Map<String, SolrDocument> existingSolrFolderDocs = null
         boolean compareExistingSolrFolderDocs = false
 
         when:
-        Map<String, List<FSFolder>> results = crawler.crawlFolders(crawlName, startFolder.toFile(), existingSolrFolderDocs, analyzer)
+        Map<String, List<FSFolder>> results = crawler.crawlFolders(crawlName, startFolder.toFile(), existingSolrFolderDocs, analyzerParsing)
 
         then:
         results != null
         results.updated.size() == 4
         results.updated[0].name == 'content'
-        results.updated[0].labels == ['default']
-        results.updated[0].matchedLabels.get('default').analysis == [Constants.TRACK]
+        results.updated[0].labels == [Constants.TRACK]
+        results.updated[0].matchedLabels.get(Constants.TRACK).analysis == [Constants.TRACK]
 
         results.updated[1].name == 'testsub'
         results.updated[2].name == 'subfolder2'
@@ -89,9 +89,9 @@ class LocalFileSystemCrawlerTest extends Specification {
         def archiveFiles = startFSFolder.children.findAll {FSObject fsObject ->
             fsObject.archive
         }
-        FSFile testzip = archiveFiles[0]
+        FSFile testzip = archiveFiles.find{it.name=='test.zip'}
         def testzipEntries = testzip.gatherArchiveEntries()
-        FSFile fuzzy = archiveFiles[1]
+        FSFile fuzzy = archiveFiles.find{it.name=='fuzzywuzzy.tar.gz'}
         def fuzzyEntries = fuzzy.gatherArchiveEntries()
 
 

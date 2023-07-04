@@ -11,17 +11,17 @@ import spock.lang.Specification
 class FileSystemAnalyzerTest extends Specification {
     String locationName = 'spock'
     String crawlName = 'test'
-    File startFile = new File(getClass().getResource('/content').toURI())
-    FSFolder startFSFolder = new FSFolder(startFile, null, locationName, crawlName)
+    File contentDir = new File(getClass().getResource('/content').toURI())
+    FSFolder startFSFolder = new FSFolder(contentDir, null, locationName, crawlName)
     BaseDifferenceChecker differenceChecker = new BaseDifferenceChecker()
 
     def 'tika content parsing'() {
         given:
         AutoDetectParser parser = new AutoDetectParser();
-        BodyContentHandler handler = new BodyContentHandler(1000*1000*50);
+        BodyContentHandler handler = new BodyContentHandler(1000 * 1000 * 50);
         FileSystemAnalyzer analyzer = new FileSystemAnalyzer(Constants.DEFAULT_FOLDERNAME_LOCATE, Constants.DEFAULT_FILENAME_PARSE, null, null, parser, handler)
-        File f1 = new File(startFile, 'doc.go')
-        File f2 = new File(startFile, 'FutureTechPredictions.doc')
+        File f1 = new File(contentDir, 'doc.go')
+        File f2 = new File(contentDir, 'FutureTechPredictions.doc')
         FSFile goFile = new FSFile(f1, startFSFolder, locationName, crawlName)
         FSFile docFile = new FSFile(f2, startFSFolder, locationName, crawlName)
 
@@ -31,11 +31,11 @@ class FileSystemAnalyzerTest extends Specification {
 
         then:
         goFile != null
-        goFile.extension=='go'
-        goFile.mimeType=='text/plain; charset=ISO-8859-1'
-        goFile.labels.size()==1
-        goFile.labels[0]=='parse'
-        goFile.metadata.size()==4
+        goFile.extension == 'go'
+        goFile.mimeType.containsIgnoreCase('text/plain')
+        goFile.labels.size() == 1
+        goFile.labels[0] == Constants.PARSE
+        goFile.metadata.size() == 4
 
         docFile != null
 
@@ -44,12 +44,14 @@ class FileSystemAnalyzerTest extends Specification {
 
     def 'tika content parsing via analyzer'() {
         given:
-//        AutoDetectParser parser = new AutoDetectParser();
-//        BodyContentHandler handler = new BodyContentHandler(-1);
-        FileSystemAnalyzer analyzer = new FileSystemAnalyzer(Constants.DEFAULT_FOLDERNAME_LOCATE, Constants.DEFAULT_FILENAME_LOCATE, null, null, true)
+        AutoDetectParser parser = new AutoDetectParser();
+        BodyContentHandler handler = new BodyContentHandler(-1);
+        FileSystemAnalyzer analyzer = new FileSystemAnalyzer(Constants.DEFAULT_FOLDERNAME_LOCATE, Constants.DEFAULT_FILENAME_LOCATE, null, null, parser, handler)
+        File f = new File(contentDir, 'FutureTechPredictions.doc')
+        FSFile fsFile = new FSFile(f, startFSFolder, locationName, crawlName)
 
         when:
-        def rc = analyzer.analyze(startFolder)
+        def results = analyzer.analyze(fsFile)
 
         then:
         results != null

@@ -190,7 +190,7 @@ class SolrSystemClient extends BaseClient {
         UpdateResponse deleteResponse = deleteDocuments(deleteQuery, 0)
         UpdateResponse commitResponse = commitUpdates(true, true)
         long postDeleteCount = getDocumentCount(deleteQuery)
-        log.debug "\t\t------ POST-delete count:($postDeleteCount)"
+        log.info "------PRE-delete count:($preDeleteCount) --> POST-delete count:($postDeleteCount) -- diff:(${preDeleteCount - postDeleteCount})"
         results = [deleteQuery: deleteQuery, preDeleteCount: preDeleteCount, postDeleteCount: postDeleteCount, deleteResponse: deleteResponse, commitResponse: commitResponse]
         return results
     }

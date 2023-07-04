@@ -34,7 +34,7 @@ long numFoundPreLocation = solrClient.getDocumentCount()
 
 //boolean compareExistingSolrFolderDocs = config.compareExistingSolrFolderDocs
 BaseDifferenceChecker differenceChecker = new SolrDifferenceChecker()
-BaseAnalyzer analyzer = new FileSystemAnalyzer(Constants.DEFAULT_FOLDERNAME_LOCATE, Constants.DEFAULT_FILENAME_LOCATE)
+BaseAnalyzer analyzer = new FileSystemAnalyzer(Constants.DEFAULT_FOLDERNAME_LOCATE, Constants.DEFAULT_FILENAME_PARSE)
 long start = System.currentTimeMillis()
 
 crawlMap.each { String crawlName, String startPath ->
@@ -45,7 +45,7 @@ crawlMap.each { String crawlName, String startPath ->
     log.debug "\t\t====Solr Doc Count before crawl(loc=$locationName: cs=$crawlName): $numFoundPreCrawl"
 
     // !!!!!!!!! CLEAR specific crawl if arg/config indicates !!!!!!!!!!!
-    if(config.wipeContent==true) {
+    if (config.wipeContent == true) {
         log.warn "\t\tConfig/args indicates we whould WIPE CONTENT for crawl:($crawlName) and crawler:($crawler)"
         Map<String, Object> deleteResults = solrClient.deleteCrawledDocuments(locationName, crawlName)
         log.info "\t\tDelete results map: $deleteResults"
@@ -55,9 +55,9 @@ crawlMap.each { String crawlName, String startPath ->
     def existingFolderSolrDocs = crawler.getSolrFolderDocs(crawlName)
     log.info "\t\tcrawl map item with label:'$crawlName' - startpath:'$startPath' -- numFound preCrawl: $numFoundPreCrawl -- existingSolrFolderDocs: ${existingFolderSolrDocs.size()}"
     Map<String, List<FSFolder>> crawlFolders = crawler.crawlFolders(crawlName, startDir, existingFolderSolrDocs, analyzer)
-    if(crawlFolders.updated) {
+    if (crawlFolders.updated) {
         log.info "\t\tCrawled Folders, updated:${crawlFolders?.updated?.size()} -- skipped: ${crawlFolders?.skipped?.size()}"
-            LinkedHashMap<String, Long>  solrResults = crawler.getSolrDocCount(crawlName)
+        LinkedHashMap<String, Long> solrResults = crawler.getSolrDocCount(crawlName)
         log.info "\t\t====crawl($crawlName): Solr Doc Count preCrawl:($numFoundPreCrawl) -> after:($solrResults)"
     } else {
         log.info "\t\t----no folders updated $locationName:$crawlName, skipped count:${crawlFolders?.skipped?.size()} --  Solr Doc Count preCrawl ($numFoundPreCrawl) assume the same after no updates..."
@@ -67,12 +67,12 @@ crawlMap.each { String crawlName, String startPath ->
 
 long end = System.currentTimeMillis()
 long elapsed = end - start
-log.info "${this.class.simpleName} Elapsed time: ${elapsed}ms (${elapsed / 1000} sec) (${elapsed /(1000 * 60)} min)"
+log.info "${this.class.simpleName} Elapsed time: ${elapsed}ms (${elapsed / 1000} sec) (${elapsed / (1000 * 60)} min)"
 
 log.info "Force commit updates to get proper count a"
 solrClient.commitUpdates(true, true)
 
 long numFoundPostLocation = solrClient.getDocumentCount()
-log.info "Before crawl ($numFoundPreLocation) -- After crawl NumFound ($numFoundPostLocation) -- difference:${numFoundPostLocation-numFoundPreLocation}"
+log.info "Before crawl ($numFoundPreLocation) -- After crawl NumFound ($numFoundPostLocation) -- difference:${numFoundPostLocation - numFoundPreLocation}"
 
 solrClient.closeClient(this.class.name)
