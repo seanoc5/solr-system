@@ -4,17 +4,15 @@ import com.oconeco.analysis.BaseAnalyzer
 import com.oconeco.analysis.FileSystemAnalyzer
 import com.oconeco.crawler.BaseDifferenceChecker
 import com.oconeco.crawler.LocalFileSystemCrawler
+import com.oconeco.crawler.SolrDifferenceChecker
+import com.oconeco.helpers.SolrCrawlArgParser
 
 //import com.oconeco.analysis.FolderAnalyzer
 
-import com.oconeco.crawler.SolrDifferenceChecker
-import com.oconeco.helpers.Constants
-import com.oconeco.helpers.SolrCrawlArgParser
 import com.oconeco.models.FSFolder
 import com.oconeco.persistence.SolrSystemClient
-import org.apache.logging.log4j.core.Logger
 import org.apache.logging.log4j.LogManager
-
+import org.apache.logging.log4j.core.Logger
 
 Logger log = LogManager.getLogger(this.class.name);
 log.info "Start ${this.class.name}, with args: $args"
@@ -33,8 +31,10 @@ log.info "\t\tSolr Saver created: $solrClient"
 long numFoundPreLocation = solrClient.getDocumentCount()
 
 //boolean compareExistingSolrFolderDocs = config.compareExistingSolrFolderDocs
+def folderLabels = config.namePatterns.folders
+def fileLabels = config.namePatterns.files
 BaseDifferenceChecker differenceChecker = new SolrDifferenceChecker()
-BaseAnalyzer analyzer = new FileSystemAnalyzer(Constants.DEFAULT_FOLDERNAME_LOCATE, Constants.DEFAULT_FILENAME_PARSE, null, null, )
+BaseAnalyzer analyzer = new FileSystemAnalyzer(folderLabels, fileLabels, null, null, )
 long start = System.currentTimeMillis()
 
 crawlMap.each { String crawlName, String startPath ->
