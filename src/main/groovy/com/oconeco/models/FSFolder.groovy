@@ -1,10 +1,8 @@
 package com.oconeco.models
 
 
-import org.apache.commons.io.FileUtils
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.core.Logger
-
 import org.apache.solr.common.SolrInputDocument
 /**
  * @author :    sean
@@ -29,19 +27,8 @@ class FSFolder extends FSObject {
 
         if (srcFolder.exists()) {
             type = TYPE
-//            Path nioPath = srcFolder.toPath()
-
-            if (srcFolder.canExecute() && srcFolder.canRead()) {
-                size = FileUtils.sizeOf(srcFolder)
-                log.debug "\t\t$srcFolder) directory size: $size"
-                dedup = buildDedupString()
-
-            } else {
-                log.warn "\t\tCannot execute/read folder: $srcFolder"
-                size = srcFolder.size()
-            }
-
-
+            // todo - find best way to get file size (with ignored patterns)....
+            // see crawler to set FSFolder size after crawling folder files...
 
         } else {
             log.warn "Src folder ($srcFolder) is not accessible??"
@@ -63,11 +50,4 @@ class FSFolder extends FSObject {
         return list
     }
 
-    List<FSFile> gatherArchiveFiles(){
-        List<FSFile> archiveFiles = []
-        if(children){
-            children.findAll {it.archive}
-        }
-        return archiveFiles
-    }
 }

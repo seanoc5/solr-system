@@ -47,6 +47,7 @@ class SolrSystemClient extends BaseClient {
     public static String FLD_MATCHED_LABELS = "matchedLabels_ss"
 
     public static String FLD_CONTENT_BODY = 'content_txt_en'
+    public static String FLD_CONTENT_BODY_SIZE = 'contentSize_l'
     public static String FLD_METADATA = 'metadata_txt_en'
 
 //    public static String FLD_ = ""

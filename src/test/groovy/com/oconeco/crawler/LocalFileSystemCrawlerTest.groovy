@@ -5,6 +5,7 @@ import com.oconeco.helpers.Constants
 import com.oconeco.models.FSFile
 import com.oconeco.models.FSFolder
 import com.oconeco.models.FSObject
+import com.oconeco.models.SavableObject
 import com.oconeco.persistence.SolrSystemClient
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
@@ -85,7 +86,7 @@ class LocalFileSystemCrawlerTest extends Specification {
 //        List<SavableObject> archiveItems = []
 
         when:
-        Map<String, Map<String, Object>> crawlResults = crawler.crawlFolderFiles(startFSFolder, analyzer)
+        List<SavableObject> crawlResults = crawler.crawlFolderFiles(startFSFolder, analyzer)
         def archiveFiles = startFSFolder.children.findAll {FSObject fsObject ->
             fsObject.archive
         }

@@ -42,6 +42,7 @@ abstract class SavableObject {
     Date lastAccessDate
 
     String content = null
+    Long contentSize = null
 
     boolean hidden = false
 
@@ -161,6 +162,7 @@ abstract class SavableObject {
 
         if(content){
             sid.setField(SolrSystemClient.FLD_CONTENT_BODY, content)
+            sid.setField(SolrSystemClient.FLD_CONTENT_BODY_SIZE, content.size())
         }
         if(metadata){
             sid.setField(SolrSystemClient.FLD_METADATA, metadata)
@@ -194,8 +196,21 @@ abstract class SavableObject {
      * @return string with groupable values that should flag duplicates (ala solr facet counts)
      */
     String buildDedupString() {
-        String uniq = type + ':' + name + '::' + size
-        return uniq
+        String prevDedup = dedup
+        if(type && name && size != null) {
+            log.debug "\t\tgood params for dedup: (type && name && size != null): (type:$type  name:$name  size:$size)"
+        } else {
+            log.warn "Something is null: (type && name && size == null): (type:$type  name:$name  size:$size)"
+        }
+        dedup = type + ':' + name + '::' + size
+        if(prevDedup){
+            if(!prevDedup.equalsIgnoreCase(dedup)) {
+                log.info "\t\tAlready had a dedup:($prevDedup), it was DIFFERENT from new/current dedup ($dedup)?? "
+            } else {
+                log.debug "\t\tAlready had a dedup:($prevDedup), same as new/current dedup ($dedup)?? "
+            }
+        }
+        return dedup
     }
 
 
@@ -220,11 +235,11 @@ abstract class SavableObject {
     String toString() {
         String s = null
         if (labels) {
-            s = "${type}[depth:$depth]: ${name} :: (${labels[0]})"
+            s = "${type}:(${name}) [depth:$depth] :: (${labels[0]})"
         } else if (ignore) {
-            s = "${type}[depth:${depth}]:[IGNORE]: '$name'"
+            s = "${type}:(${name}) [depth:$depth] :: [IGNORE]"
         } else {
-            s = "${type}[depth:${depth}]: '$name'"
+            s = "${type}:(${name}) [depth:$depth] "
         }
 
         return s

@@ -1,5 +1,8 @@
 # Solr System
 
+## TODO
+
+
 ## Personal search and content discovery
 A project to create a personal information discovery and search tool, similar to Windows search, or Mac spotlight.
 

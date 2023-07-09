@@ -30,7 +30,8 @@ class Constants {
     public static final String NO_MATCH = 'no match'
 
     public static final Map<String, Pattern> DEFAULT_FOLDERNAME_PATTERNS = [
-            ignore       : ~/.*(?i)(csv|\.gradle.?|\.m2|snapshots?|caches?|chrome|deleteme.*|flatpack|git|github|google-chrome|ignore.*|never_index|node_modules|packages?|Partitions|pkgs?|plugins?|repo|repository|skins?|skipme.*|svn|target|te?mp|vscode)/,
+            // csv|
+            ignore       : ~/.*(?i)(\.gradle.?|\.m2|assets|caches?|chrome|deleteme.*|flatpack|git|github|google-chrome|ignore.*|never_index|node_modules|packages?|Partitions|pkgs?|plugins?|repo|repository|skins?|skipme.*|snapshots?|svn|target|te?mp|vscode)/,
             backups      : ~/.*(?i)(backups?|bkups?|old|timeshift)/,
             configuration: ~/.*(?i)(configs)/,
             documents    : ~/.*([Dd]ocuments|[Dd]esktop)/,

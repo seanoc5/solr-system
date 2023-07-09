@@ -1,5 +1,7 @@
 import org.apache.commons.compress.archivers.ArchiveEntry
 import org.apache.commons.compress.archivers.ArchiveInputStream
+import org.apache.commons.compress.archivers.jar.JarArchiveEntry
+import org.apache.commons.compress.archivers.jar.JarArchiveInputStream
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
@@ -31,12 +33,34 @@ class ApacheComressHackingTest extends Specification {
             Long size = entry.size
             Long csize = entry.compressedSize
             int percent = ((size - csize) / size) * 100
-//            println "${entry.name} (${size}->${csize} ${percent}%) :-: ctime: ${entry.creationTime} -- mtime: ${entry.lastModifiedTime} -- lastAccess: ${entry.lastAccessTime} "
         }
         ArchiveEntry entry1 = entries[1]
 
         then:
         entries.size() == 5
+
+    }
+
+   def "basic ops with apache.compress jar file"() {
+        // https://itsallbinary.com/apache-commons-compress-simplest-zip-zip-with-directory-compression-level-unzip/
+        given:
+        File jar = new File(getClass().getResource('/content/testsub/opencsv-2.0.jar').toURI())
+
+        JarArchiveInputStream archive = new JarArchiveInputStream(new BufferedInputStream(new FileInputStream(jar)))
+
+        List entries = []
+
+        when:
+        JarArchiveEntry entry;
+        while ((entry = archive.getNextJarEntry()) != null) {
+            entries << entry
+            Long size = entry.size
+            Long csize = entry.compressedSize
+//            int percent = ((size - csize) / size) * 100
+        }
+
+        then:
+        entries.size() == 19
 
     }
 

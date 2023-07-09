@@ -113,20 +113,12 @@ class ArchFile extends SavableObject {
 
     SolrInputDocument toSolrInputDocument() {
         SolrInputDocument sid = super.toSolrInputDocument()
-//        if (crawlName) {
-//            sid.setField(SolrSystemClient.FLD_CRAWL_NAME, crawlName)
-//        }
 
         if (extension) {
             sid.addField(SolrSystemClient.FLD_EXTENSION_SS, extension)
         } else {
             log.debug "\t\tno extention for archive file: $this"
         }
-//        sid.addField(SolrSystemClient.FLD_NAME_SIZE_S, "${this.name}:${this.size}")
-//        sid.addField(SolrSystemClient.FLD_DEPTH, depth)
-//        if(dedup){
-//            log.warn "ensure dedupe is saved, and replaces name-size field"
-//        }
         return sid
     }
 
@@ -153,7 +145,6 @@ class ArchFile extends SavableObject {
     String buildDedupString(){
         String uniq = type + ':' + name + '::' + size
         return uniq
-
     }
 
 }

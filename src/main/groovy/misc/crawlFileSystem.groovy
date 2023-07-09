@@ -2,14 +2,13 @@ package misc
 
 import com.oconeco.analysis.BaseAnalyzer
 import com.oconeco.analysis.FileSystemAnalyzer
-import com.oconeco.crawler.BaseDifferenceChecker
 import com.oconeco.crawler.LocalFileSystemCrawler
 import com.oconeco.crawler.SolrDifferenceChecker
 import com.oconeco.helpers.SolrCrawlArgParser
+import com.oconeco.models.FSFolder
 
 //import com.oconeco.analysis.FolderAnalyzer
 
-import com.oconeco.models.FSFolder
 import com.oconeco.persistence.SolrSystemClient
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.core.Logger
@@ -33,7 +32,7 @@ long numFoundPreLocation = solrClient.getDocumentCount()
 //boolean compareExistingSolrFolderDocs = config.compareExistingSolrFolderDocs
 def folderLabels = config.namePatterns.folders
 def fileLabels = config.namePatterns.files
-BaseDifferenceChecker differenceChecker = new SolrDifferenceChecker()
+SolrDifferenceChecker differenceChecker = new SolrDifferenceChecker()
 BaseAnalyzer analyzer = new FileSystemAnalyzer(folderLabels, fileLabels, null, null, )
 long start = System.currentTimeMillis()
 
@@ -62,8 +61,8 @@ crawlMap.each { String crawlName, String startPath ->
     } else {
         log.info "\t\t----no folders updated $locationName:$crawlName, skipped count:${crawlFolders?.skipped?.size()} --  Solr Doc Count preCrawl ($numFoundPreCrawl) assume the same after no updates..."
     }
-
 }
+
 
 long end = System.currentTimeMillis()
 long elapsed = end - start

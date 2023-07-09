@@ -46,7 +46,7 @@ class FSObject extends SavableObject {
 
         hidden = f.isHidden()
         if (hidden) {
-            log.info "\t\t~~~~processing hidden file: $f"
+            log.debug "\t\t~~~~processing hidden file: $f"
         }
 
         // todo -- revisit if this replacing backslashes with forward slashes helps, I had trouble querying for id with backslashes (SoC 20230603)

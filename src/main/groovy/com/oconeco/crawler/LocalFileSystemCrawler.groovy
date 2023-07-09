@@ -33,8 +33,8 @@ class LocalFileSystemCrawler {
 //    String crawlName        // todo -- remove this from class, leave as arg in methods where appropriate
     String locationName
     String osName
-    BaseDifferenceChecker differenceChecker
-//    BaseAnalyzer analyzer
+//    BaseDifferenceChecker differenceChecker
+    SolrDifferenceChecker differenceChecker
     BaseClient persistenceClient
 
     // todo -- fix these fied lists, put in constructor, or move to diff checker
@@ -51,27 +51,27 @@ class LocalFileSystemCrawler {
     }
 
 
-    /**
-     * helper method to accept various inputs,and return the filesystem object (File/dir) to actuallly crawl
-     * @param source
-     * @param namePatterns
-     * @return
-     */
-    File getStartDirectory(def source) {
-        File startDir = null
-        if (source instanceof Path) {
-            log.info "got a proper path (${source.class.name}): $source"
-            startDir = source.toFile()
-        } else if (source instanceof File) {
-            startDir = source
-        } else if (source instanceof String) {
-            startDir = new File(source)
-        } else {
-            log.warn "Unknown source type (${source.class.name}, trying a blind cast..."
-            startDir = ((Path) source)
-        }
-        return startDir
-    }
+//    /**
+//     * helper method to accept various inputs,and return the filesystem object (File/dir) to actuallly crawl
+//     * @param source
+//     * @param namePatterns
+//     * @return
+//     */
+//    File getStartDirectory(def source) {
+//        File startDir = null
+//        if (source instanceof Path) {
+//            log.info "got a proper path (${source.class.name}): $source"
+//            startDir = source.toFile()
+//        } else if (source instanceof File) {
+//            startDir = source
+//        } else if (source instanceof String) {
+//            startDir = new File(source)
+//        } else {
+//            log.warn "Unknown source type (${source.class.name}, trying a blind cast..."
+//            startDir = ((Path) source)
+//        }
+//        return startDir
+//    }
 
 
     def getSolrDocCount(String crawlName = '', String q = '*:*', String filterQuery = '') {
@@ -127,11 +127,11 @@ class LocalFileSystemCrawler {
 
             int depth = getRelativeDepth(startPath, f)
             currentFolder = new FSFolder(f, null, this.locationName, crawlName)
+            boolean shouldIgnore = analyzer.shouldIgnore(currentFolder)
 //            results << currentFolder
 
             if (accessible) {
-                def foo = analyzer.analyze(currentFolder)
-                if (currentFolder.ignore) {
+                if (shouldIgnore) {
                     log.info "\t\t----IGNORABLE folder:($currentFolder)"
                     fvr = FileVisitResult.SKIP_SUBTREE
                 } else {
@@ -151,19 +151,22 @@ class LocalFileSystemCrawler {
                        preRoot: true, postRoot: true, visitRoot: true,]
 
         long cnt = 0
-        int cntStatusFrequency = 500 // show log message every cntStatusFrequency folders
         startDir.traverse(options) { File folder ->
             cnt++
             if (currentFolder.ignore) {
-                log.info "---- $cnt) Ignoring current folder: $currentFolder"
+                log.debug "---- $cnt) Ignoring current folder: $currentFolder"
                 results.skipped << currentFolder
             } else {
+                // note: crawlFolderFiles here to get actual/tracked file size of folder -- it should be light enough, and will ignore changes in ignored files :-)
+                def folderResults = crawlFolderFiles(currentFolder, analyzer)
+//                currentFolder.dedup = currentFolder.buildDedupString()
                 DifferenceStatus differenceStatus = differenceChecker.compareFSFolderToSavedDocMap(currentFolder, existingSolrFolderDocs)
+//                DifferenceStatus differenceStatus = differenceChecker.compare(currentFolder, existingSolrFolderDocs)
                 boolean shouldUpdate = differenceChecker.shouldUpdate(differenceStatus)
                 if (shouldUpdate) {
-                    def folderResults = crawlFolderFiles(currentFolder, analyzer)
                     log.debug "\t\tcrawlFolderFiles results:($folderResults)"
-                    List doAnalysisresults = analyzer.doAnalysis(currentFolder)
+//                    List doAnalysisresults = analyzer.doAnalysis(currentFolder)
+                    def doAnalysisresults = analyzer.analyze(currentFolder)
                     log.debug "\t\tdoAnalysisresults: $doAnalysisresults to currentFolder: $currentFolder"
 
                     List<SavableObject> savableObjects = currentFolder.gatherSavableObjects()
@@ -173,11 +176,12 @@ class LocalFileSystemCrawler {
 
                     def archiveFiles = currentFolder.children.each { FSObject fsObject ->
                         if (fsObject.archive) {
-                            List<SavableObject> archEntries = fsObject.gatherArchiveEntries()
+                            List<SavableObject> archEntries = ((FSFile)fsObject).gatherArchiveEntries()
                             def responseArch = persistenceClient.saveObjects(savableObjects)
                             log.debug "\t\tSolr response saving archive entries: $responseArch"
                         }
                     }
+                    log.debug "\t\tArhive files in folder($currentFolder): $archiveFiles"
 
                 } else {
                     results.current << currentFolder
@@ -188,8 +192,15 @@ class LocalFileSystemCrawler {
         return results
     }
 
-    Map<String, Map<String, Object>> crawlFolderFiles(FSFolder fsFolder, BaseAnalyzer analyzer) {
-        Map<String, Map<String, Object>> results = [:]
+
+    /**
+     * Crawl the folder and use the analyzer to determin what folder contents (files, subdirs) to add as 'children'
+     * @param fsFolder
+     * @param analyzer
+     * @return the folder's (newly added?) children
+     */
+    List<SavableObject> crawlFolderFiles(FSFolder fsFolder, BaseAnalyzer analyzer) {
+//        Map<String, Map<String, Object>> results = [:]
         int countAdded = 0
         if (fsFolder.children) {
             log.warn "FSFolder ($fsFolder) already has defined 'children': ${fsFolder.children}, this seems bad!!"
@@ -197,6 +208,10 @@ class LocalFileSystemCrawler {
             log.debug "\t\tinitialize empty children list for FSFolder ($fsFolder) -- as expected "
             fsFolder.children = []
         }
+        if(fsFolder.size){
+            log.warn "FSFolder($fsFolder) size already set??? reseting to 0 as we crawlFolderFiles (with ignore patterns)..."
+        }
+        fsFolder.size = 0
 
         int cnt = 0
         if (fsFolder.thing instanceof File) {
@@ -210,20 +225,27 @@ class LocalFileSystemCrawler {
                     child = new FSFile(f, fsFolder, locationName, fsFolder.crawlName)
                 }
 
-                Map<String, Map<String, Object>> aResults = analyzer.analyze(child)
-                results.put(f, aResults)
+//                Map<String, Map<String, Object>> aResults = analyzer.analyze(child)
+//                results.put(f, aResults)
                 if (child.ignore) {
                     log.debug "\t\t\t\tignoring child: $child -- analyzer results:($aResults)"
                 } else {
                     countAdded++
-                    log.debug "\t\tAdding child:($child) to folder($fsFolder)-- analyzer results:($aResults)"
+                    log.debug "\t\tAdding child:($child) to folder($fsFolder)"
                     fsFolder.children << child
+                    if(child.type==FSFile.TYPE) {
+                        fsFolder.size += child.size         // todo -- revisit this semi-hidden folder size counting, is there a better/more explicit way?
+                    } else {
+                        log.debug "\t\tskip incrementing parent folder size, becuase this ($child) is not a File (???)"
+                    }
                 }
             }
+            def rc = fsFolder.buildDedupString()
+            log.debug "\t\tBuilt fsFolder($fsFolder) dedup string(${fsFolder.dedup})"
         } else {
             log.warn "fsFolder.thing(${fsFolder.thing}) is not a file!! bug??"
         }
-        return results
+        return fsFolder.children
     }
 
 

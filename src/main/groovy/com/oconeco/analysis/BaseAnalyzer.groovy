@@ -82,7 +82,7 @@ class BaseAnalyzer {
         Map<String, Object> gnm = groupNameMap[Constants.IGNORE]
         if (gnm) {
             ignoreGroup = gnm.pattern
-            this.groupNameMap = groupNameMap.findAll { it.key != Constants.IGNORE }
+            this.groupNameMap = groupNameMap.findAll { it.key != Constants.IGNORE }     // todo -- consider just a map-remove op??
             log.debug "\t\tFound special ignoreGroup entry ($ignoreGroup), setting to Analyzer prop: 'ignoreGroup' and removing from groupNameMap ($groupNameMap) "
         } else {
             this.groupNameMap = groupNameMap
@@ -100,11 +100,11 @@ class BaseAnalyzer {
         }
 
         if (groupPathMap) {
-            log.info "\t\tFound groupPathMap: $groupPathMap ($this)"
+            log.debug "\t\tFound groupPathMap: $groupPathMap ($this)"
             this.groupPathMap = groupPathMap
         }
         if (itemPathMap) {
-            log.info "\t\tFound itemPathMap: $itemPathMap ($this)"
+            log.debug "\t\tFound itemPathMap: $itemPathMap ($this)"
             this.itemPathMap = itemPathMap
         }
 
@@ -155,7 +155,7 @@ class BaseAnalyzer {
                         object.matchedLabels = ml
                         log.info "\t\tIGNORE: processing a groupObject ($object), this matches group name ignore (${this.ignoreGroup} "
                     } else {
-                        log.debug "\t\tprocess: processing a groupObject ($object), this does NOT match group name ignore (${this.ignoreGroup} "
+                        log.debug "\t\tprocess: processing a groupObject ($object), this does NOT match group name ignore (${this.ignoreGroup}, so we should PROCESS it"
                     }
                 } else {
                     object.ignore = false
@@ -167,7 +167,7 @@ class BaseAnalyzer {
                     object.ignore = matcher.matches()
                     if (object.ignore) {
                         String match = matcher.group(1)
-                        log.info "\t\tIGNORE: processing an Item Object ($object), this matches item name ignore (${this.ignoreItem} -- match:$match "
+                        log.debug "\t\tIGNORE: processing an Item Object ($object), this matches item name ignore (${this.ignoreItem} -- match:$match "
                         object.labels << Constants.IGNORE
                         Map ml = [(Constants.IGNORE): [pattern: this.ignoreItem, (Constants.LABEL_MATCH): match]]
                         object.matchedLabels = ml
@@ -184,7 +184,7 @@ class BaseAnalyzer {
             }
             return object.ignore
         } else {
-            log.warn "\t\tFound existing ignore flag (${object.ignore}) on onbject: $object (remove this, just a code/processing check during development"
+            log.info "\t\tFound existing ignore flag (${object.ignore}) on onbject: $object (remove this, just a code/processing check during development"
             return object.ignore
         }
     }
@@ -200,21 +200,21 @@ class BaseAnalyzer {
         log.debug "analyze object: $object"
         if (object) {
             if(object.archive){
-                log.info "\t\tArchive File: $object"
+                log.debug "\t\t\t\tArchive File: $object"
             }
-//        def results = []
+
             if (shouldIgnore(object)) {
                 log.info "\t\tIgnore object ($object) (skipping majority of `analyze(object)` method"
                 Map ignoreMap = [(Constants.IGNORE): [pattern: '', analysis: [], (Constants.LABEL_MATCH): Constants.NO_MATCH]]
                 object.matchedLabels = ignoreMap
             } else {
                 object.matchedLabels = applyLabelMaps(object)
-//            results.addAll(matchedEntries)
+
                 object.matchedLabels.each { String label, Map labelMatchMap ->
                     def analysis = labelMatchMap.analysis
                     if (analysis instanceof List) {
                         analysis.each { String analysisName ->
-                            log.debug "\t\t++++ -> Apply analysis: $label->$analysisName -- object (${object}) -- matched on: ${labelMatchMap.get(Constants.LABEL_MATCH)}"
+                            log.debug "\t\t....Apply analysis: $label->$analysisName -- object (${object}) -- matched on: ${labelMatchMap.get(Constants.LABEL_MATCH)}"
                             // todo - move me to after "shouldUpdate'
                             def rc = this.doAnalysis(analysisName, object)
                             log.debug "\t\tdoAnalysis($label) results: $rc"
@@ -238,10 +238,14 @@ class BaseAnalyzer {
      * @param object
      * @return
      */
-    def doAnalysis(SavableObject object) {
-        def results = []
+    List doAnalysis(SavableObject object) {
+        List results = []
         if (object) {
-            log.info "iterate through each matched label entry, and call doAnalysis(label, object)"
+            if(object.children){
+                def childResults = doAnalysisOnChildren(object.children)
+                results.addAll(childResults)
+            }
+            log.debug "iterate through each matched label entry, and call doAnalysis(label, object)"
             object.matchedLabels.each {
                 def foo = doAnalysis(it.key, object)
                 results << foo
@@ -261,7 +265,7 @@ class BaseAnalyzer {
      */
     def doAnalysis(String analysisName, SavableObject object) {
         def results = null
-        log.debug "\t\tAnalysis ($analysisName) on object:($object)"
+        log.info "\t\t....Analysis ($analysisName) on object:($object)"
         switch (analysisName.toLowerCase()) {
             case 'track':
                 log.debug "\t\tDo analysis named '$analysisName' on object $object"
@@ -290,6 +294,15 @@ class BaseAnalyzer {
         return results
     }
 
+
+    /**
+     * simple wrapper, but can allow for more advanced overriding if needed for analyzing child objects
+     * @param children
+     * @return
+     */
+    List doAnalysisOnChildren(List<SavableObject> children) {
+        List results = children.collect{doAnalysis(it)}
+    }
 
 /**
  * Based on if SavableObject is a group/wrapper (ie. folder) or an individual item (i.e. File) check the relevant label maps and add all those labels (keys) that match (based on name regex, and optionally path regex)
@@ -385,8 +398,12 @@ class BaseAnalyzer {
 
 
     def parse(SavableObject object) {
+        Map results = [:]
         String content
         Metadata metadata
+        log.info "\t\t....parse(object:$object) starting..."
+        long start = System.currentTimeMillis()
+
         if(tikaBodyHandler && tikaParser) {
             try (InputStream inputStream = object.thing.newInputStream()) {
                 if (inputStream) {
@@ -414,10 +431,15 @@ class BaseAnalyzer {
             } catch (TikaException tikaException) {
                 log.error "Tika exception: $tikaException -- object:${object}"
             }
-            return [content: content, metadata: metadata]
+            results = [content: content, metadata: metadata]
         } else {
             log.warn "No tikaParser($tikaParser) or tikaBodyHandler:($tikaBodyHandler), no parsing possible"
         }
+        long end = System.currentTimeMillis()
+        long elapsed = end - start
+        log.info "\t\t....parse(object:$object) -- Elapsed time: ${elapsed}ms (${elapsed/1000} sec)"
+
+        return results
     }
 
     @Override

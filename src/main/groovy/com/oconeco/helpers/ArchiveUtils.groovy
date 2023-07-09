@@ -1,6 +1,5 @@
 package com.oconeco.helpers
 
-
 import org.apache.commons.compress.archivers.ArchiveInputStream
 import org.apache.commons.compress.archivers.jar.JarArchiveInputStream
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
@@ -12,7 +11,6 @@ import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.core.Logger
 
 import java.nio.file.Files
-import java.util.regex.Pattern
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -30,7 +28,7 @@ class ArchiveUtils {
         String name = archiveFile.name
         String fileType = Files.probeContentType(archiveFile.toPath())
         String ext = FilenameUtils.getExtension(name)
-        log.info "\t\tFile type: ($fileType) and extension: $ext -- file:${archiveFile.absolutePath}"
+        log.debug "\t\tgetArchiveInputStream(): File type: ($fileType) and extension: $ext -- file:${archiveFile.absolutePath}"
         if (name.endsWith('tar.gz') || name.endsWith('tgz')) {
             inputStream = new GzipCompressorInputStream(archiveFile.newInputStream());
             ais = new TarArchiveInputStream(inputStream)
@@ -51,6 +49,7 @@ class ArchiveUtils {
     }
 
 
+/*
     static final Pattern ARCHIVE_EXTENSIONS = Pattern.compile('.*(tar.gz|tgz|tar.z|tar.bz2?|zip)$')
 
     static boolean isArchiveFileByExtension(File file) {
@@ -63,4 +62,5 @@ class ArchiveUtils {
 
         return archive
     }
+*/
 }
