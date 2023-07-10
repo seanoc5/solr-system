@@ -122,13 +122,12 @@ class LocalFileSystemCrawler {
         def doPreDir = {
             File f = it
             log.info "====PRE dir:  $it"
-            FileVisitResult fvr = FileVisitResult.CONTINUE
+            FileVisitResult fvr = FileVisitResult.CONTINUE      // set default to continue/process
             boolean accessible = f.exists() && f.canRead() && f.canExecute()
 
             int depth = getRelativeDepth(startPath, f)
             currentFolder = new FSFolder(f, null, this.locationName, crawlName)
             boolean shouldIgnore = analyzer.shouldIgnore(currentFolder)
-//            results << currentFolder
 
             if (accessible) {
                 if (shouldIgnore) {
@@ -136,8 +135,13 @@ class LocalFileSystemCrawler {
                     fvr = FileVisitResult.SKIP_SUBTREE
                 } else {
                     log.debug "\t\t----Not ignorable folder: $currentFolder"
+                    def folderResults = crawlFolderFiles(currentFolder, analyzer)
+                    //NOte compareFSFolderToSavedDocMap will save diff status in object, for postDir assessment/analysis
+                    DifferenceStatus differenceStatus = differenceChecker.compareFSFolderToSavedDocMap(currentFolder, existingSolrFolderDocs)
+                    // continue through tree, even if this folder needs no updating
                     fvr = FileVisitResult.CONTINUE
                 }
+
             } else {
                 fvr = FileVisitResult.SKIP_SUBTREE
                 log.warn "Folder: $currentFolder is not accessible, skip subtree: $f"
@@ -145,21 +149,31 @@ class LocalFileSystemCrawler {
             return fvr
         }
 
-//        def doPostDir = { log.debug "\t\tPost dir: $it" }
+        def doPostDir = {
+            log.debug "\t\tPost dir: $it"
+            boolean shouldUpdate = differenceChecker.shouldUpdate(differenceStatus)
+            if (shouldUpdate) {
+                log.debug "\t\tcrawlFolderFiles results:($folderResults)"
+                def doAnalysisresults = analyzer.analyze(currentFolder)
+                log.debug "\t\tdoAnalysisresults: $doAnalysisresults to currentFolder: $currentFolder"
+            } else {
+                log.info "\t\tdifferenceChecker says we can skip this ($currentFolder) folder, it is up to date"
+            }
 
-        Map options = [type   : FileType.DIRECTORIES, preDir: doPreDir, //postDir: doPostDir,
+        }
+
+        Map options = [type   : FileType.DIRECTORIES, preDir: doPreDir, postDir: doPostDir,
                        preRoot: true, postRoot: true, visitRoot: true,]
 
         long cnt = 0
         startDir.traverse(options) { File folder ->
             cnt++
-            if (currentFolder.ignore) {
-                log.debug "---- $cnt) Ignoring current folder: $currentFolder"
-                results.skipped << currentFolder
+            FSFolder childFolder = new FSFolder(folder, null, locationName, crawlName)
+            boolean ignoreFolder = analyzer.shouldIgnore(childFolder)
+            if (childFolder.ignore) {
+                log.debug "---- $cnt) Ignoring child folder: $childFolder"
+                results.skipped << childFolder
             } else {
-                // note: crawlFolderFiles here to get actual/tracked file size of folder -- it should be light enough, and will ignore changes in ignored files :-)
-                def folderResults = crawlFolderFiles(currentFolder, analyzer)
-//                currentFolder.dedup = currentFolder.buildDedupString()
                 DifferenceStatus differenceStatus = differenceChecker.compareFSFolderToSavedDocMap(currentFolder, existingSolrFolderDocs)
 //                DifferenceStatus differenceStatus = differenceChecker.compare(currentFolder, existingSolrFolderDocs)
                 boolean shouldUpdate = differenceChecker.shouldUpdate(differenceStatus)
@@ -176,7 +190,7 @@ class LocalFileSystemCrawler {
 
                     def archiveFiles = currentFolder.children.each { FSObject fsObject ->
                         if (fsObject.archive) {
-                            List<SavableObject> archEntries = ((FSFile)fsObject).gatherArchiveEntries()
+                            List<SavableObject> archEntries = ((FSFile) fsObject).gatherArchiveEntries()
                             def responseArch = persistenceClient.saveObjects(savableObjects)
                             log.debug "\t\tSolr response saving archive entries: $responseArch"
                         }
@@ -200,6 +214,7 @@ class LocalFileSystemCrawler {
      * @return the folder's (newly added?) children
      */
     List<SavableObject> crawlFolderFiles(FSFolder fsFolder, BaseAnalyzer analyzer) {
+        log.info "\t\tcall to crawlFolderFiles($fsFolder, ${analyzer.class.simpleName})..."
 //        Map<String, Map<String, Object>> results = [:]
         int countAdded = 0
         if (fsFolder.children) {
@@ -208,7 +223,7 @@ class LocalFileSystemCrawler {
             log.debug "\t\tinitialize empty children list for FSFolder ($fsFolder) -- as expected "
             fsFolder.children = []
         }
-        if(fsFolder.size){
+        if (fsFolder.size) {
             log.warn "FSFolder($fsFolder) size already set??? reseting to 0 as we crawlFolderFiles (with ignore patterns)..."
         }
         fsFolder.size = 0
@@ -233,8 +248,9 @@ class LocalFileSystemCrawler {
                     countAdded++
                     log.debug "\t\tAdding child:($child) to folder($fsFolder)"
                     fsFolder.children << child
-                    if(child.type==FSFile.TYPE) {
-                        fsFolder.size += child.size         // todo -- revisit this semi-hidden folder size counting, is there a better/more explicit way?
+                    if (child.type == FSFile.TYPE) {
+                        fsFolder.size += child.size
+                        // todo -- revisit this semi-hidden folder size counting, is there a better/more explicit way?
                     } else {
                         log.debug "\t\tskip incrementing parent folder size, becuase this ($child) is not a File (???)"
                     }

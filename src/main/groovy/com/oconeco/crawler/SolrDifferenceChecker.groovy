@@ -25,6 +25,7 @@ class SolrDifferenceChecker extends BaseDifferenceChecker {
     }
 
     DifferenceStatus compareFSFolderToSavedDocMap(FSFolder fsfolder, Map<String, SolrDocument> existingSolrDocMap) {
+        log.info "\t\tcall compareFSFolderToSavedDocMap($fsfolder, existingdocs size: ${existingSolrDocMap.size()})"
         DifferenceStatus differenceStatus = null
         if (fsfolder) {
             String fsId = null
@@ -172,59 +173,4 @@ class SolrDifferenceChecker extends BaseDifferenceChecker {
     }
 
 
-/*
-    boolean shouldUpdate(DifferenceStatus status) {
-        boolean should = false
-        String msg
-        if (status) {
-            if (status.noMatchingSavedDoc) {
-                should = true
-                msg = "no matching saved/solr doc, flagging for update"
-                log.info "\t\t--$msg"
-            } else {
-                if (status.differentIds) {
-                    // todo -- check logic and assumptions --
-                    msg = "different ids, flagging for update (CAUTION: why would we ever compare different IDs???)"
-                    should = true
-                    log.warn "\t--$msg: $status"
-                } else if (status.differentDedups) {
-                    should = true
-                    String objDedup = status.object.dedup
-                    String solrDedup = status.solrDocument.getFirstValue(SolrSystemClient.FLD_DEDUP)
-                    msg = "different dedups, flagging for update (FSFolder: ${objDedup}) != (solrdedup: $solrDedup)"
-                    log.debug "\t\t--$msg: $status"
-                } else if (status.differentSizes) {
-                    should = true
-                    msg = "different sizes, flagging for update"
-                    log.debug "\t\t----$msg: $status"
-                } else if (status.differentPaths) {
-                    should = true
-                    msg = "different paths, flagging for update (how do we get different paths...?) "
-                    log.warn "\t\t--: $status"
-                } else if (status.differentLastModifieds) {
-                    // todo -- check logic and assumptions
-                    should = true
-                    msg = "different lastModifiedDate, FLAGGING for update"
-                    log.info "\t\t--$msg: $status"
-                } else if (status.differentLocations) {
-                    // todo -- check logic and assumptions
-                    should = false
-                    String objectLocation = status.object.locationName
-                    String solrLocation = status.solrDocument.getFirstValue(SolrSystemClient.FLD_LOCATION_NAME)
-                    msg = "different locations, BUT NOT CONSIDERED WORTHY of reindexing, NOT flagging for update (fsfolder location: ${objectLocation}) != (solr doc location: ${solrLocation})}"
-                    log.info "\t----$msg: $status"
-                } else {
-                    msg = "no differences found, flagging as NO update"
-                }
-            }
-            if (!msg) {
-                log.warn "\t\t....No message for status: $status???"
-            }
-        } else {
-            log.warn "No valid DifferenceStatus, coding bug??!?!"
-            should = true
-        }
-        return should
-    }
-*/
 }
