@@ -28,7 +28,7 @@ abstract class SavableObject {
     /** if hierarchacical (quite common) what is the depth here? */
     Integer depth = 0
     /** size of thing -- (ie count of files and subdirs in a folder */
-    Long size
+    Long size = 0
     /** name of 'source', where this came from, e.g.: hostname, browser profile, email account,.... */
     String locationName
     /** name of 'crawl', useful for segmenting the source into various logical sub-sections,

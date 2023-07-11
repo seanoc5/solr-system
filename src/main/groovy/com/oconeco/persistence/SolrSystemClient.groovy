@@ -226,13 +226,18 @@ class SolrSystemClient extends BaseClient {
         return resp
     }*/
 
+    @Override
     def saveObjects(List<SavableObject> objects, int commitWithinMS = 1000) {
-        log.debug "Adding solrInputDocuments, size: ${objects.size()}"
+        log.info "\t\t++++Adding solrInputDocuments, size: ${objects.size()}"
         UpdateResponse resp
         List<SolrInputDocument> solrInputDocuments = objects.collect { it.toSolrInputDocument() }
         try {
             resp = solrClient.add(solrInputDocuments, commitWithinMS)
-            log.debug "saveObjects add response: $resp"
+            if(resp.status==0) {
+                log.debug "saveObjects add response: $resp"
+            } else {
+                log.warn "Bad response from solr save/commit?? $resp"
+            }
         } catch (SolrServerException sse) {
             log.error "Solr server exception: $sse"
         }

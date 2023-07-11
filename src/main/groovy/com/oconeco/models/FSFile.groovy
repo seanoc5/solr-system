@@ -202,14 +202,14 @@ class FSFile extends FSObject {
             if (ais instanceof ZipArchiveInputStream) {
                 entry = ais.getNextZipEntry()
                 if (entry) {
-                    def size = entry.size
+                    long size = entry.size
                     log.debug "Size: $size"
                 } else {
                     log.warn "no entry: $entry -- in ais: $ais"
                 }
             } else if (ais instanceof JarArchiveInputStream) {
                 entry = ais.getNextJarEntry()
-                def size = entry.size
+                long size = entry.size
                 log.debug "Size: $size"
             } else {
                 entry = ais.getNextEntry()

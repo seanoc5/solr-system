@@ -151,14 +151,14 @@ class LocalFileSystemCrawler {
 
         def doPostDir = {
             log.debug "\t\tPost dir: $it"
-            boolean shouldUpdate = differenceChecker.shouldUpdate(differenceStatus)
-            if (shouldUpdate) {
-                log.debug "\t\tcrawlFolderFiles results:($folderResults)"
-                def doAnalysisresults = analyzer.analyze(currentFolder)
-                log.debug "\t\tdoAnalysisresults: $doAnalysisresults to currentFolder: $currentFolder"
-            } else {
-                log.info "\t\tdifferenceChecker says we can skip this ($currentFolder) folder, it is up to date"
-            }
+//            boolean shouldUpdate = differenceChecker.shouldUpdate(differenceStatus)
+//            if (shouldUpdate) {
+//                log.debug "\t\tcrawlFolderFiles results:($folderResults)"
+//                def doAnalysisresults = analyzer.analyze(currentFolder)
+//                log.debug "\t\tdoAnalysisresults: $doAnalysisresults to currentFolder: $currentFolder"
+//            } else {
+//                log.info "\t\tdifferenceChecker says we can skip this ($currentFolder) folder, it is up to date"
+//            }
 
         }
 
@@ -168,39 +168,44 @@ class LocalFileSystemCrawler {
         long cnt = 0
         startDir.traverse(options) { File folder ->
             cnt++
-            FSFolder childFolder = new FSFolder(folder, null, locationName, crawlName)
-            boolean ignoreFolder = analyzer.shouldIgnore(childFolder)
-            if (childFolder.ignore) {
-                log.debug "---- $cnt) Ignoring child folder: $childFolder"
-                results.skipped << childFolder
-            } else {
-                DifferenceStatus differenceStatus = differenceChecker.compareFSFolderToSavedDocMap(currentFolder, existingSolrFolderDocs)
-//                DifferenceStatus differenceStatus = differenceChecker.compare(currentFolder, existingSolrFolderDocs)
-                boolean shouldUpdate = differenceChecker.shouldUpdate(differenceStatus)
-                if (shouldUpdate) {
-                    log.debug "\t\tcrawlFolderFiles results:($folderResults)"
-//                    List doAnalysisresults = analyzer.doAnalysis(currentFolder)
-                    def doAnalysisresults = analyzer.analyze(currentFolder)
-                    log.debug "\t\tdoAnalysisresults: $doAnalysisresults to currentFolder: $currentFolder"
-
-                    List<SavableObject> savableObjects = currentFolder.gatherSavableObjects()
-                    def response = persistenceClient.saveObjects(savableObjects)
-                    log.info "\t\t$cnt) ++++Save folder (${currentFolder.path}:${currentFolder.depth}) -- Differences:${differenceStatus.differences} -- response: $response"
-                    results.updated << currentFolder
-
-                    def archiveFiles = currentFolder.children.each { FSObject fsObject ->
-                        if (fsObject.archive) {
-                            List<SavableObject> archEntries = ((FSFile) fsObject).gatherArchiveEntries()
-                            def responseArch = persistenceClient.saveObjects(savableObjects)
-                            log.debug "\t\tSolr response saving archive entries: $responseArch"
-                        }
-                    }
-                    log.debug "\t\tArhive files in folder($currentFolder): $archiveFiles"
-
+            if(folder.isDirectory()) {
+                FSFolder childFolder = new FSFolder(folder, null, locationName, crawlName)
+                boolean ignoreFolder = analyzer.shouldIgnore(childFolder)
+                if (childFolder.ignore) {
+                    log.debug "---- $cnt) Ignoring child folder: $childFolder"
+                    results.skipped << childFolder
                 } else {
-                    results.current << currentFolder
-                    log.debug "\t\t$cnt) no need to update: $differenceStatus -- persistence ad source are current"
+                    DifferenceStatus differenceStatus = differenceChecker.compareFSFolderToSavedDocMap(currentFolder, existingSolrFolderDocs)
+//                DifferenceStatus differenceStatus = differenceChecker.compare(currentFolder, existingSolrFolderDocs)
+                    boolean shouldUpdate = differenceChecker.shouldUpdate(differenceStatus)
+                    if (shouldUpdate) {
+                        List<SavableObject> savableObjects = currentFolder.gatherSavableObjects()
+
+                        def doAnalysisresults = analyzer.analyze(currentFolder)
+                        log.debug "\t\tdoAnalysisresults: $doAnalysisresults to currentFolder: $currentFolder"
+
+                        def response = persistenceClient.saveObjects(savableObjects)
+                        log.info "\t\t$cnt) ++++Save folder (${currentFolder.path}:${currentFolder.depth}) -- Differences:${differenceStatus.differences} -- response: $response"
+                        results.updated << currentFolder
+
+                        def archiveFiles = currentFolder.children.each { FSObject fsObject ->
+                            if (fsObject.archive) {
+                                List<SavableObject> archEntries = ((FSFile) fsObject).gatherArchiveEntries()
+                                def responseArch = persistenceClient.saveObjects(savableObjects)
+                                log.debug "\t\tSolr response saving archive entries: $responseArch"
+                            } else {
+                                log.debug "\t\tskip non archive file: $fsObject"
+                            }
+                        }
+                        log.debug "\t\tArhive files in folder($currentFolder): $archiveFiles"
+
+                    } else {
+                        results.current << currentFolder
+                        log.debug "\t\t$cnt) no need to update: $differenceStatus -- persistence ad source are current"
+                    }
                 }
+            } else {
+                log.info "processing file: $folder"
             }
         }
         return results
@@ -214,7 +219,7 @@ class LocalFileSystemCrawler {
      * @return the folder's (newly added?) children
      */
     List<SavableObject> crawlFolderFiles(FSFolder fsFolder, BaseAnalyzer analyzer) {
-        log.info "\t\tcall to crawlFolderFiles($fsFolder, ${analyzer.class.simpleName})..."
+        log.info "\t\t....call to crawlFolderFiles($fsFolder, ${analyzer.class.simpleName})..."
 //        Map<String, Map<String, Object>> results = [:]
         int countAdded = 0
         if (fsFolder.children) {

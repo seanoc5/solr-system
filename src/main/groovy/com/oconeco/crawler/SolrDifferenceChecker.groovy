@@ -25,7 +25,7 @@ class SolrDifferenceChecker extends BaseDifferenceChecker {
     }
 
     DifferenceStatus compareFSFolderToSavedDocMap(FSFolder fsfolder, Map<String, SolrDocument> existingSolrDocMap) {
-        log.info "\t\tcall compareFSFolderToSavedDocMap($fsfolder, existingdocs size: ${existingSolrDocMap.size()})"
+        log.debug "\t\t....call compareFSFolderToSavedDocMap($fsfolder, existingdocs size: ${existingSolrDocMap.size()})"
         DifferenceStatus differenceStatus = null
         if (fsfolder) {
             String fsId = null
