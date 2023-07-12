@@ -71,7 +71,7 @@ namePatterns {
 
     files = [
             (Constants.IGNORE): [pattern: ~/(?i)([.~]*lock.*|_.*|.*\bte?mp|.*\.class|.*\.pem|skipme.*)/, analysis: Constants.IGNORE_BUNDLE],
-            office            : [pattern: ~/.*\.(?i)(accdb|docx?|ics|ods|odp|odt|ott|pptx?|rtf|vsdx?|xlsx?)/, analysis: Constants.PARSE_BUNDLE],
+            office            : [pattern: ~/.*\.(?i)(accdb|docx?|ics|ods|odp|odt|ott|pptx?|rtf|sxi|vsdx?|xlsx?)/, analysis: Constants.PARSE_BUNDLE],
             system            : [pattern: ~/.*(\.(?i)(bin|cab|deb|dmg|exe|jar|lib|md5|pkg|rpm|so)|(gcc.*))/, analysis: Constants.TRACK_BUNDLE],
             web               : [pattern: ~/.*(?i)(html?)/, analysis: Constants.PARSE_BUNDLE],
             instructions      : [pattern: ~'(?i).*(adoc|readme.*|md)', analysis: Constants.PARSE_BUNDLE],
