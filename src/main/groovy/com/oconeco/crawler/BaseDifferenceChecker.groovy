@@ -19,12 +19,23 @@ class BaseDifferenceChecker {
         this.checkItemFields = SolrSystemClient.DEFAULT_FIELDS_TO_CHECK.join(' ')
     }
 
+    /**
+     * constructor to pass in what fields to check
+     * todo -- revisit to check if this is actually useful/valid code approach
+     * @param checkGroupFields
+     * @param checkItemFields
+     */
     BaseDifferenceChecker(String checkGroupFields, String checkItemFields) {
         this.checkGroupFields = checkGroupFields
         this.checkItemFields = checkItemFields
     }
 
 
+    /**
+     * check DifferenceStatus to determine if any existing differences are significant enough to require an update
+     * @param status predefined record of differences (status) to check to determine if there are compelling differences
+     * @return true if the caller should update the saved record (solr, ....)
+     */
     boolean shouldUpdate(DifferenceStatus status) {
         boolean shouldUpdatePersistence = true
         String msg

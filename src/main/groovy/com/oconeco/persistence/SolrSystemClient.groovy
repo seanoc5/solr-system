@@ -209,37 +209,25 @@ class SolrSystemClient extends BaseClient {
     }
 
 
-    /**
-     * wrapper to send collection of solrInputDocs to solr for processing
-     * @param solrInputDocuments
-     * @param commitWithinMS time to allow before solr autocommit (solr performance tuning/batching)
-     * @return UpdateResponse
-     */
-/*    def saveDocs(ArrayList<SolrInputDocument> solrInputDocuments, int commitWithinMS = 1000) {
-        log.debug "Adding solrInputDocuments, size: ${solrInputDocuments.size()}"
-        UpdateResponse resp
-        try {
-            resp = solrClient.add(solrInputDocuments, commitWithinMS)
-        } catch (SolrServerException sse) {
-            log.error "Solr server exception: $sse"
-        }
-        return resp
-    }*/
-
     @Override
     def saveObjects(List<SavableObject> objects, int commitWithinMS = 1000) {
-        log.info "\t\t++++Adding solrInputDocuments, size: ${objects.size()}"
         UpdateResponse resp
-        List<SolrInputDocument> solrInputDocuments = objects.collect { it.toSolrInputDocument() }
-        try {
-            resp = solrClient.add(solrInputDocuments, commitWithinMS)
-            if(resp.status==0) {
-                log.debug "saveObjects add response: $resp"
-            } else {
-                log.warn "Bad response from solr save/commit?? $resp"
+        if(objects) {
+            String firstId = objects[0].id
+            log.debug "\t\t++++Adding solrInputDocuments, size: ${objects.size()} -- first ID:($firstId)"
+            List<SolrInputDocument> solrInputDocuments = objects.collect { it.toSolrInputDocument() }
+            try {
+                resp = solrClient.add(solrInputDocuments, commitWithinMS)
+                if (resp.status == 0) {
+                    log.debug "saveObjects add response: $resp"
+                } else {
+                    log.warn "Bad response from solr save/commit?? $resp"
+                }
+            } catch (SolrServerException sse) {
+                log.error "Solr server exception: $sse"
             }
-        } catch (SolrServerException sse) {
-            log.error "Solr server exception: $sse"
+        } else {
+            log.info "No objects passed to saveObjects($objects), skipping..."
         }
         return resp
     }

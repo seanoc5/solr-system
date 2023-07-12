@@ -14,7 +14,6 @@ import org.apache.logging.log4j.core.Logger
 import org.apache.solr.common.SolrInputDocument
 
 import java.util.regex.Pattern
-
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -38,6 +37,13 @@ class FSFile extends FSObject {
     public Pattern FAKE_ARCHIVE_PATTERN = ~/.*(doc|xls|ppt)x/
 
 
+    /**
+     * Basic constructor
+     * @param f source file to model/track
+     * @param parent this may be unused... todo track value of parent object in constructor (filevisitor does not lend itself to eash tracking of parent/child)
+     * @param locationName - source machine, profile, email account...
+     * @param crawlName - subpartition of source location into logical naming (of content)
+     */
     FSFile(File f, SavableObject parent, String locationName, String crawlName) {
         super(f, parent, locationName, crawlName)
 
@@ -88,6 +94,11 @@ class FSFile extends FSObject {
         return sid
     }
 
+
+    /**
+     * basic test to check if this file(object) is an archive which we may want to track the contents of
+     * @return boolean: yes if archive
+     */
     Boolean isArchive() {
         Boolean archive = null
 
@@ -114,7 +125,7 @@ class FSFile extends FSObject {
                     }
                 }
             } else {
-                log.info "\t\t ------ File (${f.name}) has no size, not an archive: ${f.absolutePath}"
+                log.debug "\t\t ------ File (${f.name}) has no size, not an archive: ${f.absolutePath}"
             }
         } else {
             log.warn "File ($f) does not exist, or cannot be read: ${f.absolutePath}"
@@ -172,7 +183,7 @@ class FSFile extends FSObject {
             int i = 0
             ArchiveEntry entry = null
             while ((entry = getSpecificArchEntry(ais)) != null) {
-                if (entry.getSize() > 0) {
+                if (entry.getSize() >= 0) {
                     log.debug "good, entry has a size: $entry"
                 } else if (entry.name.endsWith('/')) {
                     log.debug "processing arch folder: $entry, size should be 0 (this is fine)"
@@ -184,7 +195,7 @@ class FSFile extends FSObject {
                 if (entry.isDirectory()) {
                     archObj = new ArchFolder(entry, this, locationName, crawlName)
                     children << archObj
-                    log.info "\t\t+.+.+. arch folder: ${archObj.toString()}"
+                    log.debug "\t\t+.+.+. arch folder: ${archObj.toString()}"
                 } else {
                     archObj = new ArchFile(entry, this, locationName, crawlName)
                     children << archObj
@@ -208,7 +219,7 @@ class FSFile extends FSObject {
      * @return list of FSObjects with minimal metadata
      */
     List<SavableObject> gatherZippyArchiveEntries(ArchiveInputStream ais) {
-        log.info "gatherZippyArchiveEntries(ais) for FSFile: ${this.toString()}"
+        log.debug "gatherZippyArchiveEntries(ais) for FSFile: ${this.toString()}"
         if (ais) {
             int i = 0
             ArchiveEntry entry = getSpecificArchEntry(ais)
@@ -228,7 +239,7 @@ class FSFile extends FSObject {
                 if (entry.isDirectory()) {
                     archObj = new ArchFolder(entry, this, locationName, crawlName)
                     children << archObj
-                    log.info "\t\t+.+.+. arch folder: ${archObj.toString()}"
+                    log.debug "\t\t+.+.+. arch folder: ${archObj.toString()}"
                 } else {
                     archObj = new ArchFile(entry, this, locationName, crawlName)
                     children << archObj

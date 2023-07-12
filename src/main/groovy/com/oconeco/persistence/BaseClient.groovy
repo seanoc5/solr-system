@@ -35,6 +35,7 @@ class BaseClient {
         log.warn " deleteDocuments() -- Complete me!!"
     }
 
+
     def saveObjects(List<SavableObject> objects) {
         log.warn "saveObjects(List objects) -- complete me"
     }

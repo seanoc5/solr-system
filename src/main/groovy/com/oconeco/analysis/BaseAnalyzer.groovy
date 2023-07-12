@@ -122,7 +122,11 @@ class BaseAnalyzer {
     }
 
 
-
+    /**
+     * convenience method to iterate over a list of savable objects (i.e. a folder and it's children)
+     * @param objectList
+     * @return status results (not intended for any further analysis
+     */
     def analyze(List<SavableObject> objectList) {
         List<Map<String, Map<String, Object>>> results = []
         objectList.each { SavableObject object ->
@@ -220,7 +224,7 @@ class BaseAnalyzer {
                             log.debug "\t\tdoAnalysis($label) results: $rc"
                         }
                     } else {
-                        log.warn "\t\tNothing to process? $label - $analysis"
+                        log.info "\t\tNothing to process? $label - $analysis"
                     }
                     // todo - more code here
                 }
@@ -304,7 +308,8 @@ class BaseAnalyzer {
         List results = children.collect{doAnalysis(it)}
     }
 
-/**
+
+    /**
  * Based on if SavableObject is a group/wrapper (ie. folder) or an individual item (i.e. File) check the relevant label maps and add all those labels (keys) that match (based on name regex, and optionally path regex)
  * @param object SavableObject to check (name, optional path)
  * @return all matching map entries, focused on entry keys which become item labels in solr (or other persistence???)
@@ -338,7 +343,7 @@ class BaseAnalyzer {
     }
 
 
-/**
+    /**
  * Based on if SavableObject is a group/wrapper (ie. folder) or an individual item (i.e. File) check the relevant label maps and add all those labels (keys) that match (based on name regex, and optionally path regex)
  * @param object SavableObject to check (name, optional path)
  * @param name explicit label to be added to object (in solr...)
@@ -400,7 +405,11 @@ class BaseAnalyzer {
         return results
     }
 
-
+    /**
+     * call to extract content from object. Rely on tika for majority of extaction
+     * @param object
+     * @return
+     */
     def parse(SavableObject object) {
         Map results = [:]
         String content

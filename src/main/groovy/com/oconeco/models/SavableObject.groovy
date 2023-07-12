@@ -10,9 +10,12 @@ import org.apache.tika.metadata.Metadata
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
  * @created :   8/5/22, Friday
- * @description:
+ * @description: base object to hold common methods and properties
  */
 
+/**
+ * base object to hold common methods and properties for various more specific savable objects (files, archive entries, emails, browser bookmarks and histories,...)
+ */
 abstract class SavableObject {
     Logger log = LogManager.getLogger(this.class.name);
     /** the source thing (File, Folder, bookmark, email, todo, browser history,...) */

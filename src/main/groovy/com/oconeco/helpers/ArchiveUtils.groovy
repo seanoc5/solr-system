@@ -1,5 +1,6 @@
 package com.oconeco.helpers
 
+import com.oconeco.models.SavableObject
 import org.apache.commons.compress.archivers.ArchiveInputStream
 import org.apache.commons.compress.archivers.jar.JarArchiveInputStream
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
@@ -48,19 +49,13 @@ class ArchiveUtils {
         return ais
     }
 
-
-/*
-    static final Pattern ARCHIVE_EXTENSIONS = Pattern.compile('.*(tar.gz|tgz|tar.z|tar.bz2?|zip)$')
-
-    static boolean isArchiveFileByExtension(File file) {
-        String name = file.name.toLowerCase()
-        boolean archive = false
-//        if(name.endsWith('tar.gz') || name.endsWith('tgz') || name.endsWith('tar.z') || name.endsWith('tar.bz2')){
-        if (name ==~ ARCHIVE_EXTENSIONS) {
-            archive = true
-        }
-
-        return archive
+    /**
+     * simple helper method that can be overridden with more advanced logic
+     * @param objects list to gather archives from
+     * @return objects which are archives (to then extract information about archive entries (like a virtual filesystem)
+     */
+    static List<SavableObject> gatherArchiveObjects(List<SavableObject> objects){
+        List<SavableObject> archiveObjects = objects.findAll {it.archive}
+        return archiveObjects
     }
-*/
 }
