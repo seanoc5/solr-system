@@ -356,11 +356,15 @@ class BaseAnalyzer {
                 Matcher matcher = pattern.matcher(name)
 //                if (name ==~ pattern) {
                 if (matcher.matches()) {
-                    String s = matcher.group(1)
+                    if(matcher.groupCount()>0) {
+                        String s = matcher.group(1)
+                        mapVal.put(Constants.LABEL_MATCH, s)
+                    } else {
+                        mapVal.put(Constants.LABEL_MATCH, pattern.pattern() + " => (default matching?? '.*'??")
+                    }
                     object.labels << label
-                    mapVal.put(Constants.LABEL_MATCH, s)
                     matchingLabels.put(label, mapVal)
-                    log.debug "\t\tMatch: $label name($name) -- matches str($s)) =~ pattern($pattern) "
+                    log.debug "\t\tMatch: $label name($name) -- $mapVal "
                 } else {
                     log.debug "${Constants.NO_MATCH}, obj($object) name($name) LABEL($label)::pattern($pattern)"
                 }

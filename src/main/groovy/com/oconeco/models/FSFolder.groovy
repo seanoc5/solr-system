@@ -27,7 +27,7 @@ class FSFolder extends FSObject {
 
         if (srcFolder.exists()) {
             type = TYPE
-            // todo - find best way to get file size (with ignored patterns)....
+            // todo - find best way to get file size (with ignored patterns).... currently handling in crawler??
             // see crawler to set FSFolder size after crawling folder files...
 
         } else {

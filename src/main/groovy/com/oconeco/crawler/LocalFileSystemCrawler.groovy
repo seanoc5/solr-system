@@ -131,7 +131,7 @@ class LocalFileSystemCrawler {
 
             if (accessible) {
                 if (shouldIgnore) {
-                    log.info "\t\t----IGNORABLE folder:($currentFolder)"
+                    log.info "\t\t----IGNORABLE folder:($currentFolder) matchedLabels:($currentFolder.matchedLabels)"
                     fvr = FileVisitResult.SKIP_SUBTREE
                 } else {
                     log.debug "\t\t----Not ignorable folder: $currentFolder"
@@ -190,6 +190,7 @@ class LocalFileSystemCrawler {
 
                         def archiveFiles = currentFolder.children.each { FSObject fsObject ->
                             if (fsObject.archive) {
+                                //todo -- ignore jar files, as they are likely numerous, and we really don't care about their contents...? (for java developers especially)
                                 List<SavableObject> archEntries = ((FSFile) fsObject).gatherArchiveEntries()
                                 def responseArch = persistenceClient.saveObjects(savableObjects)
                                 log.debug "\t\tSolr response saving archive entries: $responseArch"
@@ -201,7 +202,7 @@ class LocalFileSystemCrawler {
 
                     } else {
                         results.current << currentFolder
-                        log.info "\t\t$cnt) no need to update: $differenceStatus -- persistence ad source are current"
+                        log.debug "\t\t$cnt) no need to update: $differenceStatus -- persistence ad source are current"
                     }
                 }
             } else {

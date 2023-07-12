@@ -5,6 +5,7 @@ import com.oconeco.helpers.Constants
 import com.oconeco.persistence.SolrSystemClient
 import org.apache.commons.compress.archivers.ArchiveEntry
 import org.apache.commons.compress.archivers.ArchiveInputStream
+import org.apache.commons.compress.archivers.jar.JarArchiveEntry
 import org.apache.commons.compress.archivers.jar.JarArchiveInputStream
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream
 import org.apache.commons.io.FilenameUtils
@@ -131,19 +132,23 @@ class FSFile extends FSObject {
     List<SavableObject> gatherArchiveEntries() {
         List<SavableObject> archiveEntries = null
         if (this.isArchive()) {
-            ArchiveInputStream aiszip
+            ArchiveInputStream archiveInputStream
             try {
-                aiszip = ArchiveUtils.getArchiveInputStream(this.thing)
-                if (aiszip) {
-                    archiveEntries = gatherArchiveEntries(aiszip)
+                archiveInputStream = ArchiveUtils.getArchiveInputStream(this.thing)
+                if (archiveInputStream) {
+                    if (archiveInputStream instanceof ZipArchiveInputStream || archiveInputStream instanceof JarArchiveEntry) {
+                        archiveEntries = gatherZippyArchiveEntries(archiveInputStream)
+                    } else {
+                        archiveEntries = gatherArchiveEntries(archiveInputStream)
+                    }
                 } else {
                     log.warn "no valid archive input stream available, skipping gatherArchiveEntries for this (fake archive/office doc??): $this"
                 }
             } catch (IOException ioe) {
                 log.warn "IOException: $ioe"
             } finally {
-                if (aiszip) {
-                    aiszip.close()
+                if (archiveInputStream) {
+                    archiveInputStream.close()
                     log.debug "close Archive input steam: $this"
                 } else {
                     log.debug "do not have a valid Archive input steam to close! this:$this"
@@ -164,27 +169,26 @@ class FSFile extends FSObject {
     List<SavableObject> gatherArchiveEntries(ArchiveInputStream ais) {
         log.info "gatherArchiveEntries(ais) for FSFile: ${this.toString()}"
         if (ais) {
-            if (!children) {
-                log.debug "Create children list... ($this)"
-                children = []
-            } else {
-                log.warn "\t\t$this) children prop already exists/defined?? $children"
-            }
             int i = 0
             ArchiveEntry entry = null
             while ((entry = getSpecificArchEntry(ais)) != null) {
-//            while ((entry = (ais instanceof JarArchiveInputStream ? ais.getNextJarEntry() : ais instanceof ZipArchiveInputStream ? ais.getNextZipEntry() : ais.getNextEntry())) != null) {
-
+                if (entry.getSize() > 0) {
+                    log.debug "good, entry has a size: $entry"
+                } else if (entry.name.endsWith('/')) {
+                    log.debug "processing arch folder: $entry, size should be 0 (this is fine)"
+                } else {
+                    log.info "still no entry size?? $entry"
+                }
                 i++
                 SavableObject archObj
                 if (entry.isDirectory()) {
                     archObj = new ArchFolder(entry, this, locationName, crawlName)
                     children << archObj
-                    log.debug "\t\t+.+.+. ${archObj.toString()}"
+                    log.info "\t\t+.+.+. arch folder: ${archObj.toString()}"
                 } else {
                     archObj = new ArchFile(entry, this, locationName, crawlName)
                     children << archObj
-                    log.debug "\t\t+.+.+. File: ${archObj.toString()})"
+                    log.debug "\t\t+.+.+. arch File: ${archObj.toString()})"
                 }
                 if (i % ARCHIVE_STATUS_SIZE == 0) {
                     log.info "\t\t$i) (still) gathering archive entries (e.g. ${archObj}) for file ($this) "
@@ -196,26 +200,70 @@ class FSFile extends FSObject {
         return children
     }
 
+
+    /**
+     * hackish approach to deal with zip and jar arhcives have trouble with file size
+     * need to get 'next' entry before current entry has a valid size
+     * @param ais
+     * @return list of FSObjects with minimal metadata
+     */
+    List<SavableObject> gatherZippyArchiveEntries(ArchiveInputStream ais) {
+        log.info "gatherZippyArchiveEntries(ais) for FSFile: ${this.toString()}"
+        if (ais) {
+            int i = 0
+            ArchiveEntry entry = getSpecificArchEntry(ais)
+            ArchiveEntry nextEntry = null
+            do {
+                nextEntry = getSpecificArchEntry(ais)
+                long size = entry.size          // debugging, checking if we have an actual size from the entry
+                if (size >= 0) {
+                    log.debug "good, entry has a size: $entry"
+                } else if (entry.name.endsWith('/')) {
+                    log.debug "processing arch folder: $entry, size should be 0 (this is fine)"
+                } else {
+                    log.info "still no entry size?? $entry"
+                }
+                i++
+                SavableObject archObj
+                if (entry.isDirectory()) {
+                    archObj = new ArchFolder(entry, this, locationName, crawlName)
+                    children << archObj
+                    log.info "\t\t+.+.+. arch folder: ${archObj.toString()}"
+                } else {
+                    archObj = new ArchFile(entry, this, locationName, crawlName)
+                    children << archObj
+                    log.debug "\t\t+.+.+. arch File: ${archObj.toString()})"
+                }
+                if (i % ARCHIVE_STATUS_SIZE == 0) {
+                    log.info "\t\t$i) (still) gathering archive entries (e.g. ${archObj}) for file ($this) "
+                }
+                entry = nextEntry
+            } while (nextEntry != null)
+
+        } else {
+            log.warn "Invalid archive input stream: $ais, how did this happen?? -- $this"
+        }
+        return children
+    }
+
+
     ArchiveEntry getSpecificArchEntry(ArchiveInputStream ais) {
         ArchiveEntry entry = null
         if (ais) {
-            if (ais instanceof ZipArchiveInputStream) {
-                entry = ais.getNextZipEntry()
-                if (entry) {
-                    long size = entry.size
-                    log.debug "Size: $size"
-                } else {
-                    log.warn "no entry: $entry -- in ais: $ais"
-                }
-            } else if (ais instanceof JarArchiveInputStream) {
+            if (ais instanceof JarArchiveInputStream) {
                 entry = ais.getNextJarEntry()
+            } else if (ais instanceof ZipArchiveInputStream) {
+                entry = ais.getNextZipEntry()
+            } else {
+                entry = ais.getNextEntry()
+            }
+            if (entry) {
                 long size = entry.size
                 log.debug "Size: $size"
             } else {
-                entry = ais.getNextEntry()
-                def size = entry.size
-                log.debug "Size: $size"
+                log.debug "no entry: $entry -- in ais: $ais -- hit end of archive??"
             }
+
         } else {
             log.warn "no ArchiveInputStream: $ais"
         }

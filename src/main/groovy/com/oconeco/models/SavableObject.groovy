@@ -51,7 +51,7 @@ abstract class SavableObject {
     String parentId
 
     /** links to children (if any) */
-    List<SavableObject> children
+    List<SavableObject> children = []
 /** track individual diference/update status */
     DifferenceStatus differenceStatus
 

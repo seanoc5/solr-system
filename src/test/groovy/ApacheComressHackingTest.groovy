@@ -41,6 +41,30 @@ class ApacheComressHackingTest extends Specification {
 
     }
 
+    def "debug apache.compress zip file"() {
+        given:
+        File zip = new File('/home/sean/work/haystack-conference/osc/chorus/data-encoder/ecommerce/vectors/data/1.json.zip')
+        ZipArchiveInputStream archive = new ZipArchiveInputStream(new BufferedInputStream(new FileInputStream(zip)))
+        List entries = []
+
+        when:
+        ZipArchiveEntry entry = archive.getNextZipEntry()
+        ZipArchiveEntry nextEntry = null
+        do {
+            nextEntry =  archive.getNextZipEntry()
+            entries << entry
+            Long size = entry.size
+            Long csize = entry.compressedSize
+            int percent = ((size - csize) / size) * 100
+        }
+        while (nextEntry != null)
+        ArchiveEntry entry1 = entries[1]
+
+        then:
+        entries.size() == 5
+
+    }
+
    def "basic ops with apache.compress jar file"() {
         // https://itsallbinary.com/apache-commons-compress-simplest-zip-zip-with-directory-compression-level-unzip/
         given:

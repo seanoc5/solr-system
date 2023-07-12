@@ -61,7 +61,7 @@ class SolrDifferenceChecker extends BaseDifferenceChecker {
         DifferenceStatus status = new DifferenceStatus(fsfolder, existingSolrDoc)
         String msg
         if (!fsfolder) {
-            msg = "FSFolder ($fsfolder) is null -- this almost certainly will be a problem!!! [[existingSolrDoc??:($existingSolrDoc)]]"
+            msg = "FSFolder ($fsfolder) is null -- this almost certainly will be a problem!!! [[existingSolrDoc:($existingSolrDoc)??]]"
             log.warn "$msg: folder:$fsfolder - existingSolrDoc: $existingSolrDoc"
             similarities << msg
         } else {
@@ -111,7 +111,7 @@ class SolrDifferenceChecker extends BaseDifferenceChecker {
 
                 }
 
-                Long solrSize = (Long) existingSolrDoc.getFirstValue(SolrSystemClient.FLD_SIZE)
+                Long solrSize = (Long) existingSolrDoc.getFirstValue(SolrSystemClient.FLD_SIZE) ?: 0
                 if (fsfolder.size == solrSize) {
                     msg = "Same sizes, fsfolder: ${fsfolder.size} != solr: $solrSize"
                     log.debug "\t\t${msg}"
@@ -120,7 +120,7 @@ class SolrDifferenceChecker extends BaseDifferenceChecker {
                 } else {
                     status.differentSizes = true
                     msg = "Different sizes, fsfolder(${fsfolder.path}): ${fsfolder.size} != solr: $solrSize (${fsfolder.size - solrSize})"
-                    log.info "\t\t>>>>$msg"
+                    log.debug "\t\t>>>>$msg"
                     status.differences << msg
                     status.significantlyDifferent = false        // todo -- revisit and see if this is muddled code... can/should we short circuit checking methods???
                 }
@@ -134,7 +134,7 @@ class SolrDifferenceChecker extends BaseDifferenceChecker {
                 } else {
                     status.differentDedups = true
                     msg = "Different dedups (${fsfolder.path}), fsfolder: ${fsfolder.dedup} != solr: $solrDedup"
-                    log.info "\t\t>>>>$msg"
+                    log.debug "\t\t>>>>$msg"
                     status.differences << msg
                     status.significantlyDifferent = true        // todo -- revisit and see if this is muddled code... can/should we short circuit checking methods???
                 }
