@@ -87,7 +87,7 @@ class FSObject extends SavableObject {
                     log.warn "Unknown/null osName ($osName), replacing any backslashes with forward in path($p) --this:$this"
                     p = p.replaceAll('\\\\', '/')
                 } else if (osName?.contains('Windows')) {
-                    log.info "\t\treplacing Windows backslashes(\\)  with forward (/) in path: $p (this)"
+                    log.debug "\t\treplacing Windows backslashes(\\)  with forward (/) in path: $p (this)"
                     p = p.replaceAll('\\\\', '/')
                 } else {
                     if (p.contains('\\')) {

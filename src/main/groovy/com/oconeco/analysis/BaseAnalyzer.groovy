@@ -184,7 +184,7 @@ class BaseAnalyzer {
             }
             return object.ignore
         } else {
-            log.info "\t\tFound existing ignore flag (${object.ignore}) on onbject: $object (remove this, just a code/processing check during development"
+            log.debug "\t\tFound existing ignore flag (${object.ignore}) on onbject: $object (remove this, just a code/processing check during development"
             return object.ignore
         }
     }

@@ -28,6 +28,7 @@ class Constants {
 
     public static final String LABEL_MATCH = 'LabelMatch'
     public static final String NO_MATCH = 'no match'
+    public static final String DEFAULT_APP_NAME = 'solr_system'
 
     public static final Map<String, Pattern> DEFAULT_FOLDERNAME_PATTERNS = [
             // csv|

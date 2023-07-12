@@ -201,7 +201,7 @@ class LocalFileSystemCrawler {
 
                     } else {
                         results.current << currentFolder
-                        log.debug "\t\t$cnt) no need to update: $differenceStatus -- persistence ad source are current"
+                        log.info "\t\t$cnt) no need to update: $differenceStatus -- persistence ad source are current"
                     }
                 }
             } else {
@@ -219,7 +219,7 @@ class LocalFileSystemCrawler {
      * @return the folder's (newly added?) children
      */
     List<SavableObject> crawlFolderFiles(FSFolder fsFolder, BaseAnalyzer analyzer) {
-        log.info "\t\t....call to crawlFolderFiles($fsFolder, ${analyzer.class.simpleName})..."
+        log.debug "\t\t....call to crawlFolderFiles($fsFolder, ${analyzer.class.simpleName})..."
 //        Map<String, Map<String, Object>> results = [:]
         int countAdded = 0
         if (fsFolder.children) {
