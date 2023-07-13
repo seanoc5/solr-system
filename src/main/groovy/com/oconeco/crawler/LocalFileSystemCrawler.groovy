@@ -192,7 +192,7 @@ class LocalFileSystemCrawler {
 
                         archiveFiles.each { FSFile fSFile ->
                             if (fSFile.extension.equalsIgnoreCase('jar')) {
-                                log.info "\t\tskipping jar files for archive entry analysis: $fSFile"
+                                log.debug "\t\tskipping jar files for archive entry analysis: $fSFile"
                             } else {
                                 //todo -- ignore jar files, as they are likely numerous, and we really don't care about their contents...? (for java developers especially)
                                 List<SavableObject> archEntries = ((FSFile) fSFile).gatherArchiveEntries()
