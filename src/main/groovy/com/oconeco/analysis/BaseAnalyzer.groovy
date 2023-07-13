@@ -269,7 +269,7 @@ class BaseAnalyzer {
      */
     def doAnalysis(String analysisName, SavableObject object) {
         def results = null
-        log.info "\t\t....Analysis ($analysisName) on object:($object)"
+        log.debug "\t\t....Analysis ($analysisName) on object:($object)"
         switch (analysisName.toLowerCase()) {
             case 'track':
                 log.debug "\t\tDo analysis named '$analysisName' on object $object"
