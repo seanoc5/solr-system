@@ -1,40 +1,24 @@
-package com.oconeco.crawler
+package com.oconeco.difference
 
 import com.oconeco.models.SavableObject
 import org.apache.logging.log4j.core.Logger
 import org.apache.logging.log4j.LogManager
 
-import org.apache.solr.common.SolrDocument
-
 /**
  * Small class to record differences
  */
-class DifferenceStatus {
+class SolrDifferenceStatus extends BaseDifferenceStatus {
     Logger log = LogManager.getLogger(this.class.name);
-    SavableObject object
-    SolrDocument solrDocument
 
-    Boolean differentIds
-    Boolean differentLastModifieds
-    Boolean differentSizes
-    Boolean differentDedups
-    Boolean differentPaths
-    Boolean differentLocations
 
-    Boolean sourceIsNewer
-    Boolean noMatchingSavedDoc
-//    List<String> messages = []
-    List<String> differences = []
-    List<String> similarities = []
-    boolean significantlyDifferent = false
-
-    DifferenceStatus(SavableObject object, SolrDocument solrDocument) {
-        this.object = object
-        if(solrDocument) {
-            this.solrDocument = solrDocument
+    SolrDifferenceStatus(SavableObject object, Object savedDoc) {
+        super(object, savedDoc)
+        //    SolrDifferenceStatus(SavableObject object, def solrDocument) {
+        if (solrDocument) {
+            this.savedDocument = solrDocument
             noMatchingSavedDoc = false
             String solrID = solrDocument.getFirstValue('id')
-            if(solrID) {
+            if (solrID) {
                 if (object.id == solrID) {
                     similarities << "Object.id == solrDoc id ($solrID)"
                 } else {
@@ -53,16 +37,17 @@ class DifferenceStatus {
             differences << msg
             noMatchingSavedDoc = true
         }
+
     }
 
-    String toString() {
-        String s = "Diff Status:($object) "
-        if(similarities){
-            s=s+ " Similarities:${similarities} "
-        }
-        if(differences){
-            s = s+ " Differences: ${differences} "
-        }
-        return s
-    }
+//    String toString() {
+//        String s = "Diff Status:($object) "
+//        if (similarities) {
+//            s = s + " Similarities:${similarities} "
+//        }
+//        if (differences) {
+//            s = s + " Differences: ${differences} "
+//        }
+//        return s
+//    }
 }

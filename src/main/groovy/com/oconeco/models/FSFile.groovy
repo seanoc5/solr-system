@@ -67,8 +67,8 @@ class FSFile extends FSObject {
      * @return SolrInputDocument
      */
     @Override
-    SolrInputDocument toSolrInputDocument() {
-        SolrInputDocument sid = super.toSolrInputDocument()
+    SolrInputDocument toPersistenceDocument() {
+        SolrInputDocument sid = super.toPersistenceDocument()
         if (crawlName) {
             sid.setField(SolrSystemClient.FLD_CRAWL_NAME, crawlName)
         }
@@ -194,11 +194,11 @@ class FSFile extends FSObject {
                 SavableObject archObj
                 if (entry.isDirectory()) {
                     archObj = new ArchFolder(entry, this, locationName, crawlName)
-                    children << archObj
+                    childGroups << archObj
                     log.debug "\t\t+.+.+. arch folder: ${archObj.toString()}"
                 } else {
                     archObj = new ArchFile(entry, this, locationName, crawlName)
-                    children << archObj
+                    childItems << archObj
                     log.debug "\t\t+.+.+. arch File: ${archObj.toString()})"
                 }
                 if (i % ARCHIVE_STATUS_SIZE == 0) {
@@ -208,7 +208,7 @@ class FSFile extends FSObject {
         } else {
             log.warn "Invalid archive input stream: $ais, how did this happen?? -- $this"
         }
-        return children
+        return childGroups.addAll(childItems)
     }
 
 
@@ -238,11 +238,11 @@ class FSFile extends FSObject {
                 SavableObject archObj
                 if (entry.isDirectory()) {
                     archObj = new ArchFolder(entry, this, locationName, crawlName)
-                    children << archObj
+                    childGroups << archObj
                     log.debug "\t\t+.+.+. arch folder: ${archObj.toString()}"
                 } else {
                     archObj = new ArchFile(entry, this, locationName, crawlName)
-                    children << archObj
+                    childItems << archObj
                     log.debug "\t\t+.+.+. arch File: ${archObj.toString()})"
                 }
                 if (i % ARCHIVE_STATUS_SIZE == 0) {
@@ -254,7 +254,7 @@ class FSFile extends FSObject {
         } else {
             log.warn "Invalid archive input stream: $ais, how did this happen?? -- $this"
         }
-        return children
+        return childGroups.addAll(childItems)
     }
 
 

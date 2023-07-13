@@ -31,7 +31,7 @@ import java.nio.file.Path
  * Simple local fs crawler, intended to be created for each crawl name/startfolder in a given location
  * review if there is a benefit to having a persistent crawler over multiple folders/names in a given location/source
  */
-class LocalFileSystemCrawler {
+class BaseCrawler {
     static log = LogManager.getLogger(this.class.name);
     String locationName
     String osName
@@ -43,7 +43,7 @@ class LocalFileSystemCrawler {
     String checkFolderFields = SolrSystemClient.DEFAULT_FIELDS_TO_CHECK.join(' ')
     String checkFileFields = SolrSystemClient.DEFAULT_FIELDS_TO_CHECK.join(' ')
 
-    LocalFileSystemCrawler(String locationName, BaseClient persistenceClient, BaseDifferenceChecker diffChecker) {
+    BaseCrawler(String locationName, BaseClient persistenceClient, BaseDifferenceChecker diffChecker) {
         log.debug "${this.class.simpleName} constructor with location:$locationName, Client($persistenceClient) DiffChecker($differenceChecker)"
         this.locationName = locationName
         osName = System.getProperty("os.name")

@@ -1,41 +1,35 @@
 package com.oconeco.crawler
 
-import com.oconeco.helpers.Constants
-import com.oconeco.models.FSFolder
-import com.oconeco.persistence.SolrSystemClient
-import org.apache.solr.common.SolrDocument
+import com.oconeco.difference.BaseDifferenceChecker
+import com.oconeco.difference.BaseDifferenceStatus
 import spock.lang.Specification
-
-import java.util.regex.Pattern
 
 class BaseDifferenceCheckerTest extends Specification {
     String locationName = 'spock'
     String crawlName = 'test'
-    Pattern ignoreItems = Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE]
-    Pattern ignoreGroups = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]
+    Date matchingDate = new Date()
+    String itemName = 'foo'
+    String groupName = 'bar'
+    Long matchingSize = 1234
+    String itemDedup = "$locationName:$itemName:$matchingSize"
+    String groupDedup = "$locationName:$groupName:$matchingSize"
 
+    Map savedGroup = [id:groupName, name:groupName, type:"Group", lastModified:matchingDate, path:"/test/$groupName", size:matchingSize, dedup:groupDedup]
+    Map savedItem = [id:itemName, name:itemName, type:"Item", lastModified:matchingDate, path:"/test/group1/item1", size:matchingSize, dedup:itemDedup]
 
-    File startFolder = new File(getClass().getResource('/content').toURI())
-    FSFolder fsFolder = new FSFolder(startFolder, null, locationName, crawlName)
-//    Map<String, Object> fieldsMap = ["${SolrSystemClient.FLD_ID}": fsFolder.id, "${SolrSystemClient.FLD_TYPE}": "${FSFolder.TYPE}", "${SolrSystemClient.FLD_PATH_S}": '/content', "${SolrSystemClient.FLD_LAST_MODIFIED}": fsFolder.lastModifiedDate]
-//    SolrDocument solrDoc = new SolrDocument(fieldsMap)
+    Map crawledGroupMatching = [id:groupName, name:groupName, type:"Group", lastModified:matchingDate, path:"/test/${groupName}", size:matchingSize, dedup:groupDedup]
+    Map crawledItemMatching = [id:itemName, name:itemName, type:"Item", lastModified:matchingDate, path:"/test/group1/item1", size:matchingSize, dedup:itemDedup]
+
+    Map crawledGroupDifferentName = [id:groupName, name:"${groupName}-1", type:"Group", lastModified:matchingDate, path:"/test/${groupName}-1", size:(matchingSize + 1000), dedup:groupDedup]
+    Map crawledItemDifferentName = [id:"$itemName", name:"${itemName}-1", type:"Item", lastModified:matchingDate, path:"/test/group1/${itemName}-1", size:matchingSize, dedup:itemDedup]
+
 
     def "check when objects should be current"() {
         given:
         BaseDifferenceChecker differenceChecker = new BaseDifferenceChecker()
-        SolrDocument sameSolrDoc = new SolrDocument()
-        sameSolrDoc.setField(SolrSystemClient.FLD_ID, fsFolder.id)
-        sameSolrDoc.setField(SolrSystemClient.FLD_TYPE, fsFolder.type)
-        sameSolrDoc.setField(SolrSystemClient.FLD_LAST_MODIFIED, fsFolder.lastModifiedDate)
-        sameSolrDoc.setField(SolrSystemClient.FLD_PATH_S, fsFolder.path)
-        sameSolrDoc.setField(SolrSystemClient.FLD_SIZE, fsFolder.size)
-        sameSolrDoc.setField(SolrSystemClient.FLD_DEDUP, fsFolder.dedup)
-        sameSolrDoc.setField(SolrSystemClient.FLD_LOCATION_NAME, fsFolder.locationName)
-//        sameSolrDoc.setField(SolrSystemClient.FLD_, fsFolder.)
 
         when:
-        DifferenceStatus status = differenceChecker.compareFSFolderToSavedDoc(fsFolder, sameSolrDoc)
-//        def diff = differenceChecker.folderNeedsUpdate()
+        BaseDifferenceStatus status = differenceChecker.compareCrawledGroupToSavedGroup(crawledGroupMatching, savedGroup)
 
         then:
         status != null
@@ -51,30 +45,19 @@ class BaseDifferenceCheckerTest extends Specification {
 
     def "check when objects are different"() {
         given:
-        SolrDocument diffSolrDoc = new SolrDocument()
-        diffSolrDoc.setField(SolrSystemClient.FLD_ID, fsFolder.id + '!')
-        diffSolrDoc.setField(SolrSystemClient.FLD_TYPE, fsFolder.type + '!')
-        diffSolrDoc.setField(SolrSystemClient.FLD_LAST_MODIFIED, new Date())
-//        diffSolrDoc.setField(SolrSystemClient.Fld_, fsFolder.id)
-        diffSolrDoc.setField(SolrSystemClient.FLD_PATH_S, fsFolder.path + '!')
-        diffSolrDoc.setField(SolrSystemClient.FLD_SIZE, fsFolder.size + 1)
-        diffSolrDoc.setField(SolrSystemClient.FLD_DEDUP, fsFolder.dedup + '!')
-        diffSolrDoc.setField(SolrSystemClient.FLD_LOCATION_NAME, fsFolder.locationName + '!')
-        BaseDifferenceChecker differenceChecker = new BaseDifferenceChecker()
+         BaseDifferenceChecker differenceChecker = new BaseDifferenceChecker()
 
-        when:
-        DifferenceStatus status = differenceChecker.compareFSFolderToSavedDoc(fsFolder, diffSolrDoc)
-//        def diff = differenceChecker.folderNeedsUpdate()
+         when:
+         BaseDifferenceStatus status = differenceChecker.compareCrawledGroupToSavedGroup(crawledGroupDifferentName, savedGroup)
 
-        then:
-        status != null
-        status.differentIds == true
-        status.differentDedups == true
-        status.differentLastModifieds == true
-        status.differentLocations == true
-        status.differentPaths == true
-        status.differentSizes == true
-        differenceChecker.shouldUpdate(status) == true
-
+         then:
+         status != null
+         status.differentIds == false
+         status.differentDedups == false
+         status.differentLastModifieds == false
+         status.differentLocations == false
+         status.differentPaths == false
+         status.differentSizes == false
+         differenceChecker.shouldUpdate(status) == false
     }
 }

@@ -128,6 +128,7 @@ class BaseAnalyzer {
      * @return status results (not intended for any further analysis
      */
     def analyze(List<SavableObject> objectList) {
+        log.info "\t\tAnalyze list (size: ${objectList.size()}) -- first object: ${objectList[0]}"
         List<Map<String, Map<String, Object>>> results = []
         objectList.each { SavableObject object ->
             log.info "Analyze list (size: ${objectList.size()}) objects: $objectList"
@@ -219,7 +220,7 @@ class BaseAnalyzer {
                     if (analysis instanceof List) {
                         analysis.each { String analysisName ->
                             log.debug "\t\t....Apply analysis: $label->$analysisName -- object (${object}) -- matched on: ${labelMatchMap.get(Constants.LABEL_MATCH)}"
-                            // todo - move me to after "shouldUpdate'
+
                             def rc = this.doAnalysis(analysisName, object)
                             log.debug "\t\tdoAnalysis($label) results: $rc"
                         }
@@ -245,8 +246,12 @@ class BaseAnalyzer {
     List doAnalysis(SavableObject object) {
         List results = []
         if (object) {
-            if(object.children){
-                def childResults = doAnalysisOnChildren(object.children)
+            if(object.childGroups){
+                def childResults = doAnalysisOnChildGroups(object.childGroups)
+                results.addAll(childResults)
+            }
+            if(object.childItems){
+                def childResults = doAnalysisOnChildItems(object.childItems)
                 results.addAll(childResults)
             }
             log.debug "iterate through each matched label entry, and call doAnalysis(label, object)"
@@ -269,18 +274,20 @@ class BaseAnalyzer {
      */
     def doAnalysis(String analysisName, SavableObject object) {
         def results = null
-        log.debug "\t\t....Analysis ($analysisName) on object:($object)"
-        switch (analysisName.toLowerCase()) {
+        String lowerName = analysisName.toLowerCase()
+        switch (lowerName) {
             case 'track':
                 log.debug "\t\tDo analysis named '$analysisName' on object $object"
                 results = this.track(object)
                 break
             case 'parse':
-                log.debug "\t\tDo analysis named '$analysisName' on object $object"
+                log.info "\t\tDo analysis named '$analysisName' on object $object"
                 results = this.parse(object)
                 String mime = results?.metadata?.get('Content-Type')
                 if(mime){
                     object.mimeType = mime
+                } else {
+                    log.info "\t\tcould not determine mime type for SavableObject:($object) -- analysisName: $analysisName"
                 }
                 break
 //            case 'default':
@@ -290,7 +297,7 @@ class BaseAnalyzer {
                 log.debug "\t\tignore object $object"
                 break
             default:
-                log.warn "${Constants.NO_MATCH} in swtich, falling back to  default analysis on object $object"
+                log.info "${Constants.NO_MATCH} on ($lowerName) in swtich, falling back to  default analysis on object $object"
                 results = this.track(object)
                 break
         }
@@ -300,11 +307,20 @@ class BaseAnalyzer {
 
 
     /**
-     * simple wrapper, but can allow for more advanced overriding if needed for analyzing child objects
+     * simple wrapper, but can allow for more advanced overriding if needed for analyzing childGroup objects (i.e. folders/directories)
      * @param children
      * @return
      */
-    List doAnalysisOnChildren(List<SavableObject> children) {
+    List doAnalysisOnChildGroups(List<SavableObject> children) {
+        List results = children.collect{doAnalysis(it)}
+    }
+
+    /**
+     * simple wrapper, but can allow for more advanced overriding if needed for analyzing childItem objects (i.e. files/messages/...)
+     * @param children
+     * @return
+     */
+    List doAnalysisOnChildItems(List<SavableObject> children) {
         List results = children.collect{doAnalysis(it)}
     }
 
@@ -432,9 +448,10 @@ class BaseAnalyzer {
                     content = tikaBodyHandler.toString()
                     if (content) {
                         object.content = content
+                        object.contentSize = content.size()
                         log.debug "\t\tContent, size(${content.size()})"
                     } else {
-                        log.warn "No content....!!!"
+                        log.info "\t\tno content found for SavableObject:($object) in parse(object) method"
                     }
                 } else {
                     log.warn "No input Stream?)"

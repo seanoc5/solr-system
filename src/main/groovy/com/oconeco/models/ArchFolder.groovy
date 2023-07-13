@@ -102,8 +102,8 @@ class ArchFolder extends SavableObject {
      * minor helper to add any specific Solr Fields to this type of object
      * @return
      */
-    SolrInputDocument toSolrInputDocument() {
-        SolrInputDocument sid = super.toSolrInputDocument()
+    SolrInputDocument toPersistenceDocument() {
+        SolrInputDocument sid = super.toPersistenceDocument()
         return sid
     }
 

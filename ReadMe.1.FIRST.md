@@ -113,3 +113,6 @@ It is more solr admin than user query/browsing, but still quite nice.
 run    crawlFileSystem: 8   seconds
 debug  crawlFileSystem: 417 seconds (7 min  ) -- with lots of break points 
 debug2 crawlFileSystem: 10  seconds (.16 min) -- with 0 break points 
+
+
+**NOTE** 'rc' is return code' -- throwaway var for debugging

@@ -25,7 +25,8 @@ class FSFolderTest extends Specification {
         then:
         fsFolder.parentId == pid
         fsFolder.parent == null
-        fsFolder.children == null
+        fsFolder.childGroups == []
+        fsFolder.childItems == []
         fsFolder.size > 1           // could test actual size, but that might change as we update test folder contents
         fsFolder.lastModifiedDate != null
 
@@ -47,7 +48,7 @@ class FSFolderTest extends Specification {
         fsFolder.parent == null
         fsFolder.parentId == pid
 
-        fsFolder.children == null
+        fsFolder.childItems == null
     }
 
 
@@ -80,7 +81,7 @@ class FSFolderTest extends Specification {
         Map<String, Object> details = fsFolder.addFileDetails()
 
         when:
-        SolrInputDocument sid = fsFolder.toSolrInputDocument()
+        SolrInputDocument sid = fsFolder.toPersistenceDocument()
         List<String> fieldNAmes = sid.getFieldNames().toList()
         Set<String> detailKeys = details.keySet()
         List<String> expectedKeys = ['lastAccessDate', 'createdDate', 'owner']

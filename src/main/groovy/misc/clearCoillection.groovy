@@ -10,7 +10,7 @@ import org.apache.solr.client.solrj.response.QueryResponse
  */
 Logger log = LogManager.getLogger(this.class.name);
 log.info "${this.class.name} -- Delete documents...."
-String solrUrl = "http://oldie:8983/solr/solr_system"
+String solrUrl = "http://localhost:8983/solr/solr_system"
 SolrSystemClient solrSaver = new SolrSystemClient(solrUrl)
 
 String q = "*:*"

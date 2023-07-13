@@ -9,11 +9,11 @@ class FSFileTest extends Specification {
     String locationName = 'spock'
     String crawlName = 'test'
 
-    String jsonName = 'params.json'
+    String objectsName = 'objects.json'
     String zipName = 'datasources.zip'
     String tarName = 'combinedTestContent.tgz'
 
-    File jsonFile = new File(getClass().getResource("/content/${jsonName}").toURI())
+    File jsonFile = new File(getClass().getResource("/content/${objectsName}").toURI())
     File zipFile = new File(getClass().getResource("/content/${zipName}").toURI())
     File tarFile = new File(getClass().getResource("/content/${tarName}").toURI())
     Pattern ignoreFiles = Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE]
@@ -29,7 +29,7 @@ class FSFileTest extends Specification {
         then:
         fsFile.id.startsWith(fsFile.locationName)
         fsFile.id.endsWith(fsFile.name)
-        fsFile.name == jsonName
+        fsFile.name == objectsName
         fsFile.path.endsWith(jsonFile.name)
         fsFile.type == FSFile.TYPE
         fsFile.thing instanceof File

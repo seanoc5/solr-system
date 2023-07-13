@@ -48,11 +48,7 @@ class SolrSystemClient extends BaseClient {
 
     public static String FLD_CONTENT_BODY = 'content_txt_en'
     public static String FLD_CONTENT_BODY_SIZE = 'contentSize_l'
-    public static String FLD_METADATA = 'metadata_txt_en'
-
-//    public static String FLD_ = ""
-//    public static String FLD_ = ""
-
+    public static String FLD_METADATA = 'metadata_txt_en'           // todo -- consider multivalued field??
 
     Integer SOLR_BATCH_SIZE = 5000
     Integer MIN_FILE_SIZE = 10
@@ -60,9 +56,6 @@ class SolrSystemClient extends BaseClient {
     Http2SolrClient solrClient
 
     Detector detector = null
-//    Parser parser = null
-//    BodyContentHandler handler = null
-//    TikaConfig tikaConfig
 
     /**
      * Create helper with a (non-thread safe???) solrClient that is configured for the solr server AND collection
@@ -72,27 +65,8 @@ class SolrSystemClient extends BaseClient {
     SolrSystemClient(String baseSolrUrl) {
         log.debug "Constructor baseSolrUrl:$baseSolrUrl"
         buildSolrClient(baseSolrUrl)
-//        parser = new AutoDetectParser()
-//        handler = new BodyContentHandler(MAX_CONTENT_SIZE)
     }
 
-/*    SolrSystemClient(String baseSolrUrl, String hostName) {
-//        this(baseSolrUrl)
-        log.debug "\t\tConstructor baseSolrUrl:$baseSolrUrl --- Host/machine name:$hostName --- WITHOUT tika"
-        buildSolrClient(baseSolrUrl)
-    }*/
-
-/*
-    SolrSystemClient(String baseSolrUrl, String hostName, TikaConfig tikaConfig) {
-//        this(baseSolrUrl, dataSourceName)
-        log.info "\t\tConstructor baseSolrUrl:$baseSolrUrl --- CrawlName:$hostName --- with TIKA config: $tikaConfig"
-        buildSolrClient(baseSolrUrl)
-//        this.tikaConfig = tikaConfig
-//        detector = tikaConfig.getDetector()
-//        parser = new AutoDetectParser()
-//        handler = new BodyContentHandler()
-    }
-*/
 
     public void buildSolrClient(String baseSolrUrl) {
         log.info "\t\tBuild solr client with baseSolrUrl: $baseSolrUrl"
@@ -136,13 +110,6 @@ class SolrSystemClient extends BaseClient {
         }
         return result
     }
-
-
-    /**
-     * Clear the collection of current data -- BEWARE
-     * todo -- add partitioning so we clear the same 'datasource' as we are about to crawl,
-     * i.e. get a job name/id based on the source paths
-     */
 
 
     /**
@@ -215,7 +182,7 @@ class SolrSystemClient extends BaseClient {
         if(objects) {
             String firstId = objects[0].id
             log.debug "\t\t++++Adding solrInputDocuments, size: ${objects.size()} -- first ID:($firstId)"
-            List<SolrInputDocument> solrInputDocuments = objects.collect { it.toSolrInputDocument() }
+            List<SolrInputDocument> solrInputDocuments = objects.collect { it.toPersistenceDocument() }
             try {
                 resp = solrClient.add(solrInputDocuments, commitWithinMS)
                 if (resp.status == 0) {

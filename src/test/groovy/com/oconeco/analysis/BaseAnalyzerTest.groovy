@@ -17,13 +17,13 @@ class BaseAnalyzerTest extends Specification {
 //    URL cfgUrl = getClass().getResource('/configLocate.groovy')
 //    ConfigObject config = new ConfigSlurper().parse(cfgUrl)
 
-    File paramsJson = new File(FileAnalyzerTest.getClassLoader().getResource('./content/params.json').toURI())
+    File objectsJson = new File(FileAnalyzerTest.getClassLoader().getResource('./content/objects.json').toURI())
     File currencyXml = new File(FileAnalyzerTest.getClassLoader().getResource('./content/currency.xml').toURI())
     File skipme = new File(FileAnalyzerTest.getClassLoader().getResource('./content/skipme.tmp').toURI())
 
-    FSFolder parentFolder = new FSFolder(paramsJson.parentFile, null, locationName, crawlName)
+    FSFolder parentFolder = new FSFolder(objectsJson.parentFile, null, locationName, crawlName)
 
-    FSFile paramFS = new FSFile(paramsJson, parentFolder, locationName, crawlName)
+    FSFile paramFS = new FSFile(objectsJson, parentFolder, locationName, crawlName)
     FSFile currencyFS = new FSFile(currencyXml, parentFolder, locationName, crawlName)
     FSFile skipmeFS = new FSFile(skipme, parentFolder, locationName, crawlName)
 

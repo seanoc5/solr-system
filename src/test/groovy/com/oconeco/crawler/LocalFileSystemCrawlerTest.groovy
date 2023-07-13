@@ -1,6 +1,7 @@
 package com.oconeco.crawler
 
 import com.oconeco.analysis.FileSystemAnalyzer
+import com.oconeco.difference.BaseDifferenceChecker
 import com.oconeco.helpers.Constants
 import com.oconeco.models.FSFile
 import com.oconeco.models.FSFolder
@@ -87,7 +88,7 @@ class LocalFileSystemCrawlerTest extends Specification {
 
         when:
         List<SavableObject> crawlResults = crawler.crawlFolderFiles(startFSFolder, analyzer)
-        def archiveFiles = startFSFolder.children.findAll {FSObject fsObject ->
+        def archiveFiles = startFSFolder.childItems.findAll {FSObject fsObject ->
             fsObject.archive
         }
         FSFile testzip = archiveFiles.find{it.name=='test.zip'}

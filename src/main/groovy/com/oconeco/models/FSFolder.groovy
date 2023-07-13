@@ -36,8 +36,8 @@ class FSFolder extends FSObject {
     }
 
 
-    SolrInputDocument toSolrInputDocument() {
-        SolrInputDocument sid = super.toSolrInputDocument()
+    SolrInputDocument toPersistenceDocument() {
+        SolrInputDocument sid = super.toPersistenceDocument()
         log.debug "\t\tFSFolder toSolrInputDocument(), from super: $sid"
         // todo -- is there anything else FSFolder specific to add??
 
@@ -45,8 +45,8 @@ class FSFolder extends FSObject {
     }
 
     List<SavableObject> gatherSavableObjects(){
-        List<SavableObject> list = this.children
-        list.addAll(this)
+        List<SavableObject> list = this.childGroups.addAll(childItems)
+        list.add(this)
         return list
     }
 

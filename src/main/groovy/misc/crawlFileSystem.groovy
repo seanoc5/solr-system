@@ -3,7 +3,7 @@ package misc
 import com.oconeco.analysis.BaseAnalyzer
 import com.oconeco.analysis.FileSystemAnalyzer
 import com.oconeco.crawler.LocalFileSystemCrawler
-import com.oconeco.crawler.SolrDifferenceChecker
+import com.oconeco.difference.SolrDifferenceChecker
 import com.oconeco.helpers.SolrCrawlArgParser
 import com.oconeco.models.FSFolder
 

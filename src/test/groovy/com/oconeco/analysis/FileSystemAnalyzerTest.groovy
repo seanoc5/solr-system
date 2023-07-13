@@ -1,6 +1,6 @@
 package com.oconeco.analysis
 
-import com.oconeco.crawler.BaseDifferenceChecker
+import com.oconeco.difference.BaseDifferenceChecker
 import com.oconeco.helpers.Constants
 import com.oconeco.models.FSFile
 import com.oconeco.models.FSFolder
@@ -34,7 +34,7 @@ class FileSystemAnalyzerTest extends Specification {
         goFile.extension == 'go'
         goFile.mimeType.containsIgnoreCase('text/plain')
         goFile.labels.size() == 1
-        goFile.labels[0] == Constants.PARSE
+        goFile.labels[0] == 'techDev'
         goFile.metadata.size() == 4
 
         docFile != null

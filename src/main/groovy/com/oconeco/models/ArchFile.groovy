@@ -57,7 +57,6 @@ class ArchFile extends SavableObject {
             log.warn "Missing archive entry name?? $ae"
             name = ae.toString()
             path = ae.toString()
-
         }
 
         Long aesize = ae.getSize()
@@ -69,11 +68,12 @@ class ArchFile extends SavableObject {
             log.warn "\t\t no size for archive file: ${this}"
         }
 
-
         def foo = setLastModifiedDate(ae)
 
         type = TYPE
     }
+
+
 
     def setLastModifiedDate(ArchiveEntry ae) {
         if (ae instanceof ZipArchiveEntry) {
@@ -84,26 +84,8 @@ class ArchFile extends SavableObject {
             } else {
                 log.info "No Modified date/time in zip entry: $zae"
             }
-/*
-            if (zae?.xdostime) {
-                Date xdate = new Date(zae.xdostime)
-                createdDate = xdate
-                lastModifiedDate = xdate
-                log.debug "Zip entry time field(s): xdostime: $xdate "
-            } else {
-                log.info "No xdosdate for file entry: $ae"
-            }
-*/
         } else if (ae instanceof TarArchiveEntry) {
-            // todo -- check last modified date processing
-//            lmd = ((TarArchiveEntry) ae).getLastModifiedDate()
             lastModifiedDate = ((TarArchiveEntry) ae).lastModifiedDate
-//            if (tstamp) {
-//                lastModifiedDate = new Date(tstamp)
-//                log.debug "Zip entry modified time field(s): $lastModifiedDate "
-//            } else {
-//                log.info "No Modified date/time in zip entry: $zae"
-//            }
         } else {
             log.warn "unhandled archive entry (type: ${ae.class.simpleName}) ${ae.name}"
         }
@@ -111,8 +93,8 @@ class ArchFile extends SavableObject {
     }
 
 
-    SolrInputDocument toSolrInputDocument() {
-        SolrInputDocument sid = super.toSolrInputDocument()
+    SolrInputDocument toPersistenceDocument() {
+        SolrInputDocument sid = super.toPersistenceDocument()
 
         if (extension) {
             sid.addField(SolrSystemClient.FLD_EXTENSION_SS, extension)
@@ -142,9 +124,14 @@ class ArchFile extends SavableObject {
 
     }
 
-    String buildDedupString(){
-        String uniq = type + ':' + name + '::' + size
-        return uniq
-    }
 
+    /**
+     * for the sake of deduplication, we treat an archive file the same as an FSFile -- note this.type will be true ArchFile.TYPE
+     * @return string to help compare likely duplicates based on file-type, name, and size (no quarantee, but good enough for focus attention
+     */
+    @Override
+    String buildDedupString() {
+        String s = FSFile.TYPE + ':' + name + '::' + size
+        return s
+    }
 }

@@ -1,6 +1,6 @@
 package com.oconeco.models
 
-import com.oconeco.crawler.DifferenceStatus
+import com.oconeco.difference.SolrDifferenceStatus
 import com.oconeco.persistence.SolrSystemClient
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.core.Logger
@@ -54,9 +54,11 @@ abstract class SavableObject {
     String parentId
 
     /** links to children (if any) */
-    List<SavableObject> children = []
-/** track individual diference/update status */
-    DifferenceStatus differenceStatus
+    List<SavableObject> childGroups = []
+    List<SavableObject> childItems = []
+
+    /** track individual diference/update status */
+    SolrDifferenceStatus differenceStatus
 
     /** rough metric for how recent this is (remove?) */
     def recency
@@ -120,7 +122,7 @@ abstract class SavableObject {
      * create a solr doc with the (most) common params, descendant object will add more details to @SolrInputDocument
      * @return SolrInputDocument
      */
-    SolrInputDocument toSolrInputDocument() {
+    SolrInputDocument toPersistenceDocument() {
         SolrInputDocument sid = new SolrInputDocument()
         sid.setField(SolrSystemClient.FLD_ID, id)
         sid.setField(SolrSystemClient.FLD_TYPE, type)
@@ -165,7 +167,11 @@ abstract class SavableObject {
 
         if(content){
             sid.setField(SolrSystemClient.FLD_CONTENT_BODY, content)
-            sid.setField(SolrSystemClient.FLD_CONTENT_BODY_SIZE, content.size())
+            if(contentSize) {
+                sid.setField(SolrSystemClient.FLD_CONTENT_BODY_SIZE, contentSize)
+            } else {
+                sid.setField(SolrSystemClient.FLD_CONTENT_BODY_SIZE, content.size())
+            }
         }
         if(metadata){
             sid.setField(SolrSystemClient.FLD_METADATA, metadata)
@@ -174,15 +180,15 @@ abstract class SavableObject {
         if (dedup) {
             log.debug "\t\tDedup already set: $dedup"
             sid.setField(SolrSystemClient.FLD_DEDUP, dedup)
-        } else if (type && name && size != null) {
-            dedup = buildDedupString()
-            if (dedup) {
-                sid.setField(SolrSystemClient.FLD_DEDUP, dedup)
-                log.debug "\t\tDid not have a dedup ($dedup) -- now we do as we build solrInput doc: $this"
-            } else {
-                log.warn "\t\tno dedup value set??? $this"
-            }
-        } else {
+//        } else if (type && name && size != null) {
+//            dedup = buildDedupString()        // NOTE: no need for dedup if this is analyzing children
+//            if (dedup) {
+//                sid.setField(SolrSystemClient.FLD_DEDUP, dedup)
+//                log.warn "\t\tDid not have a dedup ($dedup) -- now we do as we build solrInput doc: $this"
+//            } else {
+//                log.warn "\t\tno dedup value set??? $this"
+//            }
+//        } else {
             log.warn "\t\t.....Cannot reliably build a dedup string, missing type:$type, or name:$name, or size:$size"
         }
 
