@@ -125,14 +125,13 @@ class BaseAnalyzer {
     /**
      * convenience method to iterate over a list of savable objects (i.e. a folder and it's children)
      * @param objectList
-     * @return status results (not intended for any further analysis
+     * @return status results (not intended for any further analysis) -- todo revisit this return value, does it make sense? confusiing???
      */
     def analyze(List<SavableObject> objectList) {
-        log.info "\t\tAnalyze list (size: ${objectList.size()}) -- first object: ${objectList[0]}"
+//        log.debug "\t\tAnalyze list (size: ${objectList.size()}) -- first object: ${objectList[0]}"
         List<Map<String, Map<String, Object>>> results = []
+        log.info "\t\tAnalyze list (size: ${objectList.size()}) objects: $objectList"
         objectList.each { SavableObject object ->
-            log.info "Analyze list (size: ${objectList.size()}) objects: $objectList"
-//            List<Map<String, Map<String, Object>>> analysisResults = analyze(object)
             Map<String, Map<String, Object>> analysisResults = analyze(object)
             results << analysisResults
         }
@@ -205,7 +204,7 @@ class BaseAnalyzer {
         log.debug "analyze object: $object"
         if (object) {
             if(object.archive){
-                log.debug "\t\t\t\tArchive File: $object"
+                log.info "\t\t\t\tARCHIVE File: $object"
             }
 
             if (shouldIgnore(object)) {
@@ -281,7 +280,7 @@ class BaseAnalyzer {
                 results = this.track(object)
                 break
             case 'parse':
-                log.info "\t\tDo analysis named '$analysisName' on object $object"
+                log.info "\t\tDo analysis named '$analysisName' on object $object (size:${object.size})"
                 results = this.parse(object)
                 String mime = results?.metadata?.get('Content-Type')
                 if(mime){
@@ -426,49 +425,53 @@ class BaseAnalyzer {
      * @param object
      * @return
      */
-    def parse(SavableObject object) {
+    Map parse(SavableObject object) {
         Map results = [:]
-        String content
-        Metadata metadata
-        log.info "\t\t....parse(object:$object) starting..."
-        long start = System.currentTimeMillis()
+        if (object.size>0) {
+            String content
+            Metadata metadata
+            log.debug "\t\t....parse(object:$object) starting..."
+            long start = System.currentTimeMillis()
 
-        if(tikaBodyHandler && tikaParser) {
-            try (InputStream inputStream = object.thing.newInputStream()) {
-                if (inputStream) {
-                    metadata = new Metadata();
-                    tikaParser.parse(inputStream, tikaBodyHandler, metadata);
+            if (tikaBodyHandler && tikaParser) {
+                try (InputStream inputStream = object.thing.newInputStream()) {
+                    if (inputStream) {
+                        metadata = new Metadata();
+                        tikaParser.parse(inputStream, tikaBodyHandler, metadata);
 
-                    if (metadata) {
-                        log.debug "metadata: $metadata"
-                        object.metadata = metadata
+                        if (metadata) {
+                            log.debug "metadata: $metadata"
+                            object.metadata = metadata
+                        } else {
+                            log.warn "No metadata? $srcfile -- meta: $metadata"
+                        }
+                        content = tikaBodyHandler.toString()
+                        if (content) {
+                            object.content = content
+                            object.contentSize = content.size()
+                            log.info "\t\t$object) Content, size(${content.size()})"
+                        } else {
+                            log.info "\t\tno content found for SavableObject:($object) in parse(object) method"
+                        }
                     } else {
-                        log.warn "No metadata? $srcfile -- meta: $metadata"
+                        log.warn "No input Stream?)"
                     }
-                    content = tikaBodyHandler.toString()
-                    if (content) {
-                        object.content = content
-                        object.contentSize = content.size()
-                        log.debug "\t\tContent, size(${content.size()})"
-                    } else {
-                        log.info "\t\tno content found for SavableObject:($object) in parse(object) method"
-                    }
-                } else {
-                    log.warn "No input Stream?)"
+                } catch (NoSuchFieldError nsfe) {
+                    log.error "Tika exception: $nsfe -- object:${object}"
+                } catch (TikaException tikaException) {
+                    log.error "Tika exception: $tikaException -- object:${object}"
                 }
-            } catch (NoSuchFieldError nsfe) {
-                log.error "Tika exception: $nsfe -- object:${object}"
-            } catch (TikaException tikaException) {
-                log.error "Tika exception: $tikaException -- object:${object}"
+                results = [content: content, metadata: metadata]
+            } else {
+                log.warn "No tikaParser($tikaParser) or tikaBodyHandler:($tikaBodyHandler), no parsing possible"
             }
-            results = [content: content, metadata: metadata]
-        } else {
-            log.warn "No tikaParser($tikaParser) or tikaBodyHandler:($tikaBodyHandler), no parsing possible"
-        }
-        long end = System.currentTimeMillis()
-        long elapsed = end - start
-        log.info "\t\t....parse(object:$object) -- Elapsed time: ${elapsed}ms (${elapsed/1000} sec)"
+            long end = System.currentTimeMillis()
+            long elapsed = end - start
+            log.info "\t\t....parse(object:$object) -- Elapsed time: ${elapsed}ms (${elapsed / 1000} sec)"
 
+        } else {
+            log.info "\t\t\t\tno size for object.thing (${object.thing} -- size:${object.size}) to analyze (zero-len object/file??), skipping 'parse' analysis "
+        }
         return results
     }
 

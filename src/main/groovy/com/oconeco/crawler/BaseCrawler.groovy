@@ -3,7 +3,7 @@ package com.oconeco.crawler
 import com.oconeco.analysis.BaseAnalyzer
 import com.oconeco.difference.BaseDifferenceChecker
 import com.oconeco.difference.SolrDifferenceChecker
-import com.oconeco.difference.SolrDifferenceStatus
+import com.oconeco.difference.BaseDifferenceStatus
 import com.oconeco.helpers.ArchiveUtils
 import com.oconeco.models.FSFile
 import com.oconeco.models.FSFolder
@@ -126,7 +126,7 @@ class BaseCrawler {
                     rc = currentFolder.buildDedupString()       // create dedup AFTER we have collected relevant file sizes
 
                     //Note compareFSFolderToSavedDocMap will save diff status in object, for postDir assessment/analysis
-                    SolrDifferenceStatus diffStatus = differenceChecker.compareCrawledDocToSavedDoc(currentFolder, existingSolrFolderDocs)
+                    BaseDifferenceStatus diffStatus = differenceChecker.compareCrawledDocToSavedDoc(currentFolder, existingSolrFolderDocs)
                     fvr = FileVisitResult.CONTINUE // note continue through tree, separate analysis of updating done later
                 }
 
@@ -151,7 +151,7 @@ class BaseCrawler {
                     log.debug "---- $cnt) Ignoring child folder: $childFolder"
                     results.skipped << childFolder
                 } else {
-                    SolrDifferenceStatus differenceStatus = differenceChecker.compareCrawledDocToSavedDoc(currentFolder, existingSolrFolderDocs)
+                    BaseDifferenceStatus differenceStatus = differenceChecker.compareCrawledDocToSavedDoc(currentFolder, existingSolrFolderDocs)
                     boolean shouldUpdate = differenceChecker.shouldUpdate(differenceStatus)
                     if (shouldUpdate) {
                         List<SavableObject> savableObjects = currentFolder.gatherSavableObjects()

@@ -41,9 +41,10 @@ class ApacheComressHackingTest extends Specification {
 
     }
 
-    def "debug apache.compress zip file"() {
+    def "debug apache.compress zip file - todo revisit this?"() {
         given:
-        File zip = new File('/home/sean/work/haystack-conference/osc/chorus/data-encoder/ecommerce/vectors/data/1.json.zip')
+//        File zip = new File('/home/sean/work/haystack-conference/osc/chorus/data-encoder/ecommerce/vectors/data/1.json.zip')
+        File zip = new File(getClass().getResource('/content/test.zip').toURI())
         ZipArchiveInputStream archive = new ZipArchiveInputStream(new BufferedInputStream(new FileInputStream(zip)))
         List entries = []
 

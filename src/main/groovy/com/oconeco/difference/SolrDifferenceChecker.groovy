@@ -10,21 +10,30 @@ import org.apache.solr.common.SolrDocument
  */
 class SolrDifferenceChecker extends BaseDifferenceChecker {
     Logger log = LogManager.getLogger(this.class.name)
-//    String checkFolderFields = BaseClient.DEFAULT_FIELDS_TO_CHECK.join(' ')
-//    String checkFileFields = BaseClient.DEFAULT_FIELDS_TO_CHECK.join(' ')
 
     SolrDifferenceChecker() {
         super()
     }
 
-//    SolrDifferenceChecker(String checkFolderFields, String checkFileFields) {
-//        super(checkFolderFields, checkFileFields)
-//    }
+    @Override
+    BaseDifferenceStatus compareCrawledGroupToSavedGroup(def crawledGroup, def savedGroup, BaseDifferenceStatus diffStatus) {
+        super.compareCrawledGroupToSavedGroup(crawledGroup, savedGroup, diffStatus)
+    }
+
+//    @Override
+    BaseDifferenceStatus compareCrawledGroupToSavedGroup(def crawledGroup, def savedGroup) {
+        BaseDifferenceStatus solrStatus = new BaseDifferenceStatus(crawledGroup, savedGroup)
+        compareCrawledGroupToSavedGroup(crawledGroup, savedGroup, solrStatus)
+    }
 
 
-    SolrDifferenceStatus compareCrawledDocToSavedDoc(FSFolder fsfolder, Map<String, SolrDocument> existingSolrDocMap) {
+
+
+
+/*
+    BaseDifferenceStatus compareCrawledDocToSavedDoc(FSFolder fsfolder, Map<String, SolrDocument> existingSolrDocMap) {
         log.debug "\t\t....call compareFSFolderToSavedDocMap($fsfolder, existingdocs size: ${existingSolrDocMap.size()})"
-        SolrDifferenceStatus differenceStatus = null
+        BaseDifferenceStatus differenceStatus = null
         if (fsfolder) {
             String fsId = null
             if (existingSolrDocMap?.size() > 0) {
@@ -35,11 +44,11 @@ class SolrDifferenceChecker extends BaseDifferenceChecker {
                     differenceStatus = compareFSFolderToSavedDoc(fsfolder, solrDocument)
                 } else {
                     log.debug "\t\tNo existing solr doc to compare, id:'${fsId}'"
-                    differenceStatus = new SolrDifferenceStatus(fsfolder, null)
+                    differenceStatus = new BaseDifferenceStatus(fsfolder, null)
                 }
             } else if (!existingSolrDocMap) {
                 log.debug "\t\tNo existingSolrDocMap, assuming first time crawling this folder? $fsfolder"
-                differenceStatus = new SolrDifferenceStatus(fsfolder, null)
+                differenceStatus = new BaseDifferenceStatus(fsfolder, null)
             }
             // save the results to the actual savable object (this/FSFolder)
             fsfolder.differenceStatus = differenceStatus
@@ -48,15 +57,15 @@ class SolrDifferenceChecker extends BaseDifferenceChecker {
         }
         return differenceStatus
     }
-
+*/
 
     /**
      *
      * @param fsfolder
      * @param existingSolrDoc
      */
-    SolrDifferenceStatus compareFSFolderToSavedDoc(FSFolder fsfolder, SolrDocument existingSolrDoc) {
-        SolrDifferenceStatus status = new SolrDifferenceStatus(fsfolder, existingSolrDoc)
+    BaseDifferenceStatus compareFSFolderToSavedDoc(FSFolder fsfolder, SolrDocument existingSolrDoc) {
+        BaseDifferenceStatus status = new BaseDifferenceStatus(fsfolder, existingSolrDoc)
         String msg
         if (!fsfolder) {
             msg = "FSFolder ($fsfolder) is null -- this almost certainly will be a problem!!! [[existingSolrDoc:($existingSolrDoc)??]]"
@@ -170,5 +179,8 @@ class SolrDifferenceChecker extends BaseDifferenceChecker {
         return status
     }
 
-
+    @Override
+    String getSavedLocation(Object savedObj) {
+        return savedObj.locationName_s
+    }
 }

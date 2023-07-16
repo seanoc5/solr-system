@@ -1,16 +1,17 @@
 package com.oconeco.difference
 
-import com.oconeco.models.SavableObject
+
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.core.Logger
-
 /**
  * Small class to record differences
  */
 class BaseDifferenceStatus {
     Logger log = LogManager.getLogger(this.class.name);
-    SavableObject object
-    def savedDocument
+    /** track crawled/new object for debugging/explanation */
+    Object crawledObject
+    /** track saved/old object for debugging/explanation */
+    Object savedDocument
 
     Boolean differentIds
     Boolean differentLastModifieds
@@ -18,24 +19,33 @@ class BaseDifferenceStatus {
     Boolean differentDedups
     Boolean differentPaths
     Boolean differentLocations
-
     Boolean sourceIsNewer
+
+    /** short-circuit flag for first-time crawls, or crawls after previous crawls have been delete/wiped */
     Boolean noMatchingSavedDoc
-//    List<String> messages = []
+
+    /** track messages/descriptions of differences */
     List<String> differences = []
+    /** track messages/descriptions of similarities (mostly debugging/understanding) */
     List<String> similarities = []
+    /** property to check if the new/crawled object has significant updates that need to be saved */
     boolean significantlyDifferent = false
 
 
-    BaseDifferenceStatus(SavableObject object, Object savedDoc) {
-        this.object = object
+    /**
+     * Basic status object that a difference checker will update. This is basically a no-action record keeper
+     * @param crawledObject -- new/crawled information
+     * @param savedDoc -- older/saved information to check for updates/new information
+     */
+    BaseDifferenceStatus(Object crawledObject, Object savedDoc) {
+        this.crawledObject = crawledObject
         this.savedDocument = savedDoc
     }
 
     String toString() {
-        String s = "Diff Status:($object) "
+        String s = "Diff Status:($crawledObject) "
         if (similarities) {
-            s = s + " Similarities:${similarities} "
+            s = s + " Similarities count:${similarities.size()} "
         }
         if (differences) {
             s = s + " Differences: ${differences} "

@@ -1,45 +1,30 @@
 package com.oconeco.difference
 
-
-import com.oconeco.models.SavableObject
+import com.oconeco.models.FSObject
 import com.oconeco.persistence.SolrSystemClient
+import org.apache.commons.lang3.time.DateUtils
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.core.Logger
+import org.apache.solr.common.SolrDocument
+
+import java.text.ParseException
 
 /**
  * codify what qualifies as a difference worthy of 're-indexing'
  */
 class BaseDifferenceChecker {
     Logger log = LogManager.getLogger(this.class.name)
-    String checkGroupFields
-    String checkItemFields
-    // todo -- attempt to keep multithreaded?
-//    SavableObject crawledObject
-//    Object savedObject
+    public static final String[] DEFAULT_DATEFORMATS = new String[]{"EEE MMM d HH:mm:ss z yyyy", "EEE, d MMM yyyy HH:mm:ss Z", "yyyy/MM/dd", "dd/MM/yyyy", "yyyy-MM-dd"}
 
     BaseDifferenceChecker() {
-        this.checkGroupFields = SolrSystemClient.DEFAULT_FIELDS_TO_CHECK.join(' ')
-        this.checkItemFields = SolrSystemClient.DEFAULT_FIELDS_TO_CHECK.join(' ')
     }
-
-    /**
-     * constructor to pass in what fields to check
-     * todo -- revisit to check if this is actually useful/valid code approach
-     * @param checkGroupFields
-     * @param checkItemFields
-     */
-    BaseDifferenceChecker(String checkGroupFields, String checkItemFields) {
-        this.checkGroupFields = checkGroupFields
-        this.checkItemFields = checkItemFields
-    }
-
 
     /**
      * check DifferenceStatus to determine if any existing differences are significant enough to require an update
      * @param status predefined record of differences (status) to check to determine if there are compelling differences
      * @return true if the caller should update the saved record (solr, ....)
      */
-    boolean shouldUpdate(SolrDifferenceStatus status) {
+    boolean shouldUpdate(BaseDifferenceStatus status) {
         boolean shouldUpdatePersistence = true
         String msg
         if (status) {
@@ -104,15 +89,23 @@ class BaseDifferenceChecker {
         return shouldUpdatePersistence
     }
 
+    BaseDifferenceStatus compareCrawledGroupToSavedGroup(def crawledGroup, def savedGroup) {
+        BaseDifferenceStatus status = new BaseDifferenceStatus(crawledGroup, savedGroup)
+        BaseDifferenceStatus updatedStatus = this.compareCrawledGroupToSavedGroup(crawledGroup, savedGroup, status)
+        return updatedStatus
+    }
+
+
     /**
      * check groups to see if the is a change (and hence avoid checking each child object)
      * @param crawledGroup (i.e. folder/dir)
      * @param savedGroup - saved info from persistence later (i.e. solr document)
      * @return
      */
-    BaseDifferenceStatus compareCrawledGroupToSavedGroup(SavableObject crawledGroup, Map<String, Object> savedGroup) {
-        BaseDifferenceStatus status = new BaseDifferenceStatus(crawledGroup, savedGroup)
-        String msg
+    BaseDifferenceStatus compareCrawledGroupToSavedGroup(def crawledGroup, def savedGroup, BaseDifferenceStatus status) {
+        String msg = null
+//        BaseDifferenceStatus status = new BaseDifferenceStatus(crawledGroup, savedGroup)
+
         if (!crawledGroup) {
             msg = "GRoup Object ($crawledGroup) is null -- this almost certainly will be a problem!!! [[savedGroup:($savedGroup)??]]"
             log.warn "$msg: folder:$crawledGroup - savedGroup: $savedGroup"
@@ -123,38 +116,39 @@ class BaseDifferenceChecker {
                 log.debug "$msg: folder:$crawledGroup"
                 status.noMatchingSavedDoc = true
                 status.significantlyDifferent = true
-                // todo -- revisit and see if this is muddled code... can/should we short circuit checking methods???
             } else {
                 String crawledID = crawledGroup.id
                 String savedId = getSavedId(savedGroup)
-                if (crawledID == savedId) {
+                if (crawledID.equals(savedId)) {
                     status.differentIds = false
-                    status.similarities << "Crawled id ($crawledID) matches saved id($savedId)"
+                    msg = "Crawled id ($crawledID) matches saved id($savedId)"
+                    status.similarities << msg
+                    log.debug "\t\t>>>>$msg"
                 } else {
-                    msg = "crawledGroup id ($crawledID) does not match solr id($savedId"
+                    msg = "crawledGroup id ($crawledID) does not match solr id($savedId)"
                     status.differences << msg
                     log.warn "\t\t>>>>$msg"
                     status.differentIds = true
                     status.significantlyDifferent = true
                 }
 
-                Date fsLastModified = crawledGroup.lastModifiedDate
-                Date solrLastModified = getSavedLastModifiedDate(savedGroup)
-                if (fsLastModified == solrLastModified) {
-                    msg = "crawledGroup and SaveObject doc have SAME last modified date: $solrLastModified"
+                Date crawledLastModified = getCrawledLastModified(crawledGroup)
+                Date savedLastModified = getSavedLastModified(savedGroup)
+                if (crawledLastModified == savedLastModified) {
+                    msg = "crawledGroup and SaveObject doc have SAME last modified date: $savedLastModified"
                     status.similarities << msg
                     status.differentLastModifieds = false
                     status.sourceIsNewer = false
                     log.debug "\t\t$msg"
-                } else if (fsLastModified > solrLastModified) {
-                    msg = "crawledGroup (${crawledGroup.path}) is newer ($fsLastModified) than solr folder ($solrLastModified)"
+                } else if (crawledLastModified > savedLastModified) {
+                    msg = "crawledGroup (${crawledGroup.path}) is newer ($crawledLastModified) than solr folder ($savedLastModified)"
                     status.differences << msg
                     log.info "\t\t>>>>${msg}"
                     status.differentLastModifieds = true
                     status.sourceIsNewer = true
                     status.significantlyDifferent = true
                 } else {
-                    msg = "crawledGroup (${crawledGroup.path}) lastModified ($fsLastModified) is NOT the same date as saved folder ($solrLastModified), SaveObject is newer???"
+                    msg = "crawledGroup (${crawledGroup.path}) lastModified ($crawledLastModified) is NOT the same date as saved folder ($savedLastModified), SaveObject is newer???"
                     status.differences << msg
                     log.warn "\t\t>>>> $msg (what logic is approapriate? currently we overwrite 'newer' saved/saved object with 'older' source object...???)"
                     status.differentLastModifieds = true
@@ -172,9 +166,9 @@ class BaseDifferenceChecker {
                 } else {
                     status.differentSizes = true
                     msg = "Different sizes, fsfolder(${crawledGroup.path}): ${crawledGroup.size} != saved: $savedSize (${crawledGroup.size - savedSize})"
-                    log.debug "\t\t>>>>$msg"
+                    log.info "\t\t>>>>$msg"
                     status.differences << msg
-                    status.significantlyDifferent = false
+                    status.significantlyDifferent = true
                 }
 
                 String savedDedup = getSavedDedup(savedGroup)
@@ -189,7 +183,6 @@ class BaseDifferenceChecker {
                     log.debug "\t\t>>>>$msg"
                     status.differences << msg
                     status.significantlyDifferent = true
-                    // todo -- revisit and see if this is muddled code... can/should we short circuit checking methods???
                 }
 
                 String savedPath = getSavedPath(savedGroup)
@@ -207,7 +200,7 @@ class BaseDifferenceChecker {
                 }
 
                 String solrLocation = getSavedLocation(savedGroup)
-                if (crawledGroup.locationName == solrLocation) {
+                if (crawledGroup.locationName.equals(solrLocation)) {
                     msg = "Same locationName: $solrLocation"
                     status.similarities << msg
                     log.debug "\t\t$msg"
@@ -218,67 +211,111 @@ class BaseDifferenceChecker {
                     log.warn "\t\t$msg"
                     status.differences << msg
                     status.significantlyDifferent = true
-                    // todo -- revisit and see if this is muddled code... can/should we short circuit checking methods???
                 }
             }
         }
-    }
-
-    String getSavedLastModifiedDate(Object savedObj) {
-        return savedObj.lastModifiedDate
+        return status
     }
 
     String getSavedId(Object savedObj) {
-        return savedObj.id
+        String id = savedObj.id
+        return id
     }
-
-/*
-    String get(Object savedObj){
-        return savedObj.
-    }
-
-    String get(Object savedObj){
-        return savedObj.
-    }
-
-*/
-
 
     String getSavedPath(Object savedObj) {
-        return savedObj.path
+        String sp = savedObj.path ?: savedObj.path_s
+        return sp
     }
 
     String getSavedDedup(Object savedObj) {
-        return savedObj.dedup
-    }
-
-    Long getSavedSize(Object savedObj) {
-        def size = savedObj.size
-        if (size instanceof Long) {
-            return size
-        } else {
-            try {
-                Long s = new Long(size)
-                return s
-            } catch (Exception e) {
-                log.warn "Casting exception: for obj($savedObj) getting 'Long' value from $size"
-            }
-        }
-        return  null
+        String dd = savedObj.dedup ?: savedObj.dedup_s
     }
 
     String getSavedLocation(Object savedObj) {
         return savedObj.location
     }
 
+    Date getCrawledLastModified(Object crawledObject) {
+        def lm = null
+        Date lmd = null
+        if (crawledObject instanceof FSObject) {
+            lm = ((FSObject) crawledObject).lastModifiedDate
+        } else if (crawledObject instanceof Map) {
+            lm = crawledObject.lastModified ?: crawledObject.lastModifiedDate
+        } else {
+            log.warn "Unknown type of crawledObject:($crawledObject.class.simpleName) -- this method getCrawledLastModified(object) should probably be overriden and customized, attempting blind grab..."
+            lm = crawledObject.lastModified ?: crawledObject.lastModifiedDate
+        }
+        if (lm) {
+            if (lm instanceof Date) {
+                lmd = lm
+            } else {
+                lmd = parseDateThing(lm)
+            }
+        } else {
+            log.info "No lastModifiedDate property identified for crawled object:($crawledObject), nothing to get... failed!"
+        }
+        return lmd
+    }
+
+    Date getSavedLastModified(Object savedObj) {
+        def lm = null
+        Date lmd = null
+        if (savedObj instanceof SolrDocument) {
+            lm = ((SolrDocument) savedObj).getFirstValue(SolrSystemClient.FLD_LAST_MODIFIED)
+        } else if (savedObj instanceof Map) {
+            lm = savedObj.lastModified ?: savedObj.lastModifiedDate
+        } else {
+            log.warn "Unknown type of savedObj:($savedObj.class.simpleName) -- this method getSavedLastModified(object) should probably be overriden and customized, attempting blind grab..."
+        }
+        if (lm) {
+            if (lm instanceof Date) {
+                lmd = lm
+            } else {
+                lmd = parseDateThing(lm)
+            }
+        } else {
+            log.info "No lastModifiedDate property identified for crawled object:($savedObj), nothing to get... failed!"
+        }
+        return lmd
+    }
+
+    Long getSavedSize(Object savedObj) {
+        def size = savedObj.size ?: savedObj.size_l
+        if (size instanceof Number) {
+            return size
+        } else {
+            String s = savedObj.toString()
+            if (s.isNumber()) {
+                try {
+                    Long l = Long.valueOf(s)
+                    return l
+                } catch (NumberFormatException nfe) {
+                    log.warn "Casting exception: for obj($savedObj) getting 'Long' value from $size -- exception:$nfe"
+                }
+            } else {
+                log.warn "\t\tSize of savedObj(${size}) is not a number (${savedObj.class.name})"
+            }
+        }
+        return null
+    }
+
+    Date parseDateThing(Object dateThing, String[] dateFormats = DEFAULT_DATEFORMATS) {
+        String dateString = dateThing.toString()
+        Date date = null
+        try {
+            date = DateUtils.parseDate(dateString, dateFormats)
+        } catch (ParseException parseException) {
+            log.warn "Exception: $parseException"
+        }
+        return date
+    }
+//        SimpleDateFormat sdf = new SimpleDateFormat('EEE MMM d HH:mm:ss z yyyy')
+//        Date fooDate = sdf.parse(dateString)
+//        log.debug "\t\tattempting to parse date string: $dateString"
 
     @Override
     public String toString() {
-        return "BaseDifferenceChecker{" +
-                ", checkGroupFields='" + checkGroupFields + '\'' +
-                ", checkItemFields='" + checkItemFields + '\'' +
-//                ", shouldUpdatePersistence=" + shouldUpdatePersistence +
-                '}';
+        return "BaseDifferenceChecker{}";
     }
-
 }

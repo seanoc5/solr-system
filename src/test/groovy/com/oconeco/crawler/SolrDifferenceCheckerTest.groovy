@@ -1,20 +1,18 @@
 package com.oconeco.crawler
 
 import com.oconeco.difference.BaseDifferenceChecker
-import com.oconeco.difference.SolrDifferenceStatus
-import com.oconeco.helpers.Constants
+import com.oconeco.difference.SolrDifferenceChecker
+import com.oconeco.difference.BaseDifferenceStatus
 import com.oconeco.models.FSFolder
 import com.oconeco.persistence.SolrSystemClient
 import org.apache.solr.common.SolrDocument
 import spock.lang.Specification
 
-import java.util.regex.Pattern
-
 class SolrDifferenceCheckerTest extends Specification {
     String locationName = 'spock'
     String crawlName = 'test'
-    Pattern ignoreItems = Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE]
-    Pattern ignoreGroups = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]
+//    Pattern ignoreItems = Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE]
+//    Pattern ignoreGroups = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]
 
 
     File startFolder = new File(getClass().getResource('/content').toURI())
@@ -24,8 +22,6 @@ class SolrDifferenceCheckerTest extends Specification {
 
     def "check when objects should be current"() {
         given:
-        BaseDifferenceChecker differenceChecker = new BaseDifferenceChecker()
-//        BaseDifferenceChecker differenceChecker = new BaseDifferenceChecker()
         SolrDocument sameSolrDoc = new SolrDocument()
         sameSolrDoc.setField(SolrSystemClient.FLD_ID, fsFolder.id)
         sameSolrDoc.setField(SolrSystemClient.FLD_TYPE, fsFolder.type)
@@ -34,11 +30,12 @@ class SolrDifferenceCheckerTest extends Specification {
         sameSolrDoc.setField(SolrSystemClient.FLD_SIZE, fsFolder.size)
         sameSolrDoc.setField(SolrSystemClient.FLD_DEDUP, fsFolder.dedup)
         sameSolrDoc.setField(SolrSystemClient.FLD_LOCATION_NAME, fsFolder.locationName)
-//        sameSolrDoc.setField(SolrSystemClient.FLD_, fsFolder.)
+
+        SolrDifferenceChecker solrChecker = new SolrDifferenceChecker()
 
         when:
-        SolrDifferenceStatus status = differenceChecker.compareCrawledGroupToSavedGroup(fsFolder, sameSolrDoc)
-//        def diff = differenceChecker.folderNeedsUpdate()
+//        BaseDifferenceStatus solrStatus = new BaseDifferenceStatus(crawledGroup, savedGroup)
+        BaseDifferenceStatus status = solrChecker.compareCrawledGroupToSavedGroup(fsFolder, sameSolrDoc, solrStatus)
 
         then:
         status != null
@@ -48,7 +45,7 @@ class SolrDifferenceCheckerTest extends Specification {
         status.differentLocations == false
         status.differentPaths == false
         status.differentSizes == false
-        differenceChecker.shouldUpdate(status) == false
+        solrChecker.shouldUpdate(status) == false
     }
 
 
@@ -66,8 +63,7 @@ class SolrDifferenceCheckerTest extends Specification {
         BaseDifferenceChecker differenceChecker = new BaseDifferenceChecker()
 
         when:
-        SolrDifferenceStatus status = differenceChecker.compareCrawledGroupToSavedGroup(fsFolder, diffSolrDoc)
-//        def diff = differenceChecker.folderNeedsUpdate()
+        BaseDifferenceStatus status = differenceChecker.compareCrawledGroupToSavedGroup(fsFolder, diffSolrDoc, new BaseDifferenceStatus(crawledGroup, savedGroup))
 
         then:
         status != null

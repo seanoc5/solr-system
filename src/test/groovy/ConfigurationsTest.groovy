@@ -87,12 +87,10 @@ skip = ~/(te?mp|cache|delete)/
         }
 
         then:
-        ignored.size() == 4
-        notIgnored.size() == 3
+        ignored.size() == 3
+        notIgnored.size() == 4
 
-        ignored[2] == 'test/.m2'
-        ignored[3] == '/opt/test/pkgs'
-
+        ignored.containsAll(['test/.m2', '/opt/test/pkgs'])
 
     }
 

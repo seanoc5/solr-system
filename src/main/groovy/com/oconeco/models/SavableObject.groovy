@@ -1,6 +1,6 @@
 package com.oconeco.models
 
-import com.oconeco.difference.SolrDifferenceStatus
+import com.oconeco.difference.BaseDifferenceStatus
 import com.oconeco.persistence.SolrSystemClient
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.core.Logger
@@ -58,7 +58,7 @@ abstract class SavableObject {
     List<SavableObject> childItems = []
 
     /** track individual diference/update status */
-    SolrDifferenceStatus differenceStatus
+    BaseDifferenceStatus differenceStatus
 
     /** rough metric for how recent this is (remove?) */
     def recency
@@ -189,7 +189,7 @@ abstract class SavableObject {
 //                log.warn "\t\tno dedup value set??? $this"
 //            }
 //        } else {
-            log.warn "\t\t.....Cannot reliably build a dedup string, missing type:$type, or name:$name, or size:$size"
+//            log.warn "\t\t.....Cannot reliably build a dedup string, missing type:$type, or name:$name, or size:$size"
         }
 
         if(matchedLabels){
@@ -211,7 +211,7 @@ abstract class SavableObject {
         } else {
             log.warn "Something is null: (type && name && size == null): (type:$type  name:$name  size:$size)"
         }
-        dedup = type + ':' + name + '::' + size
+        dedup = SavableObject.buildDedupString(type, name , size)
         if(prevDedup){
             if(!prevDedup.equalsIgnoreCase(dedup)) {
                 log.info "\t\tAlready had a dedup:($prevDedup), it was DIFFERENT from new/current dedup ($dedup)?? "
@@ -220,6 +220,10 @@ abstract class SavableObject {
             }
         }
         return dedup
+    }
+
+    static String buildDedupString(String type, String name, long size) {
+        String dedup = type + ':' + name + '::' + size
     }
 
 
