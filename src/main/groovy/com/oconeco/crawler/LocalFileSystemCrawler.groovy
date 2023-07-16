@@ -3,7 +3,7 @@ package com.oconeco.crawler
 import com.oconeco.analysis.BaseAnalyzer
 import com.oconeco.difference.BaseDifferenceChecker
 import com.oconeco.difference.SolrDifferenceChecker
-import com.oconeco.difference.SolrDifferenceStatus
+import com.oconeco.difference.BaseDifferenceStatus
 import com.oconeco.helpers.ArchiveUtils
 import com.oconeco.models.FSFile
 import com.oconeco.models.FSFolder
@@ -123,10 +123,11 @@ class LocalFileSystemCrawler {
                 } else {
                     log.debug "\t\t----Not ignorable folder: $currentFolder"
                     def rc = crawlFolderFiles(currentFolder, analyzer)
-                    rc = currentFolder.buildDedupString()       // create dedup AFTER we have collected relevant file sizes
+                    // rc = currentFolder.buildDedupString()       // create dedup AFTER we have collected relevant file sizes already done in crawlFolderFiles() ???
 
                     //Note compareFSFolderToSavedDocMap will save diff status in object, for postDir assessment/analysis
-                    SolrDifferenceStatus diffStatus = differenceChecker.compareCrawledDocToSavedDoc(currentFolder, existingSolrFolderDocs)
+                    Iterable savedGroup = findMatchingSavedGroup(existingSolrFolderDocs, currentFolder)
+                    def diffStatus = differenceChecker.compareCrawledGroupToSavedGroup(currentFolder, savedGroup)
                     fvr = FileVisitResult.CONTINUE // note continue through tree, separate analysis of updating done later
                 }
 
@@ -143,6 +144,7 @@ class LocalFileSystemCrawler {
 
         long cnt = 0
         startDir.traverse(options) { File folder ->
+            log.info "====traverse thing(folder?): ($folder)"
             cnt++
             if (folder.isDirectory()) {
                 FSFolder childFolder = new FSFolder(folder, null, locationName, crawlName)
@@ -151,7 +153,8 @@ class LocalFileSystemCrawler {
                     log.debug "---- $cnt) Ignoring child folder: $childFolder"
                     results.skipped << childFolder
                 } else {
-                    SolrDifferenceStatus differenceStatus = differenceChecker.compareCrawledDocToSavedDoc(currentFolder, existingSolrFolderDocs)
+//                    BaseDifferenceStatus differenceStatus = differenceChecker.compareCrawledDocToSavedDoc(currentFolder, existingSolrFolderDocs)
+                    BaseDifferenceStatus differenceStatus = differenceChecker.compareCrawledGroupToSavedGroup(currentFolder, existingSolrFolderDocs)
                     boolean shouldUpdate = differenceChecker.shouldUpdate(differenceStatus)
                     if (shouldUpdate) {
                         List<SavableObject> savableObjects = currentFolder.gatherSavableObjects()
@@ -160,7 +163,7 @@ class LocalFileSystemCrawler {
                         log.debug "\t\tdoAnalysisresults: $doAnalysisresults to currentFolder: $currentFolder"
                         // --------------- SAVE FOLDER AND CHILDREM
                         def response = persistenceClient.saveObjects(savableObjects)
-                        log.info "\t\t$cnt) ++++Save folder (${currentFolder.path}:${currentFolder.depth}) -- Differences:${differenceStatus.differences} -- response: $response"
+                        log.info "\t\t$cnt) ++++Save folder (${currentFolder.path}:${currentFolder.depth}) -- Children count:(item:${currentFolder.childItems.size()} groups:${currentFolder.childGroups.size()}) -- Differences:${differenceStatus.differences} -- response: $response"
                         results.updated << currentFolder
 
                         // ----------------------- PROCESS ARCHIVE FILES SEPARATE (MEMORY)---------------------
@@ -192,6 +195,11 @@ class LocalFileSystemCrawler {
             }
         }
         return results
+    }
+
+    public Iterable findMatchingSavedGroup(Map<String, SolrDocument> existingSolrFolderDocs, FSFolder currentFolder) {
+        def savedGroup = existingSolrFolderDocs.get(currentFolder.id)
+        return savedGroup
     }
 
 
@@ -242,13 +250,14 @@ class LocalFileSystemCrawler {
             } else {
                 log.info "\t\tfolder:($fsFolder) size: ${fsFolder.size}"
             }
-            def rc = fsFolder.buildDedupString()
+            def rc = fsFolder.buildDedupString()            // todo -- should this be "hidden" here???
             log.debug "\t\tBuilt fsFolder($fsFolder) dedup string(${fsFolder.dedup})"
         } else {
             log.warn "fsFolder.thing(${fsFolder.thing}) is not a file!! bug??"
         }
         // todo -- fixme - quick hack while separating child items and groups
-        return fsFolder.childGroups.addAll(fsFolder.childItems)
+        def results = fsFolder.childGroups + fsFolder.childItems
+        return results
     }
 
 
