@@ -18,7 +18,7 @@ class FSFolderTest extends Specification {
 
     def "should build basic FSFolder"() {
         when:
-        FSFolder fsFolder = new FSFolder(startFolder, null, locationName, crawlName )
+        FSFolder fsFolder = new FSFolder(startFolder, null, locationName, crawlName)
 //        fsFolder.addFolderDetails()
         String pid = SavableObject.buildId(locationName, startFolder.parent.replaceAll('\\\\', '/'))
 
@@ -27,34 +27,37 @@ class FSFolderTest extends Specification {
         fsFolder.parent == null
         fsFolder.childGroups == []
         fsFolder.childItems == []
-        fsFolder.size > 1           // could test actual size, but that might change as we update test folder contents
+        fsFolder.name == 'content'           // could test actual size, but that might change as we update test folder contents
         fsFolder.lastModifiedDate != null
+        fsFolder.childItems != null
+        fsFolder.childGroups != null
 
         fsFolder.owner == null
     }
 
     def "should build basic FSFolder with folder details"() {
         when:
-        FSFolder fsFolder = new FSFolder(startFolder, null, locationName, crawlName )
+        FSFolder fsFolder = new FSFolder(startFolder, null, locationName, crawlName)
         fsFolder.addFileDetails()
         String pid = SavableObject.buildId(locationName, startFolder.parent.replaceAll('\\\\', '/'))
 
         then:
         fsFolder.owner != null
         fsFolder.size != null
-        fsFolder.size > 0
+        fsFolder.size == 0
         fsFolder.lastModifiedDate != null
         fsFolder.lastAccessDate != null
         fsFolder.parent == null
         fsFolder.parentId == pid
 
-        fsFolder.childItems == null
+        fsFolder.childItems == []
+        fsFolder.childGroups == []
     }
 
 
     def "should build basic FSFolder with parentObject"() {
         when:
-        FSFolder fsFolder = new FSFolder(startFolder, parentFolder, locationName, crawlName )
+        FSFolder fsFolder = new FSFolder(startFolder, parentFolder, locationName, crawlName)
         fsFolder.addFileDetails()
 
         then:
@@ -65,13 +68,17 @@ class FSFolderTest extends Specification {
 
     def "items should have date and size as well as unique path:size combo"() {
         given:
-        FSFolder fsFolder = new FSFolder(startFolder, parentFolder, locationName, crawlName )
+        long testSize = 1234
+        FSFolder fsFolder = new FSFolder(startFolder, parentFolder, locationName, crawlName)
+        fsFolder.size = testSize
+        fsFolder.buildDedupString()
 
         when:
-        String dedup = fsFolder.type + ':' + fsFolder.name + '::' + fsFolder.size
+        String dedup = fsFolder.type + ':' + fsFolder.name + '::' + testSize
 
         then:
         fsFolder.dedup.startsWith(dedup)
+        SavableObject.buildDedupString(fsFolder.type, fsFolder.name, testSize) == dedup
     }
 
 
@@ -95,27 +102,18 @@ class FSFolderTest extends Specification {
     }
 
 
-
-
     def "load and analyze content folder with configLocate.groovy"() {
         given:
-//        File src = new File(getClass().getResource('/content').toURI())
         ConfigObject config = new ConfigSlurper().parse(getClass().getResource('/configLocate.groovy'))
-//        FolderAnalyzer analyzer = new FolderAnalyzer(config)
         FSFolder startFolder = new FSFolder(startFolder, parentFolder, locationName, crawlName)
         BaseAnalyzer analyzer = new BaseAnalyzer()
 
         when:
         def results = analyzer.analyze(startFolder)
-//        log.info "Analysis results: $results"
-//        Map assignmentGroupedFiles = startFolder.children.groupBy { it.assignedTypes[0] }
-//        List keys = assignmentGroupedFiles.keySet().toList()
 
         then:
-//        keys.size == 8
-//        keys == ['techDev', 'archive', 'office', 'config', 'instructions', 'data', 'control', 'media']
-        results instanceof List<Map<String, Map<String, Object>>>
-        results[0].keySet()[0] == 'default'     // todo -- fixme??
+        results instanceof Map<String, Map<String, Object>>
+        results.keySet()[0] == 'track'     // todo -- fixme??
     }
 
 

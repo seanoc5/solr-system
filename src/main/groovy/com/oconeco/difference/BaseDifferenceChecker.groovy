@@ -104,7 +104,6 @@ class BaseDifferenceChecker {
      */
     BaseDifferenceStatus compareCrawledGroupToSavedGroup(def crawledGroup, def savedGroup, BaseDifferenceStatus status) {
         String msg = null
-//        BaseDifferenceStatus status = new BaseDifferenceStatus(crawledGroup, savedGroup)
 
         if (!crawledGroup) {
             msg = "GRoup Object ($crawledGroup) is null -- this almost certainly will be a problem!!! [[savedGroup:($savedGroup)??]]"
@@ -180,7 +179,7 @@ class BaseDifferenceChecker {
                 } else {
                     status.differentDedups = true
                     msg = "Different dedups (${crawledGroup.path}), fsfolder: ${crawledGroup.dedup} != saved: $savedDedup"
-                    log.debug "\t\t>>>>$msg"
+                    log.info "\t\t>>>>$msg"
                     status.differences << msg
                     status.significantlyDifferent = true
                 }

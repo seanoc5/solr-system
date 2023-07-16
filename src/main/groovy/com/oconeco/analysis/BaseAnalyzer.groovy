@@ -208,7 +208,7 @@ class BaseAnalyzer {
             }
 
             if (shouldIgnore(object)) {
-                log.info "\t\tIgnore object ($object) (skipping majority of `analyze(object)` method"
+                log.info "\t\t....Ignore object ($object) (skipping majority of `analyze(object)` method"
                 Map ignoreMap = [(Constants.IGNORE): [pattern: '', analysis: [], (Constants.LABEL_MATCH): Constants.NO_MATCH]]
                 object.matchedLabels = ignoreMap
             } else {
@@ -276,11 +276,11 @@ class BaseAnalyzer {
         String lowerName = analysisName.toLowerCase()
         switch (lowerName) {
             case 'track':
-                log.debug "\t\tDo analysis named '$analysisName' on object $object"
+                log.debug "\t\t....Do analysis named '$analysisName' on object $object"
                 results = this.track(object)
                 break
             case 'parse':
-                log.info "\t\tDo analysis named '$analysisName' on object $object (size:${object.size})"
+                log.info "\t\t....Do analysis named '$analysisName' on object $object (size:${object.size})"
                 results = this.parse(object)
                 String mime = results?.metadata?.get('Content-Type')
                 if(mime){
@@ -293,10 +293,10 @@ class BaseAnalyzer {
 //                log.info "Do analysis named 'default' on object $object"
 //                break
             case 'ignore':
-                log.debug "\t\tignore object $object"
+                log.debug "\t\t....ignore object $object"
                 break
             default:
-                log.info "${Constants.NO_MATCH} on ($lowerName) in swtich, falling back to  default analysis on object $object"
+                log.info "....${Constants.NO_MATCH} on ($lowerName) in swtich, falling back to  default analysis on object $object"
                 results = this.track(object)
                 break
         }

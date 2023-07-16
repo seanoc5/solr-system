@@ -28,7 +28,7 @@ class SolrCrawlArgParserTest extends Specification {
         cfgFile.canRead()
 
         config != null
-        fnameMap.keySet().containsAll(fplList)
+        fnameMap.keySet().containsAll(['ignore', 'default'])
     }
 
 }

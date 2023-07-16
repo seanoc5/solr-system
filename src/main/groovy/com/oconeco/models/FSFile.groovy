@@ -178,7 +178,7 @@ class FSFile extends FSObject {
      * @return List of various Archive entries
      */
     List<SavableObject> gatherArchiveEntries(ArchiveInputStream ais) {
-        log.info "gatherArchiveEntries(ais) for FSFile: ${this.toString()}"
+        log.info "\t\t....gatherArchiveEntries(ais) for FSFile: ${this.toString()}"
         if (ais) {
             int i = 0
             ArchiveEntry entry = null
@@ -208,7 +208,8 @@ class FSFile extends FSObject {
         } else {
             log.warn "Invalid archive input stream: $ais, how did this happen?? -- $this"
         }
-        return childGroups.addAll(childItems)
+        List allItems = childGroups + childItems
+        return allItems
     }
 
 
@@ -219,7 +220,7 @@ class FSFile extends FSObject {
      * @return list of FSObjects with minimal metadata
      */
     List<SavableObject> gatherZippyArchiveEntries(ArchiveInputStream ais) {
-        log.debug "gatherZippyArchiveEntries(ais) for FSFile: ${this.toString()}"
+        log.info "\t\t....gatherZippyArchiveEntries(ais) for FSFile: ${this.toString()}"
         if (ais) {
             int i = 0
             ArchiveEntry entry = getSpecificArchEntry(ais)
@@ -254,7 +255,8 @@ class FSFile extends FSObject {
         } else {
             log.warn "Invalid archive input stream: $ais, how did this happen?? -- $this"
         }
-        return childGroups.addAll(childItems)
+        List allItems = childGroups + childItems
+        return allItems
     }
 
 

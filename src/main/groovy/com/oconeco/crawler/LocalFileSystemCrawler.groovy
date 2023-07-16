@@ -20,6 +20,7 @@ import org.apache.solr.common.SolrDocument
 import org.apache.solr.common.SolrDocumentList
 
 import java.nio.file.Path
+
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -105,8 +106,10 @@ class LocalFileSystemCrawler {
         log.info "\t\tcrawlFolders() loc=$locationName:cn=$crawlName -> Starting crawl of folder: ($startDir) [existing solrFolderDocs:${existingSolrFolderDocs?.size()}]"
         Path startPath = startDir.toPath()   // Path so we can 'relativize` to get relative depth of this crawl
         FSFolder currentFolder = null
+        int cnt = 0
 
         def doPreDir = {
+            cnt++
             File f = it
             log.info "====PRE dir:  $it"
             FileVisitResult fvr = FileVisitResult.CONTINUE      // set default to continue/process
@@ -120,15 +123,54 @@ class LocalFileSystemCrawler {
                 if (shouldIgnore) {
                     log.info "\t\t----IGNORABLE folder:($currentFolder) matchedLabels:($currentFolder.matchedLabels)"
                     fvr = FileVisitResult.SKIP_SUBTREE
+                    results.ignored << currentFolder
                 } else {
                     log.debug "\t\t----Not ignorable folder: $currentFolder"
+                    fvr = FileVisitResult.CONTINUE
                     def rc = crawlFolderFiles(currentFolder, analyzer)
                     // rc = currentFolder.buildDedupString()       // create dedup AFTER we have collected relevant file sizes already done in crawlFolderFiles() ???
 
                     //Note compareFSFolderToSavedDocMap will save diff status in object, for postDir assessment/analysis
                     Iterable savedGroup = findMatchingSavedGroup(existingSolrFolderDocs, currentFolder)
-                    def diffStatus = differenceChecker.compareCrawledGroupToSavedGroup(currentFolder, savedGroup)
-                    fvr = FileVisitResult.CONTINUE // note continue through tree, separate analysis of updating done later
+                    BaseDifferenceStatus diffStatus = differenceChecker.compareCrawledGroupToSavedGroup(currentFolder, savedGroup)
+                    boolean shouldUpdate = differenceChecker.shouldUpdate(diffStatus)
+                    // note continue through tree, separate analysis of updating done later
+                    if (shouldUpdate) {
+                        List<SavableObject> savableObjects = currentFolder.gatherSavableObjects()
+
+                        def doAnalysisresults = analyzer.analyze(savableObjects)
+                        log.debug "\t\tdoAnalysisresults: $doAnalysisresults to currentFolder: $currentFolder"
+                        // --------------- SAVE FOLDER AND CHILDREM
+                        def response = persistenceClient.saveObjects(savableObjects)
+                        log.info "\t\t$cnt) ++++Save folder (${currentFolder.path}:${currentFolder.depth}) -- Children count:(item:${currentFolder.childItems.size()} groups:${currentFolder.childGroups.size()}) -- Differences:${diffStatus.differences} -- response: $response"
+                        results.updated << currentFolder
+
+                        // ----------------------- PROCESS ARCHIVE FILES SEPARATE (MEMORY)---------------------
+                        // todo -- revisit how to avoid oome, each archive file could be huge, on top of a given (current)folder that might be huge... process archivefiles after folder, and release folder memory...?
+                        List<FSObject> archiveFiles = ArchiveUtils.gatherArchiveObjects(currentFolder.childItems)
+                        // release folder/children memory, and move on to processing each archive (virtual folder)
+                        currentFolder = null
+
+                        log.info "\t....process archive files (count:${archiveFiles.size()}) for folder ($currentFolder)...."
+                        archiveFiles.each { FSFile fSFile ->
+                            if (fSFile.extension.equalsIgnoreCase('jar')) {
+                                log.info "\t\t----skipping jar files for archive entry analysis: $fSFile"
+                            } else {
+                                //todo -- ignore jar files, as they are likely numerous, and we really don't care about their contents...? (for java developers especially)
+                                List<SavableObject> archEntries = ((FSFile) fSFile).gatherArchiveEntries()
+                                def responseArch = persistenceClient.saveObjects(archEntries)
+                                log.info "\t\t====Solr response saving archive entries: $responseArch (arch entries count: ${archEntries?.size()}) -- from fsFile:($fSFile)"
+                            }
+                        }
+                        log.debug "\t\tArhive files in folder($currentFolder): $archiveFiles"
+
+
+                    } else {
+                        log.info "\t\tdetermined we do NOT need to update: $currentFolder -- diffStatus:($diffStatus)"
+                        results.current << currentFolder
+                        //            log.info "\t\t$cnt) no need to update for currentFolder:($currentFolder) -- diffStatus:($differenceStatus) -- source current with saved version"
+                    }
+
                 }
 
             } else {
@@ -138,58 +180,19 @@ class LocalFileSystemCrawler {
             return fvr
         }
 
+//        def doPostDir = {
+//
+//        }
 
-        Map options = [type   : FileType.DIRECTORIES, preDir: doPreDir, //postDir: doPostDir,
+
+        Map options = [type   : FileType.DIRECTORIES, preDir: doPreDir, // postDir: doPostDir,
                        preRoot: true, postRoot: true, visitRoot: true,]
 
-        long cnt = 0
+        // todo -- revisit? is there anything that should happen here, rather than doPreDir??
         startDir.traverse(options) { File folder ->
-            log.info "====traverse thing(folder?): ($folder)"
-            cnt++
+            log.debug "....traverse thing(folder?): ($folder)"
             if (folder.isDirectory()) {
-                FSFolder childFolder = new FSFolder(folder, null, locationName, crawlName)
-                boolean ignoreFolder = analyzer.shouldIgnore(childFolder)
-                if (childFolder.ignore) {
-                    log.debug "---- $cnt) Ignoring child folder: $childFolder"
-                    results.skipped << childFolder
-                } else {
-//                    BaseDifferenceStatus differenceStatus = differenceChecker.compareCrawledDocToSavedDoc(currentFolder, existingSolrFolderDocs)
-                    BaseDifferenceStatus differenceStatus = differenceChecker.compareCrawledGroupToSavedGroup(currentFolder, existingSolrFolderDocs)
-                    boolean shouldUpdate = differenceChecker.shouldUpdate(differenceStatus)
-                    if (shouldUpdate) {
-                        List<SavableObject> savableObjects = currentFolder.gatherSavableObjects()
-
-                        def doAnalysisresults = analyzer.analyze(savableObjects)
-                        log.debug "\t\tdoAnalysisresults: $doAnalysisresults to currentFolder: $currentFolder"
-                        // --------------- SAVE FOLDER AND CHILDREM
-                        def response = persistenceClient.saveObjects(savableObjects)
-                        log.info "\t\t$cnt) ++++Save folder (${currentFolder.path}:${currentFolder.depth}) -- Children count:(item:${currentFolder.childItems.size()} groups:${currentFolder.childGroups.size()}) -- Differences:${differenceStatus.differences} -- response: $response"
-                        results.updated << currentFolder
-
-                        // ----------------------- PROCESS ARCHIVE FILES SEPARATE (MEMORY)---------------------
-                        // todo -- revisit how to avoid oome, each archive file could be huge, on top of a given (current)folder that might be huge... process archivefiles after folder, and release folder memory...?
-                        List<FSObject> archiveFiles = ArchiveUtils.gatherArchiveObjects(currentFolder.childItems)
-                        // release folder/children memory, and move on to processing each archive (virtual folder)
-                        currentFolder = null
-
-                        archiveFiles.each { FSFile fSFile ->
-                            if (fSFile.extension.equalsIgnoreCase('jar')) {
-                                log.debug "\t\tskipping jar files for archive entry analysis: $fSFile"
-                            } else {
-                                //todo -- ignore jar files, as they are likely numerous, and we really don't care about their contents...? (for java developers especially)
-                                List<SavableObject> archEntries = ((FSFile) fSFile).gatherArchiveEntries()
-                                def responseArch = persistenceClient.saveObjects(archEntries)
-                                log.debug "\t\tSolr response saving archive entries: $responseArch"
-                            }
-                        }
-                        log.debug "\t\tArhive files in folder($currentFolder): $archiveFiles"
-
-
-                    } else {
-                        results.current << currentFolder
-                        log.info "\t\t$cnt) no need to update for currentFolder:($currentFolder) -- diffStatus:($differenceStatus) -- source current with saved version"
-                    }
-                }
+                log.debug "====traversing folder: $folder"
             } else {
                 log.warn "processing file???: $folder (should only be folders in this loop"
             }
@@ -197,8 +200,9 @@ class LocalFileSystemCrawler {
         return results
     }
 
+
     public Iterable findMatchingSavedGroup(Map<String, SolrDocument> existingSolrFolderDocs, FSFolder currentFolder) {
-        def savedGroup = existingSolrFolderDocs.get(currentFolder.id)
+        def savedGroup = existingSolrFolderDocs?.get(currentFolder.id)
         return savedGroup
     }
 
@@ -245,7 +249,7 @@ class LocalFileSystemCrawler {
                     }
                 }
             }
-            if(fsFolder.size > 0){
+            if (fsFolder.size > 0) {
                 log.debug "\t\tfolder:($fsFolder) size: ${fsFolder.size}"
             } else {
                 log.info "\t\tfolder:($fsFolder) size: ${fsFolder.size}"

@@ -176,7 +176,7 @@ class BaseCrawler {
                                 //todo -- ignore jar files, as they are likely numerous, and we really don't care about their contents...? (for java developers especially)
                                 List<SavableObject> archEntries = ((FSFile) fSFile).gatherArchiveEntries()
                                 def responseArch = persistenceClient.saveObjects(archEntries)
-                                log.debug "\t\tSolr response saving archive entries: $responseArch"
+                                log.debug "\t\t====Solr response saving archive entries: $responseArch --  -- from fsFile:($fSFile)"
                             }
                         }
                         log.debug "\t\tArhive files in folder($currentFolder): $archiveFiles"

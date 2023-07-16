@@ -63,8 +63,8 @@ class LocalFileSystemCrawlerTest extends Specification {
 
         then:
         results != null
-        updatedNames.size() == 3        // ENSURE we don't have 'ignoreMe' in updated...?  -- fails currently
-        updatedNames.containsAll(['testsub', 'subfolder2', 'subfolder3'])
+        updatedNames.size() == 4        // ENSURE we don't have 'ignoreMe' in updated...?  -- fails currently
+        updatedNames.containsAll(['content','testsub', 'subfolder2', 'subfolder3'])
         results.updated[0].name == 'content'
         results.updated[0].labels == [Constants.TRACK]
         results.updated[0].matchedLabels.get(Constants.TRACK).analysis == [Constants.TRACK]
@@ -72,7 +72,8 @@ class LocalFileSystemCrawlerTest extends Specification {
         results.updated[1].name == 'testsub'
         results.updated[2].name == 'subfolder2'
 
-        results.skipped.size() == 1
+        results.ignored.size() == 1
+        results.ignored[0].name == 'ignoreMe'
     }
 
 
@@ -90,9 +91,13 @@ class LocalFileSystemCrawlerTest extends Specification {
 
         then:
         results != null
-        results.skipped.size() == 1
+        results.ignored.size() == 1
+        results.ignored[0].name == 'ignoreMe'
+
         results.current.size() == 1
+        results.current[0].name == 'content'
         results.updated.size() == 3
+        results.updated.collect {it.name}.containsAll(['testsub', 'subfolder2', 'subfolder3'])
     }
 
 

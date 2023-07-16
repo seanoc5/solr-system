@@ -11,14 +11,9 @@ import spock.lang.Specification
 class SolrDifferenceCheckerTest extends Specification {
     String locationName = 'spock'
     String crawlName = 'test'
-//    Pattern ignoreItems = Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE]
-//    Pattern ignoreGroups = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]
-
 
     File startFolder = new File(getClass().getResource('/content').toURI())
     FSFolder fsFolder = new FSFolder(startFolder, null, locationName, crawlName)
-//    Map<String, Object> fieldsMap = ["${SolrSystemClient.FLD_ID}": fsFolder.id, "${SolrSystemClient.FLD_TYPE}": "${FSFolder.TYPE}", "${SolrSystemClient.FLD_PATH_S}": '/content', "${SolrSystemClient.FLD_LAST_MODIFIED}": fsFolder.lastModifiedDate]
-//    SolrDocument solrDoc = new SolrDocument(fieldsMap)
 
     def "check when objects should be current"() {
         given:
@@ -34,7 +29,7 @@ class SolrDifferenceCheckerTest extends Specification {
         SolrDifferenceChecker solrChecker = new SolrDifferenceChecker()
 
         when:
-//        BaseDifferenceStatus solrStatus = new BaseDifferenceStatus(crawledGroup, savedGroup)
+        BaseDifferenceStatus solrStatus = new BaseDifferenceStatus(fsFolder, sameSolrDoc)
         BaseDifferenceStatus status = solrChecker.compareCrawledGroupToSavedGroup(fsFolder, sameSolrDoc, solrStatus)
 
         then:
@@ -63,7 +58,7 @@ class SolrDifferenceCheckerTest extends Specification {
         BaseDifferenceChecker differenceChecker = new BaseDifferenceChecker()
 
         when:
-        BaseDifferenceStatus status = differenceChecker.compareCrawledGroupToSavedGroup(fsFolder, diffSolrDoc, new BaseDifferenceStatus(crawledGroup, savedGroup))
+        BaseDifferenceStatus status = differenceChecker.compareCrawledGroupToSavedGroup(fsFolder, diffSolrDoc, new BaseDifferenceStatus(fsFolder, diffSolrDoc))
 
         then:
         status != null
