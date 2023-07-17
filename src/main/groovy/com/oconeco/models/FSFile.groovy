@@ -29,12 +29,13 @@ class FSFile extends FSObject {
     Logger log = LogManager.getLogger(this.class.name)
     public static final String TYPE = 'File'
     String extension
-    String mimeType
-    String owner
+//    String mimeType
+//    String owner
 
-    String osName
+//    String osName
     Integer ARCHIVE_STATUS_SIZE = 1000
-    public Pattern FAKE_ARCHIVE_PATTERN = ~/.*(doc|xls|ppt)x/
+    // todo move this code out of FSFile into analyzer??
+    public Pattern IGNORE_ARCHIVE_PATTERN = ~/.*(bundle|concepts|deb|dmg|exe|iso|jar|o[dt]t|pages|pkg|rpm|war)|(|doc|xls|ppt)x?/
 
 
     /**
@@ -55,7 +56,7 @@ class FSFile extends FSObject {
         // todo -- more here -- also check FSFolder object, and analyze() method,
         extension = FilenameUtils.getExtension(f.name)
         log.debug "File(${this.toString()})"
-        archive = isArchive()
+        archive = isArchive()       // todo move this code out of FSFile into analyzer??
         if (archive) {
             log.debug "\t\tfound archive file: $this"
         }
@@ -105,7 +106,7 @@ class FSFile extends FSObject {
         File f = this.thing
         if (f.exists() && f.canRead()) {
             if (f.size() > 0) {
-                if (extension ==~ FAKE_ARCHIVE_PATTERN) {
+                if (extension ==~ IGNORE_ARCHIVE_PATTERN) {
                     log.debug "\t\t~~~~This($this) is a 'fake' archive, probably a single  composit (zipped) office doc"
                     archive = false
                 } else {
@@ -125,7 +126,7 @@ class FSFile extends FSObject {
                     }
                 }
             } else {
-                log.debug "\t\t ------ File (${f.name}) has no size, not an archive: ${f.absolutePath}"
+                log.info "\t\t ------ File (${f.name}) has no size, not an archive: ${f.absolutePath}"
             }
         } else {
             log.warn "File ($f) does not exist, or cannot be read: ${f.absolutePath}"
