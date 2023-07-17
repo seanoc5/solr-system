@@ -70,8 +70,9 @@ namePatterns {
 
 
     files = [
-            (Constants.IGNORE): [pattern: ~/(?i)([.~]*lock.*|_.*|.*\bte?mp|.*\.class|.*\.pem|skipme.*)/, analysis: Constants.IGNORE_BUNDLE],
-            office            : [pattern: ~/.*\.(?i)(accdb|do[ct]x?|ics|ods|odp|odt|ott|pages|pptx?|rtf|sxi|vsdx?|xmind|xlsx?)/, analysis: Constants.PARSE_BUNDLE],
+            (Constants.IGNORE): [pattern: ~/(?i)([_.~]+lock.*|[#_~].*|.*\bte?mp|.*\.class)/, analysis: Constants.IGNORE_BUNDLE],
+//            (Constants.IGNORE): [pattern: ~/(?i)([_.~]+lock.*|[#_~].*|.*\bte?mp|.*\.class|.*\.pem|skipme.*)/, analysis: Constants.IGNORE_BUNDLE],
+            office            : [pattern: ~/.*\.(?i)(accdb|do[ct]x?|ics|ods|odp|odt|ott|pages|pdf|pptx?|rtf|sxi|vsdx?|xmind|xlsx?)/, analysis: Constants.PARSE_BUNDLE],
             system            : [pattern: ~/.*(\.(?i)(bin|bundle|cab|deb|dmg|exe|jar|lib|md5|pkg|rpm|so)|(gcc.*))/, analysis: Constants.TRACK_BUNDLE],
             web               : [pattern: ~/.*(?i)(html?)/, analysis: Constants.PARSE_BUNDLE],
             instructions      : [pattern: ~'(?i).*(adoc|readme.*|md)', analysis: Constants.PARSE_BUNDLE],
@@ -81,6 +82,7 @@ namePatterns {
             archives          : [pattern: ~/.*(?i)(bz2|cab|dmg|ear|img|iso|msi|rar|tar.gz|tgz|war)/, analysis: Constants.TRACK_BUNDLE],
             media             : [pattern: ~/.*(?i)(avi|bmp|gif|ico|jpe?g|kra|mp3|mpe?g|ogg|png|wav)/, analysis: Constants.PARSE_BUNDLE],
             communication     : [pattern: ~/.*(?i)(eml|vcf)/, analysis: Constants.PARSE_BUNDLE],
+            logs              : [pattern: ~/.*(?i)\.log([.\d_-]+)?/, analysis: Constants.TRACK_BUNDLE],
             (Constants.TRACK) : [pattern: null, analysis: Constants.TRACK_BUNDLE],
     ]
 }

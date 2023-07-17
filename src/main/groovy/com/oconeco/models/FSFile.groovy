@@ -105,7 +105,7 @@ class FSFile extends FSObject {
 
         File f = this.thing
         if (f.exists() && f.canRead()) {
-            if (f.size() > 0) {
+            if (f.size() > 5) {         // todo - revisit what is the minimum size to test against, picking 5 as a starting point...
                 if (extension ==~ IGNORE_ARCHIVE_PATTERN) {
                     log.debug "\t\t~~~~This($this) is a 'fake' archive, probably a single  composit (zipped) office doc"
                     archive = false
@@ -126,7 +126,7 @@ class FSFile extends FSObject {
                     }
                 }
             } else {
-                log.info "\t\t ------ File (${f.name}) has no size, not an archive: ${f.absolutePath}"
+                log.debug "\t\t ------ File (${f.name}) is too small to check (size:${this.size}), assuming not an actual archive: ${f.absolutePath}"
             }
         } else {
             log.warn "File ($f) does not exist, or cannot be read: ${f.absolutePath}"

@@ -133,13 +133,13 @@ class BaseAnalyzer {
     def analyze(List<SavableObject> objectList) {
 //        log.debug "\t\tAnalyze list (size: ${objectList.size()}) -- first object: ${objectList[0]}"
         List<Map<String, Map<String, Object>>> results = []
-        log.info "\t\tAnalyze list (size: ${objectList.size()}) objects: $objectList"
+        log.debug "\t\tAnalyze children SavableObjects list (size: ${objectList?.size()})"
         objectList.each { SavableObject object ->
             if (object.groupObject) {
                 log.debug "\t\tskip analyzing child group object:($object) -- it will be handled in a parent processing call..."
             } else {
-                log.info "analyze object:($object)"
                 Map<String, Map<String, Object>> analysisResults = analyze(object)
+                log.debug "\t\t analyzed object:($object) -- results:($analysisResults)"
                 results << analysisResults
             }
         }
@@ -469,7 +469,7 @@ class BaseAnalyzer {
                         if (content) {
                             object.content = content
                             object.contentSize = content.size()
-                            log.info "\t\t$object) Content, size(${content.size()})"
+                            log.debug "\t\t$object) Content size:(${content.size()})"
                         } else {
                             if (object.mimeType?.containsIgnoreCase('image')) {
                                 log.debug "\t\tno content for object:($object) which is mimetype:(${object.mimeType}) - no content really expected..."
@@ -492,7 +492,7 @@ class BaseAnalyzer {
             }
             long end = System.currentTimeMillis()
             long elapsed = end - start
-            log.info "\t\t....parse(object:$object) -- Elapsed time: ${elapsed}ms (${elapsed / 1000} sec)"
+            log.info "\t\t....parse(object:$object) -- (content size:${content?.size()}) -- Elapsed time: ${elapsed}ms (${elapsed / 1000} sec)"
 
         } else {
             log.info "\t\t\t\tno size for object.thing (${object.thing} -- size:${object.size}) to analyze (zero-len object/file??), skipping 'parse' analysis "

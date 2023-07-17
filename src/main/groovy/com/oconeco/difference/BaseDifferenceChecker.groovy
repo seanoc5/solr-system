@@ -41,12 +41,8 @@ class BaseDifferenceChecker {
 
                 } else if (status.differentDedups) {
                     shouldUpdatePersistence = true
-//                    String objDedup = status.object.dedup
-//                    String solrDedup = status.savedDocument.getFirstValue(SolrSystemClient.FLD_DEDUP)
                     msg = "different dedups, flagging for update ($status.differences)"
-                    // todo -- fixme refactor to better message
-//                    msg = "different dedups, flagging for update (FSFolder: ${objDedup}) != (solrdedup: $solrDedup)"
-                    log.info "\t\t--$msg: $status"
+                    log.debug "\t\t--$msg: $status"
 
                 } else if (status.differentSizes) {
                     shouldUpdatePersistence = true
@@ -142,7 +138,7 @@ class BaseDifferenceChecker {
                 } else if (crawledLastModified > savedLastModified) {
                     msg = "crawledGroup (${crawledGroup.path}) is newer ($crawledLastModified) than solr folder ($savedLastModified)"
                     status.differences << msg
-                    log.info "\t\t>>>>${msg}"
+                    log.debug "\t\t>>>>${msg}"
                     status.differentLastModifieds = true
                     status.sourceIsNewer = true
                     status.significantlyDifferent = true
@@ -158,14 +154,14 @@ class BaseDifferenceChecker {
 
                 Long savedSize = (Long) getSavedSize(savedGroup)
                 if (crawledGroup.size == savedSize) {
-                    msg = "Same sizes, fsfolder: ${crawledGroup.size} != saved: $savedSize"
+                    msg = "Same sizes, fsfolder: ${crawledGroup.size} == saved: $savedSize"
                     log.debug "\t\t${msg}"
                     status.similarities << msg
                     status.differentSizes = false
                 } else {
                     status.differentSizes = true
                     msg = "Different sizes, fsfolder(${crawledGroup.path}): ${crawledGroup.size} != saved: $savedSize (${crawledGroup.size - savedSize})"
-                    log.info "\t\t>>>>$msg"
+                    log.debug "\t\t>>>>$msg"
                     status.differences << msg
                     status.significantlyDifferent = true
                 }
@@ -179,7 +175,7 @@ class BaseDifferenceChecker {
                 } else {
                     status.differentDedups = true
                     msg = "Different dedups (${crawledGroup.path}), fsfolder: ${crawledGroup.dedup} != saved: $savedDedup"
-                    log.info "\t\t>>>>$msg"
+                    log.debug "\t\t>>>>$msg"
                     status.differences << msg
                     status.significantlyDifferent = true
                 }

@@ -111,7 +111,7 @@ class LocalFileSystemCrawler {
         def doPreDir = {
             cnt++
             File f = it
-            log.info "====PRE dir:  $it"
+            log.info "\t====PRE dir:  $it"
             FileVisitResult fvr = FileVisitResult.CONTINUE      // set default to continue/process
             boolean accessible = f.exists() && f.canRead() && f.canExecute()
 
@@ -128,7 +128,6 @@ class LocalFileSystemCrawler {
                     log.debug "\t\t----Not ignorable folder: $currentFolder"
                     fvr = FileVisitResult.CONTINUE
                     def rc = crawlFolderFiles(currentFolder, analyzer)
-                    // rc = currentFolder.buildDedupString()       // create dedup AFTER we have collected relevant file sizes already done in crawlFolderFiles() ???
 
                     //Note compareFSFolderToSavedDocMap will save diff status in object, for postDir assessment/analysis
                     Iterable savedGroup = findMatchingSavedGroup(existingSolrFolderDocs, currentFolder)
@@ -153,20 +152,15 @@ class LocalFileSystemCrawler {
 
                         log.info "\t....process archive files (count:${archiveFiles.size()}) for folder ($currentFolder)...."
                         archiveFiles.each { FSFile fSFile ->
-                            if (fSFile.extension.equalsIgnoreCase('jar')) {
-                                log.info "\t\t----skipping jar files for archive entry analysis: $fSFile"
-                            } else {
-                                //todo -- ignore jar files, as they are likely numerous, and we really don't care about their contents...? (for java developers especially)
-                                List<SavableObject> archEntries = ((FSFile) fSFile).gatherArchiveEntries()
-                                def responseArch = persistenceClient.saveObjects(archEntries)
-                                log.info "\t\t====Solr response saving archive entries: $responseArch (arch entries count: ${archEntries?.size()}) -- from fsFile:($fSFile)"
-                            }
+                            List<SavableObject> archEntries = ((FSFile) fSFile).gatherArchiveEntries()
+                            def responseArch = persistenceClient.saveObjects(archEntries)
+                            log.info "\t\t====Solr response saving archive entries: $responseArch (arch entries count: ${archEntries?.size()}) -- from fsFile:($fSFile)"
                         }
                         log.debug "\t\tArhive files in folder($currentFolder): $archiveFiles"
 
 
                     } else {
-                        log.info "\t\tdetermined we do NOT need to update: $currentFolder -- diffStatus:($diffStatus)"
+                        log.info "\t\t\t____determined we do NOT NEED TO UPDATE: $currentFolder -- diffStatus:($diffStatus)"
                         results.current << currentFolder
                         //            log.info "\t\t$cnt) no need to update for currentFolder:($currentFolder) -- diffStatus:($differenceStatus) -- source current with saved version"
                     }
@@ -201,8 +195,8 @@ class LocalFileSystemCrawler {
     }
 
 
-    public Iterable findMatchingSavedGroup(Map<String, SolrDocument> existingSolrFolderDocs, FSFolder currentFolder) {
-        def savedGroup = existingSolrFolderDocs?.get(currentFolder.id)
+    Map findMatchingSavedGroup(Map<String, SolrDocument> existingSolrFolderDocs, FSFolder currentFolder) {
+        SolrDocument savedGroup = existingSolrFolderDocs?.get(currentFolder.id)
         return savedGroup
     }
 
