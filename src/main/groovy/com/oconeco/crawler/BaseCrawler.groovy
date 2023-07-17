@@ -117,13 +117,13 @@ class BaseCrawler {
             boolean shouldIgnore = analyzer.shouldIgnore(currentFolder)
 
             if (accessible) {
+                rc = currentFolder.buildDedupString()       // create dedup AFTER we have collected relevant file sizes
                 if (shouldIgnore) {
                     log.info "\t\t----IGNORABLE folder:($currentFolder) matchedLabels:($currentFolder.matchedLabels)"
                     fvr = FileVisitResult.SKIP_SUBTREE
                 } else {
                     log.debug "\t\t----Not ignorable folder: $currentFolder"
                     def rc = crawlFolderFiles(currentFolder, analyzer)
-                    rc = currentFolder.buildDedupString()       // create dedup AFTER we have collected relevant file sizes
 
                     //Note compareFSFolderToSavedDocMap will save diff status in object, for postDir assessment/analysis
                     BaseDifferenceStatus diffStatus = differenceChecker.compareCrawledDocToSavedDoc(currentFolder, existingSolrFolderDocs)
