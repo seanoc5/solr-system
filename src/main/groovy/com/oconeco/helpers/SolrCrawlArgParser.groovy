@@ -72,10 +72,10 @@ String solrArg = options.solrUrl
         if (options.solrUrl) {
             if(solrArg.endsWith('solr')) {
                 config.solrUrl = solrArg + '/' + Constants.DEFAULT_APP_NAME
-                log.warn "\t\tUsing Solr url from Command line (overriding config file): ${options.solrUrl} (NOTE: added default app name:(${Constants.DEFAULT_APP_NAME})"
+                log.info "\t\tUsing Solr url from Command line (overriding config file): ${options.solrUrl} (NOTE: added default app name:(${Constants.DEFAULT_APP_NAME})"
             } else if(solrArg.endsWith('solr/')){
                 config.solrUrl = solrArg + Constants.DEFAULT_APP_NAME
-                log.warn "\t\tUsing Solr url from Command line (overriding config file): ${options.solrUrl} (NOTE: added default app name:(${Constants.DEFAULT_APP_NAME})"
+                log.info "\t\tUsing Solr url from Command line (overriding config file): ${options.solrUrl} (NOTE: added default app name:(${Constants.DEFAULT_APP_NAME})"
             } else {
                 log.info "\t\tUsing Solr url from Command line (overriding config file): ${options.solrUrl}"
                 config.solrUrl = options.solrUrl

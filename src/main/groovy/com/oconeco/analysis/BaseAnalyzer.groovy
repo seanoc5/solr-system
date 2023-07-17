@@ -12,6 +12,7 @@ import org.apache.tika.metadata.Metadata
 //import org.apache.logging.log4j.core.Logger
 
 import org.apache.tika.parser.AutoDetectParser
+import org.apache.tika.parser.ParseContext
 import org.apache.tika.parser.Parser
 import org.apache.tika.sax.BodyContentHandler
 
@@ -55,6 +56,7 @@ class BaseAnalyzer {
 
     Parser tikaParser = null
     BodyContentHandler tikaBodyHandler = null
+    int MAX_BODY_CHARS = 1000 * 1000 * 1000 * 10
 
 
     /**
@@ -82,7 +84,8 @@ class BaseAnalyzer {
         Map<String, Object> gnm = groupNameMap[Constants.IGNORE]
         if (gnm) {
             ignoreGroup = gnm.pattern
-            this.groupNameMap = groupNameMap.findAll { it.key != Constants.IGNORE }     // todo -- consider just a map-remove op??
+            this.groupNameMap = groupNameMap.findAll { it.key != Constants.IGNORE }
+            // todo -- consider just a map-remove op??
             log.debug "\t\tFound special ignoreGroup entry ($ignoreGroup), setting to Analyzer prop: 'ignoreGroup' and removing from groupNameMap ($groupNameMap) "
         } else {
             this.groupNameMap = groupNameMap
@@ -110,8 +113,8 @@ class BaseAnalyzer {
 
         if (tikaParser) {
             this.tikaParser = tikaParser
-        } else{
-            this.tikaParser =  new AutoDetectParser();
+        } else {
+            this.tikaParser = new AutoDetectParser();
         }
         if (tikaBodyHandler) {
             this.tikaBodyHandler = tikaBodyHandler
@@ -132,8 +135,13 @@ class BaseAnalyzer {
         List<Map<String, Map<String, Object>>> results = []
         log.info "\t\tAnalyze list (size: ${objectList.size()}) objects: $objectList"
         objectList.each { SavableObject object ->
-            Map<String, Map<String, Object>> analysisResults = analyze(object)
-            results << analysisResults
+            if (object.groupObject) {
+                log.debug "\t\tskip analyzing child group object:($object) -- it will be handled in a parent processing call..."
+            } else {
+                log.info "analyze object:($object)"
+                Map<String, Map<String, Object>> analysisResults = analyze(object)
+                results << analysisResults
+            }
         }
         return results
     }
@@ -203,7 +211,7 @@ class BaseAnalyzer {
     Map<String, Map<String, Object>> analyze(SavableObject object) {
         log.debug "analyze object: $object"
         if (object) {
-            if(object.archive){
+            if (object.archive) {
                 log.info "\t\t\t\tARCHIVE File: $object"
             }
 
@@ -245,11 +253,11 @@ class BaseAnalyzer {
     List doAnalysis(SavableObject object) {
         List results = []
         if (object) {
-            if(object.childGroups){
+            if (object.childGroups) {
                 def childResults = doAnalysisOnChildGroups(object.childGroups)
                 results.addAll(childResults)
             }
-            if(object.childItems){
+            if (object.childItems) {
                 def childResults = doAnalysisOnChildItems(object.childItems)
                 results.addAll(childResults)
             }
@@ -280,14 +288,14 @@ class BaseAnalyzer {
                 results = this.track(object)
                 break
             case 'parse':
-                log.info "\t\t....Do analysis named '$analysisName' on object $object (size:${object.size})"
+                log.debug "\t\t....Do analysis named '$analysisName' on object $object (size:${object.size})"
                 results = this.parse(object)
                 String mime = results?.metadata?.get('Content-Type')
-                if(mime){
-                    object.mimeType = mime
-                } else {
-                    log.info "\t\tcould not determine mime type for SavableObject:($object) -- analysisName: $analysisName"
-                }
+//                if(mime){
+//                    object.mimeType = mime
+//                } else {
+//                    log.info "\t\tcould not determine mime type for SavableObject:($object) -- analysisName: $analysisName"
+//                }
                 break
 //            case 'default':
 //                log.info "Do analysis named 'default' on object $object"
@@ -311,7 +319,7 @@ class BaseAnalyzer {
      * @return
      */
     List doAnalysisOnChildGroups(List<SavableObject> children) {
-        List results = children.collect{doAnalysis(it)}
+        List results = children.collect { doAnalysis(it) }
     }
 
     /**
@@ -320,15 +328,15 @@ class BaseAnalyzer {
      * @return
      */
     List doAnalysisOnChildItems(List<SavableObject> children) {
-        List results = children.collect{doAnalysis(it)}
+        List results = children.collect { doAnalysis(it) }
     }
 
 
     /**
- * Based on if SavableObject is a group/wrapper (ie. folder) or an individual item (i.e. File) check the relevant label maps and add all those labels (keys) that match (based on name regex, and optionally path regex)
- * @param object SavableObject to check (name, optional path)
- * @return all matching map entries, focused on entry keys which become item labels in solr (or other persistence???)
- */
+     * Based on if SavableObject is a group/wrapper (ie. folder) or an individual item (i.e. File) check the relevant label maps and add all those labels (keys) that match (based on name regex, and optionally path regex)
+     * @param object SavableObject to check (name, optional path)
+     * @return all matching map entries, focused on entry keys which become item labels in solr (or other persistence???)
+     */
     Map<String, Map<String, Object>> applyLabelMaps(SavableObject object) {
         Map<String, Map<String, Object>> results = [:]
         log.debug "\t\tapplyLabelMaps: $object"
@@ -359,12 +367,12 @@ class BaseAnalyzer {
 
 
     /**
- * Based on if SavableObject is a group/wrapper (ie. folder) or an individual item (i.e. File) check the relevant label maps and add all those labels (keys) that match (based on name regex, and optionally path regex)
- * @param object SavableObject to check (name, optional path)
- * @param name explicit label to be added to object (in solr...)
- * @param labelMap the child map which should have 'pattern' and 'analysis' values
- * @return all matching map entries, focused on entry keys which become item labels in solr (or other persistence???)
- */
+     * Based on if SavableObject is a group/wrapper (ie. folder) or an individual item (i.e. File) check the relevant label maps and add all those labels (keys) that match (based on name regex, and optionally path regex)
+     * @param object SavableObject to check (name, optional path)
+     * @param name explicit label to be added to object (in solr...)
+     * @param labelMap the child map which should have 'pattern' and 'analysis' values
+     * @return all matching map entries, focused on entry keys which become item labels in solr (or other persistence???)
+     */
     Map<String, Map<String, Object>> applyLabels(SavableObject object, String name, Map<String, Map<String, Object>> labelMap) {
         Map<String, Map<String, Object>> matchingLabels = [:]
         log.debug "\t\tapplyLabels: name($name) -> object($object)"
@@ -376,7 +384,7 @@ class BaseAnalyzer {
                 Matcher matcher = pattern.matcher(name)
 //                if (name ==~ pattern) {
                 if (matcher.matches()) {
-                    if(matcher.groupCount()>0) {
+                    if (matcher.groupCount() > 0) {
                         String s = matcher.group(1)
                         mapVal.put(Constants.LABEL_MATCH, s)
                     } else {
@@ -427,7 +435,7 @@ class BaseAnalyzer {
      */
     Map parse(SavableObject object) {
         Map results = [:]
-        if (object.size>0) {
+        if (object.size > 0) {
             String content
             Metadata metadata
             log.debug "\t\t....parse(object:$object) starting..."
@@ -437,21 +445,38 @@ class BaseAnalyzer {
                 try (InputStream inputStream = object.thing.newInputStream()) {
                     if (inputStream) {
                         metadata = new Metadata();
-                        tikaParser.parse(inputStream, tikaBodyHandler, metadata);
+                        BodyContentHandler handler = new BodyContentHandler(MAX_BODY_CHARS)     // todo -- switch approach, to proper handler
+                        ParseContext context = new ParseContext();
+                        tikaParser.parse(inputStream, handler, metadata, context);
 
                         if (metadata) {
                             log.debug "metadata: $metadata"
                             object.metadata = metadata
+                            String ctype = metadata.get('Content-Type')
+                            if (ctype) {
+                                if (!object.mimeType) {
+                                    object.mimeType = ctype
+                                    log.debug "\t\tsetting object ($object) mimetype to tika Content type:($ctype)"
+
+                                } else {
+                                    log.debug "\t\tobject ($object) mimetype already set:(${object.mimeType}) -- same as tika Content type?($ctype)??"
+                                }
+                            }
                         } else {
                             log.warn "No metadata? $srcfile -- meta: $metadata"
                         }
-                        content = tikaBodyHandler.toString()
+                        content = handler.toString()
                         if (content) {
                             object.content = content
                             object.contentSize = content.size()
                             log.info "\t\t$object) Content, size(${content.size()})"
                         } else {
-                            log.info "\t\tno content found for SavableObject:($object) in parse(object) method"
+                            if (object.mimeType?.containsIgnoreCase('image')) {
+                                log.debug "\t\tno content for object:($object) which is mimetype:(${object.mimeType}) - no content really expected..."
+                            } else {
+                                log.info "\t\tno content found for SavableObject:($object) in parse(object) method -- mimetype:(${object.mimeType})"
+
+                            }
                         }
                     } else {
                         log.warn "No input Stream?)"

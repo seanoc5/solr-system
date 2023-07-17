@@ -2,7 +2,7 @@ package com.oconeco.difference
 
 import com.oconeco.models.FSObject
 import com.oconeco.persistence.SolrSystemClient
-import org.apache.commons.lang3.time.DateUtils
+//import org.apache.commons.lang3.
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.core.Logger
 import org.apache.solr.common.SolrDocument
