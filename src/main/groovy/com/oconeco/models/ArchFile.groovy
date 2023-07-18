@@ -62,6 +62,8 @@ class ArchFile extends SavableObject {
         Long aesize = ae.getSize()
         if (aesize >= 0) {
             size = aesize
+            String d = buildDedupString()
+            log.debug "\t\tbuilt dedup String: $d in archive constructor: $this"
         } else if (ae instanceof ZipArchiveEntry) {
             log.info "\t\t no size for archive file: ${this}"
         } else {
@@ -131,8 +133,8 @@ class ArchFile extends SavableObject {
      */
     @Override
     String buildDedupString() {
-        String s = FSFile.TYPE + ':' + name + '::' + size
-        return s
+        dedup = FSFile.TYPE + ':' + name + '::' + size
+        return dedup
     }
 
 

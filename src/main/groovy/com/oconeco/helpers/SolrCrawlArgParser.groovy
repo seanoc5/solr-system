@@ -47,7 +47,7 @@ class SolrCrawlArgParser {
         }
 
         String configLocation = options.config
-        if(configLocation) {
+        if (configLocation) {
             log.info "Config location: $configLocation"
         } else {
             configLocation = './configs/configLocate.groovy'
@@ -68,12 +68,12 @@ class SolrCrawlArgParser {
 //            URL cfgUrl = cl.getResource(configLocation)
         }
 
-String solrArg = options.solrUrl
+        String solrArg = options.solrUrl
         if (options.solrUrl) {
-            if(solrArg.endsWith('solr')) {
+            if (solrArg.endsWith('solr')) {
                 config.solrUrl = solrArg + '/' + Constants.DEFAULT_APP_NAME
                 log.info "\t\tUsing Solr url from Command line (overriding config file): ${options.solrUrl} (NOTE: added default app name:(${Constants.DEFAULT_APP_NAME})"
-            } else if(solrArg.endsWith('solr/')){
+            } else if (solrArg.endsWith('solr/')) {
                 config.solrUrl = solrArg + Constants.DEFAULT_APP_NAME
                 log.info "\t\tUsing Solr url from Command line (overriding config file): ${options.solrUrl} (NOTE: added default app name:(${Constants.DEFAULT_APP_NAME})"
             } else {

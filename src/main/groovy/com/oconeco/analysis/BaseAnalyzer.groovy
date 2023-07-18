@@ -214,6 +214,12 @@ class BaseAnalyzer {
             if (object.archive) {
                 log.info "\t\t\t\tARCHIVE File: $object"
             }
+            if(object.dedup) {
+                log.debug "\t\talready have dedup string:(${object.dedup}) in object:($object)"
+            } else {
+                String dd = object.buildDedupString()
+                log.debug "\t\tBuilt dedup string:($dd) in analyze($object) call "
+            }
 
             if (shouldIgnore(object)) {
                 log.info "\t\t....Ignore object ($object) (skipping majority of `analyze(object)` method"
