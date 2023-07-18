@@ -487,6 +487,9 @@ class BaseAnalyzer {
                     } else {
                         log.warn "No input Stream?)"
                     }
+
+                } catch (FileNotFoundException fne) {
+                    log.error "File not found exception: $fne -- object:${object}"
                 } catch (NoSuchFieldError nsfe) {
                     log.error "Tika exception: $nsfe -- object:${object}"
                 } catch (TikaException tikaException) {
