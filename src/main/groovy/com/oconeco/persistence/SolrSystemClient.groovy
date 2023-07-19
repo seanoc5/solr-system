@@ -195,6 +195,7 @@ class SolrSystemClient extends BaseClient {
 
             } catch (SolrServerException sse) {
                 log.error "Solr server exception: $sse"
+                throw sse
             }
         } else {
             log.info "No objects passed to saveObjects($objects), skipping..."
