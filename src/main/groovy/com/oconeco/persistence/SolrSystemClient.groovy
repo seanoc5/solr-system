@@ -42,7 +42,11 @@ class SolrSystemClient extends BaseClient {
     public static String FLD_TAG_SS = "tag_ss"
     public static String FLD_LABELS = "label_ss"
     public static String FLD_OS_NAME = "operatingSystem_s"
-//    public static String FLD_ = ""
+    public static String FLD_CHILDREN_NAMES = "childrenNames_txt_en"
+    public static String FLD_CHILDREN_LABELS = "childrenLabels_ss"
+    public static String FLD_CHILD_GROUP_NAMES = "childrGroupNames_txt_en"
+    public static String FLD_CHILD_GROUP_LABELS = "childrenGroupLabels_ss"
+
     public static String FLD_MATCHED_LABELS = "matchedLabels_ss"
 
     public static String FLD_CONTENT_BODY = 'content_txt_en'

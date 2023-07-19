@@ -44,10 +44,9 @@ class FSFolder extends FSObject {
         return sid
     }
 
-    List<SavableObject> gatherSavableObjects(){
-        List<SavableObject> list = this.childGroups + childItems
-        list.add(this)
-        return list
+    List<SavableObject> gatherAnalyzableThings(){
+        List<SavableObject> savableThings = this.childItems + this
+        return savableThings
     }
 
 }

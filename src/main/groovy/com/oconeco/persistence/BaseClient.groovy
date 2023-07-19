@@ -23,9 +23,9 @@ class BaseClient {
             FLD_SIZE,
             FLD_DEDUP,
             FLD_PATH_S,
+            FLD_TYPE,
             FLD_LOCATION_NAME,
             FLD_INDEX_DATETIME,
-//            SolrSystemClient.FLD_,
     ]
 
     BaseClient() {

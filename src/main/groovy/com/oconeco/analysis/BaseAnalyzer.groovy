@@ -220,7 +220,7 @@ class BaseAnalyzer {
                 log.debug "\t\talready have dedup string:(${object.dedup}) in object:($object)"
             } else {
                 String dd = object.buildDedupString()
-                log.debug "\t\tBuilt dedup string:($dd) in analyze($object) call "
+                log.warn "\t\tBuilt dedup string:($dd) in analyze($object) call "
             }
 
             if (shouldIgnore(object)) {
@@ -443,7 +443,7 @@ class BaseAnalyzer {
         if (object.size > 0) {
             String content
             Metadata metadata
-            log.debug "\t\t....parse(object:$object) starting..."
+            log.debug "\t\tparse(object:$object) starting..."
             long start = System.currentTimeMillis()
 
             if (tikaBodyHandler && tikaParser) {

@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.core.Logger
 import org.apache.solr.common.SolrInputDocument
 import org.apache.tika.metadata.Metadata
+
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -97,7 +98,6 @@ abstract class SavableObject {
     Map<String, Map<String, Object>> matchedLabels = [:]
 
 
-
     /**
      * More common constrcutor - set the source thing, as well as depth (descendent object will add find & the other details
      * @param thing -(file, folder, bookmark, url,...)
@@ -141,6 +141,37 @@ abstract class SavableObject {
             log.warn "No crawl name given: ${this}"
         }
 
+        if (childItems) {
+            StringBuilder sbChildNames = new StringBuilder()
+            StringBuilder sbChildLabels = new StringBuilder()
+            this.childItems.each {
+                sbChildNames.append(it.name + '\n')
+                if (it.labels) {
+                    sbChildLabels.append(it.labels.join('\n') + '\n')
+                }
+            }
+            sid.addField(SolrSystemClient.FLD_CHILDREN_NAMES, sbChildNames.toString())
+            sid.addField(SolrSystemClient.FLD_CHILDREN_LABELS, sbChildLabels.toString())
+        } else {
+            log.debug "\t\tno child items for object:($this)"
+        }
+
+        if (childGroups) {
+            StringBuilder sbChildGroupNames = new StringBuilder()
+//            StringBuilder sbChildGroupLabels = new StringBuilder()
+            this.childGroups.each {
+                sbChildGroupNames.append(it.name + '\n')
+//                if (it.labels) {
+//                    sbChildGroupLabels.append(it.labels.join('\n'))
+//                }
+            }
+            sid.addField(SolrSystemClient.FLD_CHILD_GROUP_NAMES, sbChildGroupNames.toString())
+//            sid.addField(SolrSystemClient.FLD_CHILD_GROUP_LABELS, sbChildGroupLabels.toString())
+        } else {
+            log.debug "\t\tno child groups for this($this)"
+        }
+
+
         sid.setField(SolrSystemClient.FLD_CREATED_DATE, createdDate)
 
         // todo -- consider switching to a batch time, rather than creating a new timestamp for each doc
@@ -165,15 +196,15 @@ abstract class SavableObject {
             sid.setField(SolrSystemClient.FLD_PARENT_ID, parentId)
         }
 
-        if(content){
+        if (content) {
             sid.setField(SolrSystemClient.FLD_CONTENT_BODY, content)
-            if(contentSize) {
+            if (contentSize) {
                 sid.setField(SolrSystemClient.FLD_CONTENT_BODY_SIZE, contentSize)
             } else {
                 sid.setField(SolrSystemClient.FLD_CONTENT_BODY_SIZE, content.size())
             }
         }
-        if(metadata){
+        if (metadata) {
             sid.setField(SolrSystemClient.FLD_METADATA, metadata)
         }
 
@@ -192,8 +223,8 @@ abstract class SavableObject {
 //            log.warn "\t\t.....Cannot reliably build a dedup string, missing type:$type, or name:$name, or size:$size"
         }
 
-        if(matchedLabels){
-            sid.setField(SolrSystemClient.FLD_MATCHED_LABELS, matchedLabels.toString())
+        if (matchedLabels) {
+            sid.setField(SolrSystemClient.FLD_MATCHED_LABELS, matchedLabels.keySet())
         }
 
         return sid
@@ -206,14 +237,14 @@ abstract class SavableObject {
      */
     String buildDedupString() {
         String prevDedup = dedup
-        if(type && name && size != null) {
+        if (type && name && size != null) {
             log.debug "\t\tgood params for dedup: (type && name && size != null): (type:$type  name:$name  size:$size)"
         } else {
             log.warn "Something is null: (type && name && size == null): (type:$type  name:$name  size:$size)"
         }
-        dedup = SavableObject.buildDedupString(type, name , size)
-        if(prevDedup){
-            if(!prevDedup.equalsIgnoreCase(dedup)) {
+        dedup = SavableObject.buildDedupString(type, name, size)
+        if (prevDedup) {
+            if (!prevDedup.equalsIgnoreCase(dedup)) {
                 log.info "\t\tAlready had a dedup:($prevDedup), it was DIFFERENT from new/current dedup ($dedup)?? "
             } else {
                 log.debug "\t\tAlready had a dedup:($prevDedup), same as new/current dedup ($dedup)?? "
@@ -237,8 +268,6 @@ abstract class SavableObject {
         String s = location + ':' + path
         return s
     }
-
-
 
 
     /**

@@ -154,7 +154,7 @@ class BaseCrawler {
                     BaseDifferenceStatus differenceStatus = differenceChecker.compareCrawledDocToSavedDoc(currentFolder, existingSolrFolderDocs)
                     boolean shouldUpdate = differenceChecker.shouldUpdate(differenceStatus)
                     if (shouldUpdate) {
-                        List<SavableObject> savableObjects = currentFolder.gatherSavableObjects()
+                        List<SavableObject> savableObjects = currentFolder.gatherSavablechildItems()
 
                         def doAnalysisresults = analyzer.analyze(savableObjects)
                         log.debug "\t\tdoAnalysisresults: $doAnalysisresults to currentFolder: $currentFolder"

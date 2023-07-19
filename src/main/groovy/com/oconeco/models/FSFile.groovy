@@ -35,7 +35,7 @@ class FSFile extends FSObject {
 //    String osName
     Integer ARCHIVE_STATUS_SIZE = 1000
     // todo move this code out of FSFile into analyzer??
-    public Pattern IGNORE_ARCHIVE_PATTERN = ~/.*(bundle|concepts|deb|dmg|exe|iso|jar|o[dt]t|pages|pkg|rpm|war)|(|doc|xls|ppt)x?/
+    public Pattern IGNORE_ARCHIVE_PATTERN = ~/.*(bundle|concepts|deb|dmg|exe|iso|jar|o[dt]t|pages|pkg|rpm|war)|(doc|xls|ppt)x/
 
 
     /**

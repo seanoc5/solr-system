@@ -16,6 +16,9 @@ import org.apache.logging.log4j.core.Logger
 Logger log = LogManager.getLogger(this.class.name);
 log.info "Start ${this.class.name}, with args: $args"
 
+// https://stackoverflow.com/questions/58180179/disable-pdfbox-logging-with-springboot-org-apache-commons-logging   ??? todo -- is there a better approach? probably
+java.util.logging.Logger.getLogger("org.apache.pdfbox").setLevel(java.util.logging.Level.OFF);
+
 // call the arg parser to read the config and return a merged config
 ConfigObject config = SolrCrawlArgParser.parse(this.class.simpleName, args)
 
@@ -52,7 +55,7 @@ crawlMap.each { String crawlName, String startPath ->
     }
 
     File startDir = new File(startPath)
-    def existingFolderSolrDocs = crawler.getSolrFolderDocs(crawlName)
+    def existingFolderSolrDocs = crawler.getSavedGroupDocs(crawlName)
     log.info "\t\tcrawl map item with label:'$crawlName' - startpath:'$startPath' -- numFound preCrawl: $numFoundPreCrawl -- existingSolrFolderDocs: ${existingFolderSolrDocs.size()}"
     Map<String, List<FSFolder>> crawlFolders = crawler.crawlFolders(crawlName, startDir, existingFolderSolrDocs, analyzer)
     if (crawlFolders.updated) {

@@ -137,12 +137,12 @@ class LocalFileSystemCrawler {
                     // note continue through tree, separate analysis of updating done later
                     if (shouldUpdate) {
                         log.info "\t\t----SHOULD UPDATE folder ($currentFolder) --differences:(${diffStatus.differences}) "
-                        List<SavableObject> savableObjects = currentFolder.gatherSavableObjects()
+                        List<SavableObject> savableObjects = currentFolder.gatherAnalyzableThings()
 
                         def doAnalysisresults = analyzer.analyze(savableObjects)
                         log.debug "\t\tdoAnalysisresults: $doAnalysisresults to currentFolder: $currentFolder"
                         // --------------- SAVE FOLDER AND CHILDREM
-                        def response = persistenceClient.saveObjects(savableObjects)
+                        def response = persistenceClient.saveObjects((savableObjects))
                         log.info "\t\t$cnt) ++++Save folder (${currentFolder.path}--depth:${currentFolder.depth}) -- Children count:(item:${currentFolder.childItems.size()} groups:${currentFolder.childGroups.size()}) -- Differences:${diffStatus.differences} -- response: $response"
                         results.updated << currentFolder
 
@@ -150,7 +150,7 @@ class LocalFileSystemCrawler {
                         // todo -- revisit how to avoid oome, each archive file could be huge, on top of a given (current)folder that might be huge... process archivefiles after folder, and release folder memory...?
                         List<FSObject> archiveFiles = ArchiveUtils.gatherArchiveObjects(currentFolder.childItems)
 
-                        if (archiveFiles?.size()>0) {
+                        if (archiveFiles?.size() > 0) {
                             log.info "\t....process archive files (count:${archiveFiles.size()}) for folder ($currentFolder)...."
                         } else {
                             log.debug "\t\t no archive files for current folder: $currentFolder"
@@ -215,7 +215,7 @@ class LocalFileSystemCrawler {
      * @return the folder's (newly added?) children
      */
     List<SavableObject> crawlFolderFiles(FSFolder fsFolder, BaseAnalyzer analyzer) {
-        log.debug "\t\t....call to crawlFolderFiles($fsFolder, ${analyzer.class.simpleName})..."
+        log.info "\t\t....call to crawlFolderFiles($fsFolder, ${analyzer.class.simpleName})..."
 //        Map<String, Map<String, Object>> results = [:]
         int countAdded = 0
         if (fsFolder.size) {
@@ -276,7 +276,7 @@ class LocalFileSystemCrawler {
         int d = 0
         Path reletivePath = startPath.relativize(f.toPath())
         String relPath = reletivePath.toString()
-        if(relPath > '') {
+        if (relPath > '') {
             d = reletivePath.getNameCount()
         }
         return d
@@ -284,20 +284,22 @@ class LocalFileSystemCrawler {
 
 
     /**
-     * get the 'folder' documents for a given crawler (i.e. location name and crawl name)
-     * @param crawler
+     * get the saved (persisted) group (i.e. folder) documents for a given crawl (i.e. location name and crawl name)
+     * @param crawlName
      * @param q
      * @param fq
      * @param fl
      * @return
      */
-    Map<String, SolrDocument> getSolrFolderDocs(String crawlName, String fq = "type_s:${FSFolder.TYPE}", String fl = this.checkFolderFields, int maxRowsReturned = SolrSystemClient.MAX_ROWS_RETURNED) {
+    Map<String, SolrDocument> getSavedGroupDocs(String crawlName, String fq = "type_s:${FSFolder.TYPE}", String fl = this.checkFolderFields, int maxRowsReturned = SolrSystemClient.MAX_ROWS_RETURNED) {
         SolrQuery sq = new SolrQuery('*:*')
         sq.setRows(maxRowsReturned)
         sq.setFilterQueries(fq)
         // add filter queries to further limit
+        // NOTE Crawler objects have an intrinsic connection to a specific crawl "location" (i.e. machine/filesystem, or browser/email account,...)
         String filterLocation = SolrSystemClient.FLD_LOCATION_NAME + ':' + locationName
         sq.addFilterQuery(filterLocation)
+        // the crawlName is a subset of the larger location, this is dynamic where location is fixed (for this crawler)
         String filterCrawl = SolrSystemClient.FLD_CRAWL_NAME + ':' + crawlName
         sq.addFilterQuery(filterCrawl)
 
