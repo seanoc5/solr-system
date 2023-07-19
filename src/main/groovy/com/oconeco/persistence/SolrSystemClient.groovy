@@ -52,7 +52,7 @@ class SolrSystemClient extends BaseClient {
 
     Integer SOLR_BATCH_SIZE = 5000
     Integer MIN_FILE_SIZE = 10
-    Integer MAX_CONTENT_SIZE = 1024 * 1000 * 10 // (10 MB of text?)
+    Integer MAX_CONTENT_SIZE = 1024 * 1000 * 100 // (100 MB of text?)
     Http2SolrClient solrClient
 
     Detector detector = null
