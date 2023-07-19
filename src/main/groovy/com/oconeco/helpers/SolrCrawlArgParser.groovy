@@ -46,14 +46,19 @@ class SolrCrawlArgParser {
             System.exit(0)
         }
 
+        def foo = this.getClassLoader().getResource('/configs/configCrawl.groovy')
+        def fooDot = this.getClassLoader().getResource('.')
+        def bar = this.class.getResource('/')
+        def barDot = this.getResource('.')
+
         String configLocation = options.config
         if (configLocation) {
             log.info "Config location: $configLocation"
         } else {
-            configLocation = './configs/configLocate.groovy'
+            configLocation = '/configs/configCrawl.groovy'
             log.warn "No Config location given as CLI arg, setting to default: $configLocation"
         }
-        URL cfgUrl = SolrCrawlArgParser.class.getClassLoader().getResource(configLocation)
+        URL cfgUrl = SolrCrawlArgParser.class.getResource(configLocation)
 //        def cfgUrl = SolrCrawlArgParser.class.getResource(configLocation)     // todo -- remember that static methods need the getClassLoader() call
         File cfgFile = new File(cfgUrl.toURI())
 
