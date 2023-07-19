@@ -8,3 +8,4 @@ logs/
 *.class
 solr-system.log*
 heapdump*
+configCrawl.groovy
