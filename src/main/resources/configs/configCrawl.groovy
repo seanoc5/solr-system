@@ -11,7 +11,7 @@ import com.oconeco.helpers.Constants
 import java.nio.file.Files
 import java.nio.file.LinkOption
 
-solrUrl = "http://localhost:8983/solr/solr_system"
+solrUrl = "http://oldie:8983/solr/solr_system"
 locationName = Inet4Address.localHost.getHostName()
 
 // can be overriden b
@@ -45,6 +45,10 @@ dataSources {
             Etc = "/etc"
             Opt = "/opt"
             Var = "/var"
+            UsrShare = "/usr/share"
+            Usr = "/usr"
+            SBin = "/usr/sbin"
+            Bin = "/bin"
 
         } else if (osName.containsIgnoreCase('windows')) {
             //  todo - this is barebones, most of my work is in linux, so this should be expanded for "normal" people/use
