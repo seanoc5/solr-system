@@ -127,6 +127,38 @@ class BaseAnalyzerTest extends Specification {
         results.size() == 3
     }
 
+
+    def "Analyze test groups-folders"() {
+        given:
+        BaseAnalyzer analyzer = new BaseAnalyzer(group, item, Constants.DEFAULT_FOLDERPATH_MAP, Constants.DEFAULT_FILEPATH_MAP)
+        FSFolder dataFolder = new FSFolder(new File('/test/foo/data/myBar'),null, locationName, crawlName)
+        FSFolder workFolder = new FSFolder(new File('/test/bar/work/myFoo'),null, locationName, crawlName)
+        FSFolder binFolder = new FSFolder(new File('/test/bin/X11'),null, locationName, crawlName)
+
+        when:
+        def resultDataFolder = analyzer.analyze(dataFolder)
+        def resultWorkFolder = analyzer.analyze(workFolder)
+        def resultBinFolder = analyzer.analyze(binFolder)
+
+
+        then:
+        resultDataFolder != null
+        resultDataFolder instanceof Map<Map<String, Object>>
+        resultDataFolder.size() == 2
+        resultDataFolder instanceof Map<String, Map<String, Object>>
+        resultDataFolder.keySet().containsAll(['track','data'])
+
+        resultWorkFolder instanceof Map<Map<String, Object>>
+        resultWorkFolder.size() == 2
+        resultWorkFolder.keySet().containsAll(['track','work'])
+
+        resultBinFolder instanceof Map<Map<String, Object>>
+        resultBinFolder.size() == 2
+        resultBinFolder.keySet().containsAll(['track','binaries'])
+    }
+
+
+
     def "check doAnalysis calls"(){
         given:
         BaseAnalyzer analyzerLocate = new BaseAnalyzer(Constants.DEFAULT_FOLDERNAME_LOCATE, Constants.DEFAULT_FILENAME_LOCATE)
@@ -140,6 +172,4 @@ class BaseAnalyzerTest extends Specification {
 
     }
 
-//    def "TestAnalyze"() {
-//    }
 }

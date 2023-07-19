@@ -135,6 +135,7 @@ class LocalFileSystemCrawler {
                     boolean shouldUpdate = differenceChecker.shouldUpdate(diffStatus)
                     // note continue through tree, separate analysis of updating done later
                     if (shouldUpdate) {
+                        log.info "\t\t----SHOULD UPDATE folder ($currentFolder) --differences:(${diffStatus.differences}) "
                         List<SavableObject> savableObjects = currentFolder.gatherSavableObjects()
 
                         def doAnalysisresults = analyzer.analyze(savableObjects)
@@ -147,17 +148,22 @@ class LocalFileSystemCrawler {
                         // ----------------------- PROCESS ARCHIVE FILES SEPARATE (MEMORY)---------------------
                         // todo -- revisit how to avoid oome, each archive file could be huge, on top of a given (current)folder that might be huge... process archivefiles after folder, and release folder memory...?
                         List<FSObject> archiveFiles = ArchiveUtils.gatherArchiveObjects(currentFolder.childItems)
+
+                        if (archiveFiles?.size()>0) {
+                            log.info "\t....process archive files (count:${archiveFiles.size()}) for folder ($currentFolder)...."
+                        } else {
+                            log.debug "\t\t no archive files for current folder: $currentFolder"
+                        }
+
                         // release folder/children memory, and move on to processing each archive (virtual folder)
                         currentFolder = null
 
-                        log.info "\t....process archive files (count:${archiveFiles.size()}) for folder ($currentFolder)...."
                         archiveFiles.each { FSFile fSFile ->
                             List<SavableObject> archEntries = ((FSFile) fSFile).gatherArchiveEntries()
                             def responseArch = persistenceClient.saveObjects(archEntries)
                             log.info "\t\t====Solr response saving archive entries: $responseArch (arch entries count: ${archEntries?.size()}) -- from fsFile:($fSFile)"
                         }
                         log.debug "\t\tArhive files in folder($currentFolder): $archiveFiles"
-
 
                     } else {
                         log.info "\t\t\t____determined we do NOT NEED TO UPDATE: $currentFolder -- diffStatus:($diffStatus)"

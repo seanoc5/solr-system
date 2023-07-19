@@ -190,6 +190,9 @@ class SolrSystemClient extends BaseClient {
                 } else {
                     log.warn "Bad response from solr save/commit?? $resp"
                 }
+            } catch (IOException ioe) {
+                log.error "Solr server IO exception: $ioe"
+
             } catch (SolrServerException sse) {
                 log.error "Solr server exception: $sse"
             }

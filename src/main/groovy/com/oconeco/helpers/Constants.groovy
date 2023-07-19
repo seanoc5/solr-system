@@ -19,12 +19,13 @@ class Constants {
     public static final List<String> PARSE_BUNDLE = [TRACK, PARSE]
 
     public static final String SOURCE_CODE = 'sourceCode'
-    public static final List<String> SOURCE_BUNDLE = [TRACK, SOURCE_CODE]
+    public static final List<String> SOURCE_BUNDLE = [TRACK, PARSE, SOURCE_CODE]
     public static final String LOGS = 'logs'
     public static final List<String> LOGS_BUNDLE = [TRACK, LOGS]
 
     public static final String ARCHIVE = 'archive'
-    public static final List<String> ARCHIVE_BUNDLE = [ARCHIVE, TRACK]          // currently handling ARCHIVE in crawler, and processing each archive file as a separate group (to avoid OOME...?)
+    public static final List<String> ARCHIVE_BUNDLE = [ARCHIVE, TRACK]
+    // currently handling ARCHIVE in crawler, and processing each archive file as a separate group (to avoid OOME...?)
 
     public static final String LABEL_MATCH = 'LabelMatch'
     public static final String NO_MATCH = 'no match'
@@ -43,9 +44,9 @@ class Constants {
             system       : ~/.*(?i)(class|sbt|sbt-\d.*|runtime)/,
     ]
     public static final Map<String, Map<String, Object>> DEFAULT_FOLDERNAME_LOCATE = [
-            (IGNORE) : [pattern: DEFAULT_FOLDERNAME_PATTERNS[LBL_IGNORE], analysis: TRACK_BUNDLE],          // track ignored folders, but do not descend/crawl
-            'test' : [pattern: ~/(test.*)/, analysis: TRACK_BUNDLE],
-            (TRACK): [pattern: null, analysis: TRACK_BUNDLE],
+            (IGNORE): [pattern: DEFAULT_FOLDERNAME_PATTERNS[LBL_IGNORE], analysis: TRACK_BUNDLE],          // track ignored folders, but do not descend/crawl
+//            'test'  : [pattern: ~/(test.*)/, analysis: TRACK_BUNDLE],
+            (TRACK) : [pattern: null, analysis: TRACK_BUNDLE],
     ]
 
     public static final Map<String, Pattern> DEFAULT_FILENAME_PATTERNS = [
@@ -63,37 +64,50 @@ class Constants {
     ]
 
     public static final Map<String, Map<String, Object>> DEFAULT_FILENAME_LOCATE = [
-            (IGNORE) : [pattern: ~/(?i)([.~]*lock.*|_.*|.*\bte?mp|.*\.class|.*\.pem|skipme.*)/, analysis: IGNORE_BUNDLE],
-            (PARSE)  : [pattern: ~/.*(?i)(accdb|docx?|go|groovy|gradle|jar|java|javascript|js|jsonl?d?|md|ods|odp|odt|php|pptx?|rtf|schema|sh|vsdx?|xlsx?)/, analysis: PARSE_BUNDLE],
-            (TRACK): [pattern: null, analysis: TRACK_BUNDLE],
+            (IGNORE): [pattern: ~/(?i)([.~]*lock.*|_.*|.*\bte?mp|.*\.class|.*\.pem|skipme.*)/, analysis: IGNORE_BUNDLE],
+            (PARSE) : [pattern: ~/.*(?i)(accdb|docx?|go|groovy|gradle|jar|java|javascript|js|jsonl?d?|md|ods|odp|odt|php|pptx?|rtf|schema|sh|vsdx?|xlsx?)/, analysis: PARSE_BUNDLE],
+            (TRACK) : [pattern: null, analysis: TRACK_BUNDLE],
     ]
 
     public static final Map<String, Map<String, Object>> DEFAULT_FILENAME_PARSE = [
-            (IGNORE) : [pattern: ~/(?i)([.~]*lock.*|_.*|.*\bte?mp|.*\.class|.*\.pem|skipme.*)/, analysis: IGNORE_BUNDLE],
-            office       : [pattern: ~/.*\.(?i)(accdb|docx?|ods|odp|odt|pptx?|rtf|vsdx?|xlsx?)/,analysis: PARSE_BUNDLE],
-            system       : [pattern: ~/.*(\.(?i)(bin|deb|lib|pkg|rpm)|(gcc.*))/,analysis: PARSE_BUNDLE],
-            web          : [pattern: ~/.*(?i)(html?)/,analysis: PARSE_BUNDLE],
-            instructions : [pattern: ~'(?i).*(adoc|readme.*|md)',analysis: PARSE_BUNDLE],
-            techDev      : [pattern: ~/.*(?i)(c|css|go|groovy|gradle|jar|java|javascript|js|php|schema|sh)/,analysis: PARSE_BUNDLE],
-            config       : [pattern: ~/.*(?i)(cfg|config.*|pem|properties|xml|yaml)/,analysis: PARSE_BUNDLE],
-            data         : [pattern: ~/.*(?i)(csv|jsonl?d?|lst|tab)/,analysis: PARSE_BUNDLE],
-            media        : [pattern: ~/.*(?i)(avi|jpe?g|ogg|mp3|mpe?g|wav)/,analysis: PARSE_BUNDLE],
-            communication: [pattern: ~/.*(?i)(eml|vcf)/,analysis: PARSE_BUNDLE],
-            (TRACK): [pattern: null, analysis: PARSE_BUNDLE],
+            (IGNORE)     : [pattern: ~/(?i)([.~]*lock.*|_.*|.*\bte?mp|.*\.class|.*\.pem|skipme.*)/, analysis: IGNORE_BUNDLE],
+            office       : [pattern: ~/.*\.(?i)(accdb|docx?|ods|odp|odt|pptx?|rtf|vsdx?|xlsx?)/, analysis: PARSE_BUNDLE],
+            system       : [pattern: ~/.*(\.(?i)(bin|deb|lib|pkg|rpm)|(gcc.*))/, analysis: PARSE_BUNDLE],
+            web          : [pattern: ~/.*(?i)(html?)/, analysis: PARSE_BUNDLE],
+            instructions : [pattern: ~'(?i).*(adoc|readme.*|md)', analysis: PARSE_BUNDLE],
+            techDev      : [pattern: ~/.*(?i)(c|css|go|groovy|gradle|jar|java|javascript|js|php|schema|sh)/, analysis: PARSE_BUNDLE],
+            techDev      : [pattern: ~/.*(?i)(go|groovy|java|javascript|js|php|)/, analysis: PARSE_BUNDLE],
+            config       : [pattern: ~/.*(?i)(cfg|config.*|pem|properties|xml|yaml)/, analysis: PARSE_BUNDLE],
+            data         : [pattern: ~/.*(?i)(csv|jsonl?d?|lst|tab)/, analysis: PARSE_BUNDLE],
+            media        : [pattern: ~/.*(?i)(avi|jpe?g|ogg|mp3|mpe?g|wav)/, analysis: PARSE_BUNDLE],
+            communication: [pattern: ~/.*(?i)(eml|vcf)/, analysis: PARSE_BUNDLE],
+            (TRACK)      : [pattern: null, analysis: PARSE_BUNDLE],
     ]
 
     /** path oriented pattern, which will 'cascade' down the label through child folders */
     public static final Map<String, Pattern> DEFAULT_FOLDERPATH_MAP = [
-            data : [pattern: ~/.*(\/data\/).*/, analysis: PARSE_BUNDLE],
-            build: [pattern: ~/.*(\/build\/).*/, analysis: PARSE_BUNDLE],
-            work : [pattern: ~/.*(\/data\/).*/, analysis: SOURCE_BUNDLE],
+            binaries: [pattern: ~/.*(\bbin\b).*/, analysis: Constants.TRACK_BUNDLE],
+//            binaries: [pattern: ~/(?i)[\/\\](s?bin)[\/\\]?/, analysis: Constants.TRACK_BUNDLE],
+            work    : [pattern: ~/(?i).*[\/\\](lucidworks|oconeco|work).*/, analysis: Constants.PARSE_BUNDLE],
+            system  : [pattern: ~/(?i)[\/\\](Windows|Program Files.*|\/lib(x?32|64|exec)?\b|share|include)\b.*/, analysis: Constants.TRACK_BUNDLE],
+            data    : [pattern: ~/.*(\/data\/).*/, analysis: Constants.TRACK_BUNDLE],
+            opt     : [pattern: ~/.*(\/opt\/?).*/, analysis: Constants.TRACK_BUNDLE],
+            var     : [pattern: ~/.*(\/var\/?).*/, analysis: Constants.TRACK_BUNDLE],
+            config  : [pattern: ~/(\/etc\b).*/, analysis: Constants.PARSE_BUNDLE],
+            manuals  : [pattern: ~/(\/man\b).*/, analysis: Constants.PARSE_BUNDLE],
+
+//            data  : [pattern: ~/.*(\/data\/).*/, analysis: TRACK_BUNDLE],
+//            work  : [pattern: ~/.*(\/work\/|IdeaProjects).*/, analysis: PARSE_BUNDLE],            // just parse for work folder, assume individual file mapping will do the sourcecode parsing (when ready)
+//            system: [pattern: ~/^(?i)(Windows|Program Files|\/s?bin\b|\/lib\b)/, analysis: Constants.TRACK_BUNDLE],
+//            resources: [pattern: ~/^(\/share\b|Program Files.*|.*\/s?bin\b|.*\/lib\b).*/, analysis: Constants.TRACK_BUNDLE],
+//            opt   : [pattern: ~/.*(\/opt\/?).*/, analysis: Constants.TRACK_BUNDLE],
+//            var   : [pattern: ~/.*(\/var\/?).*/, analysis: Constants.TRACK_BUNDLE],
+//            build: [pattern: ~/.*(\/build\/).*/, analysis: PARSE_BUNDLE],         // no need here?? rely on name mapping to skip folder named 'build'...?
     ]
 
-    public static final Map<String, Pattern> DEFAULT_FILEPATH_MAP = [
-//            configuration: ~/.*(?i)(\/.local\/|configs)/,
-//            data         : ~/.*(\/data\/).*/,
-//            build           : ~/.*(\/build\/).*/,
-work: ~/.*\/work\/.*/,
-    ]
+    public static final Map<String, Pattern> DEFAULT_FILEPATH_MAP = [:]
+//            work  : [pattern: ~/(?i).*[\/\\](lucidworks|oconeco|work).*/, analysis: Constants.PARSE_BUNDLE],
+//            system: [pattern: ~/(?i)([A-Z]:)?[\/\\](Windows|Program Files.*).*/, analysis: Constants.TRACK_BUNDLE],
+//    ]
 
 }

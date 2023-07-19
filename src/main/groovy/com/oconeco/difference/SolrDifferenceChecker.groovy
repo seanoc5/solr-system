@@ -11,8 +11,8 @@ import org.apache.solr.common.SolrDocument
 class SolrDifferenceChecker extends BaseDifferenceChecker {
     Logger log = LogManager.getLogger(this.class.name)
 
-    SolrDifferenceChecker() {
-        super()
+    SolrDifferenceChecker(boolean checkSizes) {
+        super(checkSizes)
     }
 
     @Override

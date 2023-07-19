@@ -15,8 +15,14 @@ import java.text.ParseException
 class BaseDifferenceChecker {
     Logger log = LogManager.getLogger(this.class.name)
     public static final String[] DEFAULT_DATEFORMATS = new String[]{"EEE MMM d HH:mm:ss z yyyy", "EEE, d MMM yyyy HH:mm:ss Z", "yyyy/MM/dd", "dd/MM/yyyy", "yyyy-MM-dd"}
+    boolean checkSizes = true
 
-    BaseDifferenceChecker() {
+    /**
+     * default to checking sizes (especially for folders) == this can be notably longer, but more accurate, otherwise folders (and files?) will rely on lastModifiedDate
+     * @param checkSizes
+     */
+    BaseDifferenceChecker(boolean checkSizes = true) {
+        this.checkSizes = checkSizes
     }
 
     /**
@@ -152,18 +158,23 @@ class BaseDifferenceChecker {
                     // is this true? should we overwrite a newer saved file with an older source object?
                 }
 
-                Long savedSize = (Long) getSavedSize(savedGroup)
-                if (crawledGroup.size == savedSize) {
-                    msg = "Same sizes, fsfolder: ${crawledGroup.size} == saved: $savedSize"
-                    log.debug "\t\t${msg}"
-                    status.similarities << msg
-                    status.differentSizes = false
+                if (checkSizes) {
+                    Long savedSize = (Long) getSavedSize(savedGroup)
+                    if (crawledGroup.size == savedSize) {
+                        msg = "Same sizes, fsfolder: ${crawledGroup.size} == saved: $savedSize"
+                        log.debug "\t\t${msg}"
+                        status.similarities << msg
+                        status.differentSizes = false
+                    } else {
+                        status.differentSizes = true
+                        msg = "Different sizes, fsfolder(${crawledGroup.path}): ${crawledGroup.size} != saved: $savedSize (${crawledGroup.size - savedSize})"
+                        log.debug "\t\t>>>>$msg"
+                        status.differences << msg
+                        status.significantlyDifferent = true
+                    }
+
                 } else {
-                    status.differentSizes = true
-                    msg = "Different sizes, fsfolder(${crawledGroup.path}): ${crawledGroup.size} != saved: $savedSize (${crawledGroup.size - savedSize})"
-                    log.debug "\t\t>>>>$msg"
-                    status.differences << msg
-                    status.significantlyDifferent = true
+                    log.debug "\t\t DifferencesChecker check sizes set to false, skipping size check...."
                 }
 
                 String savedDedup = getSavedDedup(savedGroup)

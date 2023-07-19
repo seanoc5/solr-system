@@ -1,21 +1,17 @@
 package configs
 
 /**
- * Basic configuration file to simulate (s)locate from linux: simple file name, location, date, size tracking
- * see alsp @link configBasicAnalysis
+ * configuration file to do both tracking (simple file name, location, date, size)
+ * and/or parsing (tika metadata and content) depending on regex patterns
+ * for groups (folders) and items (files), both name and 'path'
  */
 
 import com.oconeco.helpers.Constants
 
+import java.nio.file.Files
 import java.nio.file.LinkOption
 
-/**
- * this is a starter template that I (SoC) find useful.
- * hopefully there are some helpful examples and ideas here, but please customize to suit your interests (dear reader)
- * some of these options have code to override these config FILE defaults, with more explicit program arguments (e.g.  'wipeContent')
- */
-
-solrUrl = "http://oldie:8983/solr/solr_system"
+solrUrl = "http://localhost:8983/solr/solr_system"
 locationName = Inet4Address.localHost.getHostName()
 
 // can be overriden b
@@ -24,8 +20,8 @@ userHome = System.getProperty("user.home")
 // helpful to build default crawl lists for personal crawling across variety of personal machines/os-es
 osName = System.getProperty("os.name")
 // be default don't follow links, just focus on the 'original'
-linkOption = LinkOption.NOFOLLOW_LINKS
-ignoreArchivesPattern = ~/.*([jw]ar|docx|pptx|xlsx)/
+//linkOption = LinkOption.NOFOLLOW_LINKS
+//ignoreArchivesPattern = ~/.*([jw]ar|docx|pptx|xlsx)/
 
 
 // todo -- these name: path entries are not yet used, still reading path and name from cli args
@@ -55,6 +51,10 @@ dataSources {
             Work = "/work"          // i.e. c:/work
             IdeaProjects = "${userHome}/IdeaProjects"
             GoogleDriveLocal = "${userHome}/My Drive"
+            Windows = "c:/Windows"
+            ProgramFiles = "c:/Program Files"
+            ProgramFilesx86 = "c:/Program Files (x86)"
+
         }
     }
 
@@ -87,14 +87,20 @@ namePatterns {
     ]
 }
 
-/*
 
 pathPatterns {
     folders = [
-            work: [pattern: ~/(?i).*(lucidworks|oconeco|work)/, analysis: BaseAnalyzer.PARSE_BUNDLE],
+            binaries: [pattern: ~/(?i)[\/\\](s?bin)[\/\\]?/, analysis: Constants.TRACK_BUNDLE],
+            work    : [pattern: ~/(?i).*[\/\\](lucidworks|oconeco|work).*/, analysis: Constants.PARSE_BUNDLE],
+            system  : [pattern: ~/(?i)[\/\\](Windows|Program Files.*|\/lib(x?32|64|exec)?\b|share|include)\b.*/, analysis: Constants.TRACK_BUNDLE],
+            data    : [pattern: ~/.*(\/data\/).*/, analysis: Constants.TRACK_BUNDLE],
+            opt     : [pattern: ~/.*(\/opt\/?).*/, analysis: Constants.TRACK_BUNDLE],
+            var     : [pattern: ~/.*(\/var\/?).*/, analysis: Constants.TRACK_BUNDLE],
+            config  : [pattern: ~/(\/etc\b).*/, analysis: Constants.PARSE_BUNDLE],
+            manuals  : [pattern: ~/(\/man\b).*/, analysis: Constants.PARSE_BUNDLE],
     ]
     files = []
 }
-*/
+
 
 

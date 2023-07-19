@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.core.Logger
 
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileOwnerAttributeView
 import java.nio.file.attribute.FileTime
@@ -129,31 +130,40 @@ class FSObject extends SavableObject {
         Map<String, Object> details = [:]
         File f = (File) this.thing
 
-        if (!path) {
-            log.warn "No path set for this FSObject ($this)??!! it should have been set already"
-            path = f.absolutePath
-            details.path = path
+        if (f?.exists() && f.canRead()) {
+
+            if (!path) {
+                log.warn "No path set for this FSObject ($this)??!! it should have been set already"
+                path = f.absolutePath
+                details.path = path
+            }
+
+            try {
+                BasicFileAttributes attr = Files.readAttributes(f.toPath(), BasicFileAttributes.class);
+                FileTime lastAccessTime = attr.lastAccessTime()
+                lastAccessDate = new Date(lastAccessTime.toMillis())
+                details.lastAccessDate = lastAccessDate
+
+                if (!lastModifiedDate) {
+                    log.warn "No lastModifiedDate set yet?? this:$this"
+                    FileTime lastModifyTime = attr.lastModifiedTime()
+                    lastModifiedDate = new Date(lastModifyTime.toMillis())
+                    details.lastModifiedDate = lastModifiedDate
+                }
+
+
+                createdDate = new Date(attr.creationTime().toMillis())
+                details.createdDate = createdDate
+                FileOwnerAttributeView ownerAttributeView = Files.getFileAttributeView(((File) this.thing).toPath(), FileOwnerAttributeView.class);
+
+                owner = ownerAttributeView.getOwner();
+                details.owner = owner
+            } catch (NoSuchFileException noSuchFileException) {
+                log.warn "No file found: $f -- exception: $noSuchFileException"
+            }
+        } else {
+            log.warn "\t\tCannot find/read object's($this) file/thing:($f), skipping addFileDetails()..."
         }
-
-        BasicFileAttributes attr = Files.readAttributes(f.toPath(), BasicFileAttributes.class);
-        FileTime lastAccessTime = attr.lastAccessTime()
-        lastAccessDate = new Date(lastAccessTime.toMillis())
-        details.lastAccessDate = lastAccessDate
-
-        if (!lastModifiedDate) {
-            log.warn "No lastModifiedDate set yet?? this:$this"
-            FileTime lastModifyTime = attr.lastModifiedTime()
-            lastModifiedDate = new Date(lastModifyTime.toMillis())
-            details.lastModifiedDate = lastModifiedDate
-        }
-
-
-        createdDate = new Date(attr.creationTime().toMillis())
-        details.createdDate = createdDate
-        FileOwnerAttributeView ownerAttributeView = Files.getFileAttributeView(((File) this.thing).toPath(), FileOwnerAttributeView.class);
-
-        owner = ownerAttributeView.getOwner();
-        details.owner = owner
 
         return details
     }

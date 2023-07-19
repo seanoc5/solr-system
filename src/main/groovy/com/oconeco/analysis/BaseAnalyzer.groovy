@@ -214,7 +214,7 @@ class BaseAnalyzer {
             if (object.archive) {
                 log.info "\t\t\t\tARCHIVE File: $object"
             }
-            if(object.dedup) {
+            if (object.dedup) {
                 log.debug "\t\talready have dedup string:(${object.dedup}) in object:($object)"
             } else {
                 String dd = object.buildDedupString()
@@ -297,15 +297,12 @@ class BaseAnalyzer {
                 log.debug "\t\t....Do analysis named '$analysisName' on object $object (size:${object.size})"
                 results = this.parse(object)
                 String mime = results?.metadata?.get('Content-Type')
-//                if(mime){
-//                    object.mimeType = mime
-//                } else {
-//                    log.info "\t\tcould not determine mime type for SavableObject:($object) -- analysisName: $analysisName"
-//                }
                 break
-//            case 'default':
-//                log.info "Do analysis named 'default' on object $object"
-//                break
+
+            case Constants.SOURCE_CODE:
+                log.info "\t\tdo source code parsing here..."
+                break
+
             case 'ignore':
                 log.debug "\t\t....ignore object $object"
                 break
@@ -375,19 +372,19 @@ class BaseAnalyzer {
     /**
      * Based on if SavableObject is a group/wrapper (ie. folder) or an individual item (i.e. File) check the relevant label maps and add all those labels (keys) that match (based on name regex, and optionally path regex)
      * @param object SavableObject to check (name, optional path)
-     * @param name explicit label to be added to object (in solr...)
+     * @param nameOrPath explicit label to be added to object (in solr...)
      * @param labelMap the child map which should have 'pattern' and 'analysis' values
      * @return all matching map entries, focused on entry keys which become item labels in solr (or other persistence???)
      */
-    Map<String, Map<String, Object>> applyLabels(SavableObject object, String name, Map<String, Map<String, Object>> labelMap) {
+    Map<String, Map<String, Object>> applyLabels(SavableObject object, String nameOrPath, Map<String, Map<String, Object>> labelMap) {
         Map<String, Map<String, Object>> matchingLabels = [:]
-        log.debug "\t\tapplyLabels: name($name) -> object($object)"
+        log.debug "\t\tapplyLabels: name($nameOrPath) -> object($object)"
         def defaultLabel = null
         labelMap.each { label, mapVal ->
             log.debug "\t\tLabel($label) - map($mapVal)"
             Pattern pattern = mapVal.pattern
             if (pattern) {
-                Matcher matcher = pattern.matcher(name)
+                Matcher matcher = pattern.matcher(nameOrPath)
 //                if (name ==~ pattern) {
                 if (matcher.matches()) {
                     if (matcher.groupCount() > 0) {
@@ -398,9 +395,9 @@ class BaseAnalyzer {
                     }
                     object.labels << label
                     matchingLabels.put(label, mapVal)
-                    log.debug "\t\tMatch: $label name($name) -- $mapVal "
+                    log.debug "\t\tMatch: $label name($nameOrPath) -- $mapVal "
                 } else {
-                    log.debug "${Constants.NO_MATCH}, obj($object) name($name) LABEL($label)::pattern($pattern)"
+                    log.debug "${Constants.NO_MATCH}, obj($object) name($nameOrPath) LABEL($label)::pattern($pattern)"
                 }
             } else {
                 log.debug "no pattern, label: $label -- pattern($pattern)"
@@ -451,7 +448,8 @@ class BaseAnalyzer {
                 try (InputStream inputStream = object.thing.newInputStream()) {
                     if (inputStream) {
                         metadata = new Metadata();
-                        BodyContentHandler handler = new BodyContentHandler(MAX_BODY_CHARS)     // todo -- switch approach, to proper handler
+                        BodyContentHandler handler = new BodyContentHandler(MAX_BODY_CHARS)
+                        // todo -- switch approach, to proper handler
                         ParseContext context = new ParseContext();
                         tikaParser.parse(inputStream, handler, metadata, context);
 
