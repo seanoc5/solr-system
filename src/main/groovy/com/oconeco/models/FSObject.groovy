@@ -3,6 +3,7 @@ package com.oconeco.models
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.core.Logger
 
+import java.nio.file.AccessDeniedException
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.attribute.BasicFileAttributes
@@ -158,6 +159,9 @@ class FSObject extends SavableObject {
 
                 owner = ownerAttributeView.getOwner();
                 details.owner = owner
+            } catch (AccessDeniedException accessDeniedException) {
+                log.warn "access denied to object: ${this.thing}"
+
             } catch (NoSuchFileException noSuchFileException) {
                 log.warn "No file found: $f -- exception: $noSuchFileException"
             }

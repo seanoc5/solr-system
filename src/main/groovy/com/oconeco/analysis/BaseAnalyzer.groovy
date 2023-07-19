@@ -7,6 +7,7 @@ import com.oconeco.models.SavableObject
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.core.Logger
 import org.apache.tika.exception.TikaException
+import org.apache.tika.exception.WriteLimitReachedException
 import org.apache.tika.metadata.Metadata
 
 //import org.apache.logging.log4j.core.Logger
@@ -56,7 +57,8 @@ class BaseAnalyzer {
 
     Parser tikaParser = null
     BodyContentHandler tikaBodyHandler = null
-    int MAX_BODY_CHARS = 1000 * 1000 * 1000 * 10
+    int MAX_BODY_CHARS = 10*1024*1024       // todo -- revisit :: 10 mb of text...??
+//    int MAX_BODY_CHARS = 1000 * 1000 * 1000
 
 
     /**
@@ -486,6 +488,10 @@ class BaseAnalyzer {
                         log.warn "No input Stream?)"
                     }
 
+                } catch (WriteLimitReachedException writeLimitReachedException) {
+                    log.error "Tika write limit reached exception: $writeLimitReachedException -- object:${object}"
+                } catch (LinkageError linkageError) {
+                    log.error "Tika linkage error exception: $linkageError -- object:${object}"
                 } catch (FileNotFoundException fne) {
                     log.error "File not found exception: $fne -- object:${object}"
                 } catch (NoSuchFieldError nsfe) {
