@@ -115,8 +115,9 @@ class LocalFileSystemCrawler {
             FileVisitResult fvr = FileVisitResult.CONTINUE      // set default to continue/process
             boolean accessible = f.exists() && f.canRead() && f.canExecute()
 
-            int depth = getRelativeDepth(startPath, f)
             currentFolder = new FSFolder(f, null, this.locationName, crawlName)
+            int depth = getRelativeDepth(startPath, f)
+            currentFolder.depth = depth
             boolean shouldIgnore = analyzer.shouldIgnore(currentFolder)
 
             if (accessible) {
@@ -142,7 +143,7 @@ class LocalFileSystemCrawler {
                         log.debug "\t\tdoAnalysisresults: $doAnalysisresults to currentFolder: $currentFolder"
                         // --------------- SAVE FOLDER AND CHILDREM
                         def response = persistenceClient.saveObjects(savableObjects)
-                        log.info "\t\t$cnt) ++++Save folder (${currentFolder.path}:${currentFolder.depth}) -- Children count:(item:${currentFolder.childItems.size()} groups:${currentFolder.childGroups.size()}) -- Differences:${diffStatus.differences} -- response: $response"
+                        log.info "\t\t$cnt) ++++Save folder (${currentFolder.path}--depth:${currentFolder.depth}) -- Children count:(item:${currentFolder.childItems.size()} groups:${currentFolder.childGroups.size()}) -- Differences:${diffStatus.differences} -- response: $response"
                         results.updated << currentFolder
 
                         // ----------------------- PROCESS ARCHIVE FILES SEPARATE (MEMORY)---------------------
@@ -272,10 +273,13 @@ class LocalFileSystemCrawler {
      * @return count of levels between startpath and current path
      */
     public int getRelativeDepth(Path startPath, File f) {
+        int d = 0
         Path reletivePath = startPath.relativize(f.toPath())
         String relPath = reletivePath.toString()
-        int depth = relPath > '' ? reletivePath.getNameCount() : 0
-        depth
+        if(relPath > '') {
+            d = reletivePath.getNameCount()
+        }
+        return d
     }
 
 
