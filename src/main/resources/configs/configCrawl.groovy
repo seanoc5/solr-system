@@ -1,16 +1,12 @@
 package configs
 
+import com.oconeco.helpers.Constants
+
 /**
  * configuration file to do both tracking (simple file name, location, date, size)
  * and/or parsing (tika metadata and content) depending on regex patterns
  * for groups (folders) and items (files), both name and 'path'
  */
-
-import com.oconeco.helpers.Constants
-
-import java.nio.file.Files
-import java.nio.file.LinkOption
-
 solrUrl = "http://oldie:8983/solr/solr_system"
 locationName = Inet4Address.localHost.getHostName()
 
@@ -74,12 +70,12 @@ namePatterns {
 
 
     files = [
-            (Constants.IGNORE): [pattern: ~/(?i)([_.~]+lock.*|[#_~].*|.*\bte?mp|.*\.class)/, analysis: Constants.IGNORE_BUNDLE],
+            (Constants.IGNORE): [pattern: ~/^(?i)([_.~]+lock.*|[#_~].*|.*\.te?mp|.*\.class)/, analysis: Constants.IGNORE_BUNDLE],
 //            (Constants.IGNORE): [pattern: ~/(?i)([_.~]+lock.*|[#_~].*|.*\bte?mp|.*\.class|.*\.pem|skipme.*)/, analysis: Constants.IGNORE_BUNDLE],
             office            : [pattern: ~/.*\.(?i)(accdb|do[ct]x?|ics|ods|odp|odt|ott|pages|pdf|pptx?|rtf|sxi|vsdx?|xmind|xlsx?)/, analysis: Constants.PARSE_BUNDLE],
             system            : [pattern: ~/.*(\.(?i)(bin|bundle|cab|deb|dmg|exe|jar|lib|md5|pkg|rpm|so)|(gcc.*))/, analysis: Constants.TRACK_BUNDLE],
             web               : [pattern: ~/.*(?i)(html?)/, analysis: Constants.PARSE_BUNDLE],
-            instructions      : [pattern: ~'(?i).*(adoc|readme.*|md)', analysis: Constants.PARSE_BUNDLE],
+            instructions      : [pattern: ~/.*(?i)(adoc|readme.*|md)/, analysis: Constants.PARSE_BUNDLE],
             techDev           : [pattern: ~/.*(?i)(c|css|go|groovy|gradle|java|javascript|js|php|schema|sh)/, analysis: Constants.PARSE_BUNDLE],
             config            : [pattern: ~/.*(?i)(cfg|config.*|pem|properties|xml|yaml)/, analysis: Constants.PARSE_BUNDLE],
             data              : [pattern: ~/.*(?i)(avro|bundle|csv|dat|db|jsonl?d?|lst|mdb.?|orc|parquet|tab)/, analysis: Constants.TRACK_BUNDLE],

@@ -13,7 +13,6 @@ import org.apache.solr.client.solrj.response.QueryResponse
 import org.apache.solr.client.solrj.response.UpdateResponse
 import org.apache.solr.common.SolrInputDocument
 import org.apache.solr.common.util.NamedList
-import org.apache.tika.detect.Detector
 /**
  * Looking at helper class to save solr_system (file crawl to start with content to solr
  */
@@ -55,7 +54,7 @@ class SolrSystemClient extends BaseClient {
     Integer MAX_CONTENT_SIZE = 1024 * 1000 * 100 // (100 MB of text?)
     Http2SolrClient solrClient
 
-    Detector detector = null
+//    Detector detector = null
 
     /**
      * Create helper with a (non-thread safe???) solrClient that is configured for the solr server AND collection
@@ -243,7 +242,7 @@ class SolrSystemClient extends BaseClient {
                 ", MIN_FILE_SIZE=" + MIN_FILE_SIZE +
                 ", MAX_CONTENT_SIZE=" + MAX_CONTENT_SIZE +
                 ", solrClient=" + solrClient +
-                ", detector=" + detector +
+//                ", detector=" + detector +
                 ", parser=" + parser +
                 ", handler=" + handler +
                 ", tikaConfig=" + tikaConfig +
