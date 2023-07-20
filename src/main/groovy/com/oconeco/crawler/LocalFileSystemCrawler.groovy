@@ -128,7 +128,11 @@ class LocalFileSystemCrawler {
                 } else {
                     log.debug "\t\t----Not ignorable folder: $currentFolder"
                     fvr = FileVisitResult.CONTINUE
-                    def rc = crawlFolderFiles(currentFolder, analyzer)
+
+                    // todo -- refactor, this is uber-hacky... for speed skip checking folder sizes, for completeness, crawl files and use the totalled size of non-ignored files
+                    if (differenceChecker.checkGroupSizes) {
+                        def rc = crawlFolderFiles(currentFolder, analyzer)
+                    }
 
                     //Note compareFSFolderToSavedDocMap will save diff status in object, for postDir assessment/analysis
                     Iterable savedGroup = findMatchingSavedGroup(existingSolrFolderDocs, currentFolder)
@@ -136,6 +140,12 @@ class LocalFileSystemCrawler {
                     boolean shouldUpdate = differenceChecker.shouldUpdate(diffStatus)
                     // note continue through tree, separate analysis of updating done later
                     if (shouldUpdate) {
+                        if(!differenceChecker.checkGroupSizes) {
+                            // todo -- refactor, this is uber-hacky... for speed skip checking folder sizes, for completeness, crawl files and use the totalled size of non-ignored files
+                            def rc = crawlFolderFiles(currentFolder, analyzer)
+                            log.debug "\t\tcrawl folder files after comparing (without file sizes): $currentFolder"
+                        }
+
                         log.info "\t\t----SHOULD UPDATE folder ($currentFolder) --differences:(${diffStatus.differences}) "
                         List<SavableObject> savableObjects = currentFolder.gatherAnalyzableThings()
 
@@ -230,13 +240,13 @@ class LocalFileSystemCrawler {
                 cnt++
                 SavableObject child = null
                 if (f.isDirectory()) {
-                    child = new FSFolder(f, fsFolder, locationName, fsFolder.crawlName)
+                    child = new FSFolder(f, fsFolder, locationName, fsFolder.crawlName, analyzer.ignoreGroup)
                 } else {
-                    child = new FSFile(f, fsFolder, locationName, fsFolder.crawlName)
+                    child = new FSFile(f, fsFolder, locationName, fsFolder.crawlName, analyzer.ignoreItem)
                 }
 
                 if (child.ignore) {
-                    log.debug "\t\t\t\tignoring child: $child -- analyzer results:($aResults)"
+                    log.debug "\t\t\t\tignoring child: $child "
                 } else {
                     countAdded++
                     log.debug "\t\tAdding child:($child) to folder($fsFolder)"

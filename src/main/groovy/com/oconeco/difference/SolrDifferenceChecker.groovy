@@ -1,10 +1,8 @@
 package com.oconeco.difference
 
-import com.oconeco.models.FSFolder
-import com.oconeco.persistence.SolrSystemClient
+
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.core.Logger
-import org.apache.solr.common.SolrDocument
 /**
  * codify what qualifies as a difference worthy of 're-indexing'
  */
@@ -64,6 +62,7 @@ class SolrDifferenceChecker extends BaseDifferenceChecker {
      * @param fsfolder
      * @param existingSolrDoc
      */
+/*
     BaseDifferenceStatus compareFSFolderToSavedDoc(FSFolder fsfolder, SolrDocument existingSolrDoc) {
         BaseDifferenceStatus status = new BaseDifferenceStatus(fsfolder, existingSolrDoc)
         String msg
@@ -178,6 +177,7 @@ class SolrDifferenceChecker extends BaseDifferenceChecker {
         }
         return status
     }
+*/
 
     @Override
     String getSavedLocation(Object savedObj) {

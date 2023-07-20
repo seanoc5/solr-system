@@ -123,10 +123,20 @@ class BaseCrawler {
                     fvr = FileVisitResult.SKIP_SUBTREE
                 } else {
                     log.debug "\t\t----Not ignorable folder: $currentFolder"
-                    def rc = crawlFolderFiles(currentFolder, analyzer)
+                    // todo -- refactor, this is uber-hacky... for speed skip checking folder sizes, for completeness, crawl files and use the totalled size of non-ignored files
+                    if(differenceChecker.checkGroupSizes) {
+                        def rc = crawlFolderFiles(currentFolder, analyzer)
+                    }
 
                     //Note compareFSFolderToSavedDocMap will save diff status in object, for postDir assessment/analysis
-                    BaseDifferenceStatus diffStatus = differenceChecker.compareCrawledDocToSavedDoc(currentFolder, existingSolrFolderDocs)
+                    BaseDifferenceStatus diffStatus = differenceChecker.compareCrawledGroupToSavedGroup(currentFolder, existingSolrFolderDocs)
+//                    BaseDifferenceStatus diffStatus = differenceChecker.compareCrawledDocToSavedDoc(currentFolder, existingSolrFolderDocs)
+
+                    if(!differenceChecker.checkGroupSizes && diffStatus.significantlyDifferent) {
+                        log.debug "\t\tcrawl folder files after comparing (without file sizes): $currentFolder"
+                        def rc = crawlFolderFiles(currentFolder, analyzer)
+                    }
+
                     fvr = FileVisitResult.CONTINUE // note continue through tree, separate analysis of updating done later
                 }
 

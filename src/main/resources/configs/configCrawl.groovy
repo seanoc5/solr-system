@@ -18,6 +18,7 @@ osName = System.getProperty("os.name")
 // be default don't follow links, just focus on the 'original'
 //linkOption = LinkOption.NOFOLLOW_LINKS
 //ignoreArchivesPattern = ~/.*([jw]ar|docx|pptx|xlsx)/
+checkGroupSizes = false
 
 
 // todo -- these name: path entries are not yet used, still reading path and name from cli args
@@ -28,6 +29,7 @@ dataSources {
         Downloads = "${userHome}/Downloads"
         MyDesktop = "${userHome}/Desktop"
         MyPictures = "${userHome}/Pictures"
+        ExtPassport = "/media/sean/sean-data"
 
         String bkupFolder = "${userHome}/bkup"
         if (new File(bkupFolder).exists()) {

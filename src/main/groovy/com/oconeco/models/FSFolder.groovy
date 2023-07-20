@@ -4,6 +4,9 @@ package com.oconeco.models
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.core.Logger
 import org.apache.solr.common.SolrInputDocument
+
+import java.util.regex.Pattern
+
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -35,11 +38,25 @@ class FSFolder extends FSObject {
         }
     }
 
+    FSFolder(File srcFolder, SavableObject parent, String locationName, String crawlName, Pattern ignoreName, Pattern ignorePath = null) {
+        this(srcFolder, parent, locationName, crawlName)
+        if(srcFolder.name ==~ ignoreName){
+            log.info "\t\tIgnore this folder -- name(${this.name}) matches ignore name pattern:($ignoreName)"
+            ignore = true
+        }
+        if(ignorePath && srcFolder.path ==~ ignorePath){
+            log.info "\t\tIgnore this folder -- path(${this.path}) matches ignore path pattern:($ignorePath)"
+            ignore = true
+        }
+
+    }
+
 
     SolrInputDocument toPersistenceDocument() {
         SolrInputDocument sid = super.toPersistenceDocument()
         log.debug "\t\tFSFolder toSolrInputDocument(), from super: $sid"
         // todo -- is there anything else FSFolder specific to add??
+
 
         return sid
     }

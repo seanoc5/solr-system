@@ -2,6 +2,7 @@ package com.oconeco.difference
 
 import com.oconeco.models.FSObject
 import com.oconeco.persistence.SolrSystemClient
+
 //import org.apache.commons.lang3.
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.core.Logger
@@ -15,14 +16,15 @@ import java.text.ParseException
 class BaseDifferenceChecker {
     Logger log = LogManager.getLogger(this.class.name)
     public static final String[] DEFAULT_DATEFORMATS = new String[]{"EEE MMM d HH:mm:ss z yyyy", "EEE, d MMM yyyy HH:mm:ss Z", "yyyy/MM/dd", "dd/MM/yyyy", "yyyy-MM-dd"}
-    boolean checkSizes = true
+    /** calculating size of group objects (i.e. folders) can be expensive, quick and dirty approach is just lastModifiedDate */
+    boolean checkGroupSizes = true      // todo -- refactor to more elegant approach
 
     /**
      * default to checking sizes (especially for folders) == this can be notably longer, but more accurate, otherwise folders (and files?) will rely on lastModifiedDate
      * @param checkSizes
      */
     BaseDifferenceChecker(boolean checkSizes = true) {
-        this.checkSizes = checkSizes
+        this.checkGroupSizes = checkSizes
     }
 
     /**
@@ -102,7 +104,8 @@ class BaseDifferenceChecker {
      * check groups to see if the is a change (and hence avoid checking each child object)
      * @param crawledGroup (i.e. folder/dir)
      * @param savedGroup - saved info from persistence later (i.e. solr document)
-     * @return
+     * @return status of differences
+     * todo -- refactor to checkGroupSizes as a param, or something better than the hacked prop of BaseDifferenceStatus
      */
     BaseDifferenceStatus compareCrawledGroupToSavedGroup(def crawledGroup, def savedGroup, BaseDifferenceStatus status) {
         String msg = null
@@ -136,13 +139,13 @@ class BaseDifferenceChecker {
                 Date crawledLastModified = getCrawledLastModified(crawledGroup)
                 Date savedLastModified = getSavedLastModified(savedGroup)
                 if (crawledLastModified == savedLastModified) {
-                    msg = "crawledGroup and SaveObject doc have SAME last modified date: $savedLastModified"
+                    msg = "lastModifiedDate same: $savedLastModified"
                     status.similarities << msg
                     status.differentLastModifieds = false
                     status.sourceIsNewer = false
                     log.debug "\t\t$msg"
                 } else if (crawledLastModified > savedLastModified) {
-                    msg = "crawledGroup (${crawledGroup.path}) is newer ($crawledLastModified) than solr folder ($savedLastModified)"
+                    msg = "lastModifiedDate crawledGroup (${crawledGroup.path}) is NEWER ($crawledLastModified) than solr folder ($savedLastModified)"
                     status.differences << msg
                     log.debug "\t\t>>>>${msg}"
                     status.differentLastModifieds = true
@@ -154,11 +157,10 @@ class BaseDifferenceChecker {
                     log.warn "\t\t>>>> $msg (what logic is approapriate? currently we overwrite 'newer' saved/saved object with 'older' source object...???)"
                     status.differentLastModifieds = true
                     status.sourceIsNewer = false
-                    status.significantlyDifferent = true
-                    // is this true? should we overwrite a newer saved file with an older source object?
+                    status.significantlyDifferent = true    // is this true? should we overwrite a newer saved file with an older source object?
                 }
 
-                if (checkSizes) {
+                if (checkGroupSizes) {
                     Long savedSize = (Long) getSavedSize(savedGroup)
                     if (crawledGroup.size == savedSize) {
                         msg = "Same sizes, fsfolder: ${crawledGroup.size} == saved: $savedSize"
@@ -177,18 +179,22 @@ class BaseDifferenceChecker {
                     log.debug "\t\t DifferencesChecker check sizes set to false, skipping size check...."
                 }
 
-                String savedDedup = getSavedDedup(savedGroup)
-                if (crawledGroup.dedup == savedDedup) {
-                    msg = "Same dedup: ${crawledGroup.dedup}"
-                    log.debug "\t\t${msg}"
-                    status.similarities << msg
-                    status.differentDedups = false
+                if (checkGroupSizes) {
+                    String savedDedup = getSavedDedup(savedGroup)
+                    if (crawledGroup.dedup == savedDedup) {
+                        msg = "Same dedup: ${crawledGroup.dedup}"
+                        log.debug "\t\t${msg}"
+                        status.similarities << msg
+                        status.differentDedups = false
+                    } else {
+                        status.differentDedups = true
+                        msg = "Different dedups (${crawledGroup.path}), fsfolder: ${crawledGroup.dedup} != saved: $savedDedup"
+                        log.info "\t\t>>>>$msg"
+                        status.differences << msg
+                        status.significantlyDifferent = true
+                    }
                 } else {
-                    status.differentDedups = true
-                    msg = "Different dedups (${crawledGroup.path}), fsfolder: ${crawledGroup.dedup} != saved: $savedDedup"
-                    log.debug "\t\t>>>>$msg"
-                    status.differences << msg
-                    status.significantlyDifferent = true
+                    log.debug "\t\tskipping dedup  based on checker prop(checkGroupSizes:$checkGroupSizes)"
                 }
 
                 String savedPath = getSavedPath(savedGroup)
@@ -207,7 +213,7 @@ class BaseDifferenceChecker {
 
                 String solrLocation = getSavedLocation(savedGroup)
                 if (crawledGroup.locationName.equals(solrLocation)) {
-                    msg = "Same locationName: $solrLocation"
+                    msg = "locationName same: $solrLocation"
                     status.similarities << msg
                     log.debug "\t\t$msg"
                     status.differentLocations = false

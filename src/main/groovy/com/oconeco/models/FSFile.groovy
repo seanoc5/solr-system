@@ -14,6 +14,7 @@ import org.apache.logging.log4j.core.Logger
 import org.apache.solr.common.SolrInputDocument
 
 import java.util.regex.Pattern
+
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -62,6 +63,18 @@ class FSFile extends FSObject {
         }
     }
 
+
+    FSFile(File f, SavableObject parent, String locationName, String crawlName, Pattern ignoreName, Pattern ignorePath=null) {
+        this(f, parent, locationName, crawlName)
+        if (name ==~ ignoreName) {
+            log.info "\t\tIgnore this folder -- name(${this.name}) matches ignore name pattern:($ignoreName)"
+            ignore = true
+        }
+        if (ignorePath && path ==~ ignorePath) {
+            log.info "\t\tIgnore this folder -- path(${this.path}) matches ignore path pattern:($ignorePath)"
+            ignore = true
+        }
+    }
 
     /**
      * create an index-ready solr input doc from this FSFile object
@@ -163,7 +176,7 @@ class FSFile extends FSObject {
                     archiveInputStream.close()
                     log.debug "close Archive input steam: $this"
                 } else {
-                    log.debug "do not have a valid Archive input steam to close! this:$this"
+                    log.info "do not have a valid Archive input steam to close! this:$this"
                 }
             }
         } else {

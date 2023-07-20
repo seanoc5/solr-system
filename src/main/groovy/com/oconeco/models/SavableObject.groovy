@@ -142,6 +142,8 @@ abstract class SavableObject {
         }
 
         if (childItems) {
+            sid.setField(SolrSystemClient.FLD_CHILD_ITEM_COUNT, childItems.size())
+
             StringBuilder sbChildNames = new StringBuilder()
             StringBuilder sbChildLabels = new StringBuilder()
             this.childItems.each {
@@ -150,23 +152,20 @@ abstract class SavableObject {
                     sbChildLabels.append(it.labels.join('\n') + '\n')
                 }
             }
-            sid.addField(SolrSystemClient.FLD_CHILDREN_NAMES, sbChildNames.toString())
-            sid.addField(SolrSystemClient.FLD_CHILDREN_LABELS, sbChildLabels.toString())
+            sid.addField(SolrSystemClient.FLD_CHILD_ITEM_NAMES, sbChildNames.toString())
+            sid.addField(SolrSystemClient.FLD_CHILD_ITEM_LABELS, sbChildLabels.toString())
         } else {
             log.debug "\t\tno child items for object:($this)"
         }
 
         if (childGroups) {
+            sid.setField(SolrSystemClient.FLD_CHILD_GROUP_COUNT, childGroups.size())
+
             StringBuilder sbChildGroupNames = new StringBuilder()
-//            StringBuilder sbChildGroupLabels = new StringBuilder()
             this.childGroups.each {
                 sbChildGroupNames.append(it.name + '\n')
-//                if (it.labels) {
-//                    sbChildGroupLabels.append(it.labels.join('\n'))
-//                }
             }
             sid.addField(SolrSystemClient.FLD_CHILD_GROUP_NAMES, sbChildGroupNames.toString())
-//            sid.addField(SolrSystemClient.FLD_CHILD_GROUP_LABELS, sbChildGroupLabels.toString())
         } else {
             log.debug "\t\tno child groups for this($this)"
         }

@@ -12,3 +12,9 @@
       - deeper content analysis
 - Clustering
 - 
+
+
+## Notes and various
+- crawlName logic and 'wipe'
+  - if crawlname different, does update/wipe work properly??
+  - ExtPasswort vs ExtPassport...???

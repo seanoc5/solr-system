@@ -42,10 +42,12 @@ class SolrSystemClient extends BaseClient {
     public static String FLD_TAG_SS = "tag_ss"
     public static String FLD_LABELS = "label_ss"
     public static String FLD_OS_NAME = "operatingSystem_s"
-    public static String FLD_CHILDREN_NAMES = "childrenNames_txt_en"
-    public static String FLD_CHILDREN_LABELS = "childrenLabels_ss"
-    public static String FLD_CHILD_GROUP_NAMES = "childrGroupNames_txt_en"
-    public static String FLD_CHILD_GROUP_LABELS = "childrenGroupLabels_ss"
+    public static String FLD_CHILD_ITEM_NAMES = "childNames_txt_en"
+    public static String FLD_CHILD_ITEM_LABELS = "childLabels_ss"
+    public static String FLD_CHILD_ITEM_COUNT = "childCount_i"
+    public static String FLD_CHILD_GROUP_NAMES = "childGroupNames_txt_en"
+    public static String FLD_CHILD_GROUP_COUNT = "childGroupCount_i"
+//    public static String FLD_CHILD_GROUP_LABELS = "childGroupLabels_ss"
 
     public static String FLD_MATCHED_LABELS = "matchedLabels_ss"
 
@@ -193,6 +195,9 @@ class SolrSystemClient extends BaseClient {
                 } else {
                     log.warn "Bad response from solr save/commit?? $resp"
                 }
+            } catch (RemoteSolrException rse) {
+                log.error "Remote Solr exception: $rse  (bad solr doc somewhere??"
+
             } catch (IOException ioe) {
                 log.error "Solr server IO exception: $ioe"
 
