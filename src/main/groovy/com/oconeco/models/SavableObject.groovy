@@ -222,8 +222,9 @@ abstract class SavableObject {
 //            log.warn "\t\t.....Cannot reliably build a dedup string, missing type:$type, or name:$name, or size:$size"
         }
 
+        // debugging?? add full matched label, with regex and match group... useful??
         if (matchedLabels) {
-            sid.setField(SolrSystemClient.FLD_MATCHED_LABELS, matchedLabels.keySet())
+            sid.setField(SolrSystemClient.FLD_MATCHED_LABELS, matchedLabels)
         }
 
         return sid
