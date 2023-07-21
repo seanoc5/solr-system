@@ -9,3 +9,4 @@ logs/
 solr-system.log*
 heapdump*
 configCrawl.groovy
+duplicates.list.csv
