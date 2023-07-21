@@ -9,7 +9,7 @@ import org.apache.logging.log4j.core.Logger
 class SolrDifferenceChecker extends BaseDifferenceChecker {
     Logger log = LogManager.getLogger(this.class.name)
 
-    SolrDifferenceChecker(boolean checkSizes) {
+    SolrDifferenceChecker(boolean checkSizes = true) {
         super(checkSizes)
     }
 

@@ -5,21 +5,17 @@ import com.oconeco.helpers.Constants
 import org.apache.solr.common.SolrInputDocument
 import spock.lang.Specification
 
-import java.util.regex.Pattern
-
 class FSFolderTest extends Specification {
     String locationName = 'spock'
     String crawlName = 'test'
-//    def startFolder = Path.of(getClass().getResource('/content').toURI());
     File startFolder = new File(getClass().getResource('/content').toURI())
-    Pattern ignoreFolders = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]
-    Pattern ignoreFiles = Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE]
+//    Pattern ignoreFolders = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]
+//    Pattern ignoreFiles = Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE]
     FSFolder parentFolder = new FSFolder(startFolder, null, locationName, crawlName)
 
     def "should build basic FSFolder"() {
         when:
         FSFolder fsFolder = new FSFolder(startFolder, null, locationName, crawlName)
-//        fsFolder.addFolderDetails()
         String pid = SavableObject.buildId(locationName, startFolder.parent.replaceAll('\\\\', '/'))
 
         then:
@@ -102,9 +98,8 @@ class FSFolderTest extends Specification {
     }
 
 
-    def "load and analyze content folder with configLocate.groovy"() {
+    def "analyze content folder with simple BaseAnalyzer"() {
         given:
-        ConfigObject config = new ConfigSlurper().parse(getClass().getResource('/configLocate.groovy'))
         FSFolder startFolder = new FSFolder(startFolder, parentFolder, locationName, crawlName)
         BaseAnalyzer analyzer = new BaseAnalyzer()
 
@@ -113,7 +108,23 @@ class FSFolderTest extends Specification {
 
         then:
         results instanceof Map<String, Map<String, Object>>
-        results.keySet()[0] == 'track'     // todo -- fixme??
+        results.keySet().toList() == [Constants.TRACK]
+        results.get(Constants.TRACK).keySet().containsAll(['pattern', 'analysis', Constants.LABEL_MATCH])
+    }
+
+    def "analyze content folder with Analyzer configured from configTest "() {
+        given:
+        ConfigObject config = new ConfigSlurper().parse(getClass().getResource('/configs/configTest.groovy'))
+        FSFolder startFolder = new FSFolder(startFolder, parentFolder, locationName, crawlName)
+        BaseAnalyzer analyzer = new BaseAnalyzer(config)
+
+        when:
+        def results = analyzer.analyze(startFolder)
+
+        then:
+        results instanceof Map<String, Map<String, Object>>
+        results.keySet()[0] == Constants.TRACK
+        results.get(Constants.TRACK)
     }
 
 
@@ -133,8 +144,8 @@ class FSFolderTest extends Specification {
         int foo = 2
 
         then:
+        assert "this test is complete" == true      // todo add logic to check that 'SEanHome' does not 'recrawl' previously crawled folders My* defined above it
         foo == 2
-
     }
 
 }

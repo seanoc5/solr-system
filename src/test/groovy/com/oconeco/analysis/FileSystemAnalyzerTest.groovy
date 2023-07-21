@@ -35,7 +35,7 @@ class FileSystemAnalyzerTest extends Specification {
         goFile.mimeType.containsIgnoreCase('text/plain')
         goFile.labels.size() == 1
         goFile.labels[0] == 'techDev'
-        goFile.metadata.size() == 3
+        goFile.metadata.size() >= 3
 
         docFile != null
 

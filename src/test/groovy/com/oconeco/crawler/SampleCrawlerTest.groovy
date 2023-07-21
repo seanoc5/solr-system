@@ -9,7 +9,7 @@
 //    String locationName = 'spock'
 //    String crawlName = 'test'
 //
-//    URL cfgUrl = getClass().getResource('/configLocate.groovy')
+//    URL cfgUrl = getClass().getResource('/configTest.groovy')
 //    ConfigObject config = new ConfigSlurper().parse(cfgUrl)
 //
 //    File contentFolder = new File(getClass().getResource('/content').toURI())

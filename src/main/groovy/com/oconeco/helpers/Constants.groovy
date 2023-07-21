@@ -47,7 +47,7 @@ class Constants {
     ]
     public static final Map<String, Map<String, Object>> DEFAULT_FOLDERNAME_LOCATE = [
             (IGNORE): [pattern: DEFAULT_FOLDERNAME_PATTERNS[LBL_IGNORE], analysis: TRACK_BUNDLE],          // track ignored folders, but do not descend/crawl
-//            'test'  : [pattern: ~/(test.*)/, analysis: TRACK_BUNDLE],
+            'test'  : [pattern: ~/(test.*)/, analysis: TRACK_BUNDLE],
             (TRACK) : [pattern: null, analysis: TRACK_BUNDLE],
     ]
 
@@ -88,15 +88,15 @@ class Constants {
 
     /** path oriented pattern, which will 'cascade' down the label through child folders */
     public static final Map<String, Pattern> DEFAULT_FOLDERPATH_MAP = [
-            binaries: [pattern: ~/.*(\bbin\b).*/, analysis: Constants.TRACK_BUNDLE],
+            binariesPath: [pattern: ~/.*(\bbin\b).*/, analysis: Constants.TRACK_BUNDLE],
 //            binaries: [pattern: ~/(?i)[\/\\](s?bin)[\/\\]?/, analysis: Constants.TRACK_BUNDLE],
-            work    : [pattern: ~/(?i).*[\/\\](lucidworks|oconeco|work).*/, analysis: Constants.PARSE_BUNDLE],
-            system  : [pattern: ~/(?i)[\/\\](Windows|Program Files.*|\/lib(x?32|64|exec)?\b|share|include)\b.*/, analysis: Constants.TRACK_BUNDLE],
-            data    : [pattern: ~/.*(\/data\/).*/, analysis: Constants.TRACK_BUNDLE],
-            opt     : [pattern: ~/.*(\/opt\/?).*/, analysis: Constants.TRACK_BUNDLE],
-            var     : [pattern: ~/.*(\/var\/?).*/, analysis: Constants.TRACK_BUNDLE],
-            config  : [pattern: ~/(\/etc\b).*/, analysis: Constants.PARSE_BUNDLE],
-            manuals  : [pattern: ~/(\/man\b).*/, analysis: Constants.PARSE_BUNDLE],
+            workPath    : [pattern: ~/(?i).*[\/\\](lucidworks|oconeco|work).*/, analysis: Constants.PARSE_BUNDLE],
+            systemPath  : [pattern: ~/(?i)[\/\\](Windows|Program Files.*|\/lib(x?32|64|exec)?\b|share|include)\b.*/, analysis: Constants.TRACK_BUNDLE],
+            dataPath    : [pattern: ~/.*(\/data\/).*/, analysis: Constants.TRACK_BUNDLE],
+            optPath     : [pattern: ~/.*(\/opt\/?).*/, analysis: Constants.TRACK_BUNDLE],
+            varPath     : [pattern: ~/.*(\/var\/?).*/, analysis: Constants.TRACK_BUNDLE],
+            configPath  : [pattern: ~/(\/etc\b).*/, analysis: Constants.PARSE_BUNDLE],
+            manualsPath  : [pattern: ~/(\/man\b).*/, analysis: Constants.PARSE_BUNDLE],
 
 //            data  : [pattern: ~/.*(\/data\/).*/, analysis: TRACK_BUNDLE],
 //            work  : [pattern: ~/.*(\/work\/|IdeaProjects).*/, analysis: PARSE_BUNDLE],            // just parse for work folder, assume individual file mapping will do the sourcecode parsing (when ready)
@@ -107,9 +107,9 @@ class Constants {
 //            build: [pattern: ~/.*(\/build\/).*/, analysis: PARSE_BUNDLE],         // no need here?? rely on name mapping to skip folder named 'build'...?
     ]
 
-    public static final Map<String, Pattern> DEFAULT_FILEPATH_MAP = [:]
-//            work  : [pattern: ~/(?i).*[\/\\](lucidworks|oconeco|work).*/, analysis: Constants.PARSE_BUNDLE],
-//            system: [pattern: ~/(?i)([A-Z]:)?[\/\\](Windows|Program Files.*).*/, analysis: Constants.TRACK_BUNDLE],
-//    ]
+    public static final Map<String, Pattern> DEFAULT_FILEPATH_MAP = [
+            workFiles  : [pattern: ~/(?i).*[\/\\](lucidworks|oconeco|work).*/, analysis: Constants.PARSE_BUNDLE],
+            systemFiles: [pattern: ~/(?i)([A-Z]:)?[\/\\](Windows|Program Files.*).*/, analysis: Constants.TRACK_BUNDLE],
+    ]
 
 }

@@ -11,7 +11,7 @@ package com.oconeco.analysis
 class FolderAnalyzerTest extends Specification {
     String locationName = 'spock'
     String crawlName = 'test'
-    URL cfgUrl = getClass().getResource('/configLocate.groovy')
+    URL cfgUrl = getClass().getResource('/configTest.groovy')
     ConfigObject config = new ConfigSlurper().parse(cfgUrl)
     FolderAnalyzer analyzer = new FolderAnalyzer(config)
     File startFolder = new File(getClass().getResource('/content').toURI())
@@ -34,7 +34,7 @@ class FolderAnalyzerTest extends Specification {
 /*
     def "startFolder.toSolrInputDocument analysis"() {
         given:
-        ConfigObject config = new ConfigSlurper().parse(getClass().getResource('/configLocate.groovy'))
+        ConfigObject config = new ConfigSlurper().parse(getClass().getResource('/configTest.groovy'))
         FSFolder folderFS = new FSFolder(new File(getClass().getResource('/content').toURI()))
         FolderAnalyzer analyzer = new FolderAnalyzer(config)
         List<String> labels = folderFS.analyze(analyzer)

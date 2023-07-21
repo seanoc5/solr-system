@@ -57,7 +57,7 @@ class BaseAnalyzer {
 
     Parser tikaParser = null
     BodyContentHandler tikaBodyHandler = null
-    int MAX_BODY_CHARS = 10*1024*1024       // todo -- revisit :: 10 mb of text...??
+    int MAX_BODY_CHARS = 10 * 1024 * 1024       // todo -- revisit :: 10 mb of text...??
 //    int MAX_BODY_CHARS = 1000 * 1000 * 1000
 
 
@@ -67,6 +67,11 @@ class BaseAnalyzer {
      */
     BaseAnalyzer() {
         this(Constants.DEFAULT_FOLDERNAME_LOCATE, Constants.DEFAULT_FILENAME_LOCATE, null, null, null, null)
+        log.info "No arg constructor BaseAnalyzer: $this  (consider passing in basic folder & file pattern maps??)"
+    }
+
+    BaseAnalyzer(ConfigObject cfg) {
+        this(cfg.namePatterns.folders, cfg.namePatterns.files, cfg.pathPatterns.folders, cfg.pathPatterns.files)
         log.info "No arg constructor BaseAnalyzer: $this  (consider passing in basic folder & file pattern maps??)"
     }
 
@@ -383,9 +388,9 @@ class BaseAnalyzer {
         log.debug "\t\tapplyLabels: name($nameOrPath) -> object($object)"
         def defaultLabel = null
         labelMap.each { label, mapVal ->
-            log.debug "\t\tLabel($label) - map($mapVal)"
-            Pattern pattern = mapVal.pattern
-            if (pattern) {
+            if (mapVal.pattern) {
+                log.info "\t\tLabel($label) - map($mapVal)"
+                Pattern pattern = mapVal.pattern
                 Matcher matcher = pattern.matcher(nameOrPath)
 //                if (name ==~ pattern) {
                 if (matcher.matches()) {
@@ -402,7 +407,7 @@ class BaseAnalyzer {
                     log.debug "${Constants.NO_MATCH}, obj($object) name($nameOrPath) LABEL($label)::pattern($pattern)"
                 }
             } else {
-                log.debug "no pattern, label: $label -- pattern($pattern)"
+                log.debug "no pattern, label: $label -- mapVal($mapVal) -- setting as default matching"
                 defaultLabel = label
             }
         }

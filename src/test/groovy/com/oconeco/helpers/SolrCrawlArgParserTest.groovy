@@ -8,13 +8,13 @@ class SolrCrawlArgParserTest extends Specification {
     String locationName = 'Spock'
     def "GetOptions from constructor"() {
         given:
-        URL cfgUrl = this.class.getClassLoader().getResource('configs/configLocate.groovy')
+        URL cfgUrl = this.class.getClassLoader().getResource('configs/configTest.groovy')
         File cfgFile = new File(cfgUrl.toURI())
         String filePatternLabels = "ignore index analyze office instructions techDev config control data media logs archive compressed web system"
         List<String> fplList = filePatternLabels.split(' ')
 
         when:
-        String[] args = ['--config=./configs/configLocate.groovy',
+        String[] args = ['--config=/configs/configTest.groovy',
                          '-fTestDocs:/home/sean/Documents,testDesktop:/home/sean/Desktop',
                          '-n"SpockTest"',
                          '-w']

@@ -14,7 +14,7 @@ class BaseAnalyzerTest extends Specification {
     String locationName = 'spock'
     String crawlName = 'test'
 
-//    URL cfgUrl = getClass().getResource('/configLocate.groovy')
+//    URL cfgUrl = getClass().getResource('/configTest.groovy')
 //    ConfigObject config = new ConfigSlurper().parse(cfgUrl)
 
     File objectsJson = new File(FileAnalyzerTest.getClassLoader().getResource('./content/objects.json').toURI())
@@ -146,15 +146,15 @@ class BaseAnalyzerTest extends Specification {
         resultDataFolder instanceof Map<Map<String, Object>>
         resultDataFolder.size() == 2
         resultDataFolder instanceof Map<String, Map<String, Object>>
-        resultDataFolder.keySet().containsAll(['track','data'])
+        resultDataFolder.keySet().containsAll(['track','dataPath'])
 
         resultWorkFolder instanceof Map<Map<String, Object>>
         resultWorkFolder.size() == 2
-        resultWorkFolder.keySet().containsAll(['track','work'])
+        resultWorkFolder.keySet().containsAll(['track','workPath'])
 
         resultBinFolder instanceof Map<Map<String, Object>>
         resultBinFolder.size() == 2
-        resultBinFolder.keySet().containsAll(['track','binaries'])
+        resultBinFolder.keySet().containsAll(['track','binariesPath'])
     }
 
 
