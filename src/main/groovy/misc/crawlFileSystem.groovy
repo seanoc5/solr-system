@@ -18,6 +18,19 @@ log.info "Start ${this.class.name}, with args: $args"
 
 // https://stackoverflow.com/questions/58180179/disable-pdfbox-logging-with-springboot-org-apache-commons-logging   ??? todo -- is there a better approach? probably
 java.util.logging.Logger.getLogger("org.apache.pdfbox").setLevel(java.util.logging.Level.OFF);
+List<String> loggers = [
+        "org.apache.pdfbox.util.PDFStreamEngine",
+        "org.apache.pdfbox.pdmodel.font.PDSimpleFont",
+        "httpclient.wire.header",
+        "httpclient.wire.content"]
+for (String ln : names) {
+    // Try java.util.logging as backend
+    java.util.logging.Logger.getLogger(ln).setLevel(java.util.logging.Level.WARNING);
+    // Try Log4J as backend
+    org.apache.log4j.Logger.getLogger(ln).setLevel(org.apache.log4j.Level.WARN);
+    // Try another backend
+    Log4JLoggerFactory.getInstance().getLogger(ln).setLevel(java.util.logging.Level.WARNING);
+}
 
 // call the arg parser to read the config and return a merged config
 ConfigObject config = SolrCrawlArgParser.parse(this.class.simpleName, args)
@@ -37,7 +50,7 @@ def folderLabels = config.namePatterns.folders
 def fileLabels = config.namePatterns.files
 def pathPatterns = config.pathPatterns.folders
 SolrDifferenceChecker differenceChecker = new SolrDifferenceChecker(config.checkGroupSizes)
-BaseAnalyzer analyzer = new FileSystemAnalyzer(folderLabels, fileLabels, pathPatterns, null, )
+BaseAnalyzer analyzer = new FileSystemAnalyzer(folderLabels, fileLabels, pathPatterns, null,)
 long start = System.currentTimeMillis()
 
 crawlMap.each { String crawlName, String startPath ->
