@@ -138,6 +138,7 @@ class LocalFileSystemCrawler {
                     Iterable savedGroup = findMatchingSavedGroup(existingSolrFolderDocs, currentFolder)
                     BaseDifferenceStatus diffStatus = differenceChecker.compareCrawledGroupToSavedGroup(currentFolder, savedGroup)
                     boolean shouldUpdate = differenceChecker.shouldUpdate(diffStatus)
+
                     // note continue through tree, separate analysis of updating done later
                     if (shouldUpdate) {
                         if(!differenceChecker.checkGroupSizes) {

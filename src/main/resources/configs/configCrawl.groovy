@@ -77,7 +77,7 @@ namePatterns {
             office            : [pattern: ~/.*\.(?i)(accdb|do[ct]x?|ics|ods|odp|odt|ott|pages|pdf|pptx?|rtf|sxi|vsdx?|xmind|xlsx?)/, analysis: Constants.PARSE_BUNDLE],
             system            : [pattern: ~/.*(\.(?i)(bin|bundle|cab|deb|dmg|exe|jar|lib|md5|pkg|rpm|so)|(gcc.*))/, analysis: Constants.TRACK_BUNDLE],
             web               : [pattern: ~/.*(?i)(html?)/, analysis: Constants.PARSE_BUNDLE],
-            instructions      : [pattern: ~/.*(?i)(adoc|readme.*|md)/, analysis: Constants.PARSE_BUNDLE],
+            instructions      : [pattern: ~/.*(?i)(adoc|readme.*|man|md)/, analysis: Constants.PARSE_BUNDLE],
             techDev           : [pattern: ~/.*(?i)(c|css|go|groovy|gradle|java|javascript|js|php|schema|sh)/, analysis: Constants.PARSE_BUNDLE],
             config            : [pattern: ~/.*(?i)(cfg|config.*|pem|properties|xml|yaml)/, analysis: Constants.PARSE_BUNDLE],
             data              : [pattern: ~/.*(?i)(avro|bundle|csv|dat|db|jsonl?d?|lst|mdb.?|orc|parquet|tab)/, analysis: Constants.TRACK_BUNDLE],
@@ -92,14 +92,15 @@ namePatterns {
 
 pathPatterns {
     folders = [
-            binaries: [pattern: ~/(?i)[\/\\](s?bin)[\/\\]?/, analysis: Constants.TRACK_BUNDLE],
-            work    : [pattern: ~/(?i).*[\/\\](lucidworks|oconeco|work).*/, analysis: Constants.PARSE_BUNDLE],
-            system  : [pattern: ~/(?i)[\/\\](Windows|Program Files.*|\/lib(x?32|64|exec)?\b|share|include)\b.*/, analysis: Constants.TRACK_BUNDLE],
-            data    : [pattern: ~/.*(\/data\/).*/, analysis: Constants.TRACK_BUNDLE],
-            opt     : [pattern: ~/.*(\/opt\/?).*/, analysis: Constants.TRACK_BUNDLE],
-            var     : [pattern: ~/.*(\/var\/?).*/, analysis: Constants.TRACK_BUNDLE],
-            config  : [pattern: ~/(\/etc\b).*/, analysis: Constants.PARSE_BUNDLE],
-            manuals  : [pattern: ~/(\/man\b).*/, analysis: Constants.PARSE_BUNDLE],
+            binariesFolder: [pattern: ~/(?i)[\/\\](s?bin)[\/\\]?/, analysis: Constants.TRACK_BUNDLE],
+            workFolder    : [pattern: ~/(?i).*[\/\\](lucidworks|oconeco|work).*/, analysis: Constants.PARSE_BUNDLE],
+            systemFolder  : [pattern: ~/(?i)[\/\\](Windows|Program Files.*|\/lib(x?32|64|exec)?\b|share|include)\b.*/, analysis: Constants.TRACK_BUNDLE],
+            dataFolder    : [pattern: ~/.*(\/data\/).*/, analysis: Constants.TRACK_BUNDLE],
+            downloadsFolder    : [pattern: ~/.*(\/[dD]ownloads?]\/).*/, analysis: Constants.TRACK_BUNDLE],
+            optFolder     : [pattern: ~/.*(\/opt\/?).*/, analysis: Constants.TRACK_BUNDLE],
+            varFolder     : [pattern: ~/.*(\/var\/?).*/, analysis: Constants.TRACK_BUNDLE],
+            configFolder  : [pattern: ~/(\/etc\b).*/, analysis: Constants.PARSE_BUNDLE],
+            manualsFolder : [pattern: ~/(\/man\b).*/, analysis: Constants.PARSE_BUNDLE],
     ]
     files = []
 }

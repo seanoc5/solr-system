@@ -3,8 +3,13 @@ package misc
 import com.oconeco.persistence.SolrSystemClient
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.core.Logger
-import org.apache.solr.client.solrj.SolrClient
 import org.apache.solr.client.solrj.SolrQuery
+import org.apache.solr.client.solrj.impl.Http2SolrClient
+import org.apache.solr.client.solrj.response.FacetField
+import org.apache.solr.client.solrj.response.QueryResponse
+import org.apache.solr.common.SolrDocument
+import org.apache.solr.common.SolrDocumentList
+
 
 /**
  * @author :    sean
@@ -14,21 +19,7 @@ import org.apache.solr.client.solrj.SolrQuery
  */
 
 
-//import org.apache.logging.log4j.core.Logger
-import org.apache.logging.log4j.LogManager
-import org.apache.logging.log4j.core.Logger
-import org.apache.solr.client.solrj.impl.Http2SolrClient
-import org.apache.solr.client.solrj.response.FacetField
-import org.apache.solr.client.solrj.response.QueryResponse
-import org.apache.solr.common.SolrDocument
-import org.apache.solr.common.SolrDocumentList
-import org.apache.solr.common.util.NamedList
-
-import java.lang.ref.ReferenceQueue
-
-//final Logger log = LogManager.getLogger(this.class.name);
 Logger log = LogManager.getLogger(this.class.name);
-
 log.info "Starting ${this.class.name}..."
 
 String host = 'oldie'
@@ -36,6 +27,13 @@ int port = 8983
 String collection = 'solr_system'
 String baseUrl = "http://$host:$port/solr/$collection"
 Http2SolrClient solrClient = new Http2SolrClient.Builder(baseUrl).build()
+
+int batchSize = 10
+List<String> fieldList = "dedup_s type_s name_s path_s size_l lastModified_dt indexedTime_dt label_ss crawlName_s contentSize_l id".split(' ')
+int DUP_FACET_COUNT = 50000     // Sean has 21k dup facets... probably need better filtering, as most of these are ignorable...?
+
+String userHome = System.getProperty("user.home")
+File outFile = new File(userHome, 'duplicates.list.csv')
 
 SolrQuery q = new SolrQuery("*:*")
 q.setRows(3)
@@ -69,13 +67,10 @@ dedupFacets.each {
     }
 }
 
-int batchSize = 10
-List<String> fieldList = "dedup_s type_s name_s path_s size_l lastModified_dt indexedTime_dt label_ss crawlName_s contentSize_l id".split(' ')
 SolrQuery sq2 = new SolrQuery()
 sq2.setFields(fieldList.join(' '))
-sq2.setRows(100000)
+sq2.setRows(DUP_FACET_COUNT)
 
-File outFile = new File('duplicates.list.csv')
 def fieldNames = []
 outFile.withWriter { BufferedWriter writer ->
     int cnt = 0
@@ -95,7 +90,7 @@ outFile.withWriter { BufferedWriter writer ->
             fieldList.each {
                 String s
                 def val = solrDocument.getFieldValue(it)
-                if (it.endsWith('_ss')){
+                if (it.endsWith('_ss')) {
                     log.debug "multivalued: $it"
                     s = val?.join('\n')
                 } else {
@@ -115,5 +110,6 @@ outFile.withWriter { BufferedWriter writer ->
 }
 solrClient.close()
 
+log.info "Wrote file: $outFile --> ${outFile.size()}"
 
 log.info "Done...?"
