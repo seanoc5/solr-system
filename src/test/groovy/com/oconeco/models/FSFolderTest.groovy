@@ -115,18 +115,17 @@ class FSFolderTest extends Specification {
     def "analyze content folder with Analyzer configured from configTest "() {
         given:
         ConfigObject config = new ConfigSlurper().parse(getClass().getResource('/configs/configTest.groovy'))
-        FSFolder startFolder = new FSFolder(startFolder, parentFolder, locationName, crawlName)
+        FSFolder fsFolder = new FSFolder(startFolder, parentFolder, locationName, crawlName)
         BaseAnalyzer analyzer = new BaseAnalyzer(config)
 
         when:
-        def results = analyzer.analyze(startFolder)
+        def results = analyzer.analyze(fsFolder)
 
         then:
         results instanceof Map<String, Map<String, Object>>
-        results.keySet()[0] == Constants.TRACK
-        results.get(Constants.TRACK)
+        results.keySet().containsAll(['content', 'workFolder'])
+        results.get(content).keySet().containsAll(['pattern', 'analysis', Constants.LABEL_MATCH])
     }
-
 
     def "check overlapping start folders"() {
         given:

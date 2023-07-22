@@ -50,6 +50,7 @@ class SolrSystemClient extends BaseClient {
 //    public static String FLD_CHILD_GROUP_LABELS = "childGroupLabels_ss"
 
     public static String FLD_MATCHED_LABELS = "matchedLabels_ss"
+    public static String FLD_MATCHED_LABELS_COUNT = "matchedLabels_i"
 
     public static String FLD_CONTENT_BODY = 'content_txt_en'
     public static String FLD_CONTENT_BODY_SIZE = 'contentSize_l'

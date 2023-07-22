@@ -224,7 +224,10 @@ abstract class SavableObject {
 
         // debugging?? add full matched label, with regex and match group... useful??
         if (matchedLabels) {
-            sid.setField(SolrSystemClient.FLD_MATCHED_LABELS, matchedLabels)
+            sid.setField(SolrSystemClient.FLD_MATCHED_LABELS_COUNT, matchedLabels.size())
+            matchedLabels.each {
+                sid.addField(SolrSystemClient.FLD_MATCHED_LABELS, it.toString())
+            }
         }
 
         return sid

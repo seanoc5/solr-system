@@ -30,10 +30,7 @@ class FSFile extends FSObject {
     Logger log = LogManager.getLogger(this.class.name)
     public static final String TYPE = 'File'
     String extension
-//    String mimeType
-//    String owner
 
-//    String osName
     Integer ARCHIVE_STATUS_SIZE = 1000
     // todo move this code out of FSFile into analyzer??
     public Pattern IGNORE_ARCHIVE_PATTERN = ~/.*(bundle|concepts|deb|dmg|exe|iso|jar|o[dt]t|pages|pkg|rpm|war)|(doc|xls|ppt)x/
@@ -46,9 +43,12 @@ class FSFile extends FSObject {
      * @param locationName - source machine, profile, email account...
      * @param crawlName - subpartition of source location into logical naming (of content)
      */
-    FSFile(File f, SavableObject parent, String locationName, String crawlName) {
-        super(f, parent, locationName, crawlName)
+    FSFile(File f, SavableObject parentObj, String locationName, String crawlName) {
+        super(f, parentObj, locationName, crawlName)
 
+        if (parent==null && f.parentFile){
+            parent = new FSFolder(f.parentFile,null, locationName, crawlName)
+        }
         type = TYPE
         groupObject = false
         size = f.size()

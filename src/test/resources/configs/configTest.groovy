@@ -78,7 +78,7 @@ namePatterns {
             instructions      : [pattern: ~/.*(?i)(adoc|readme.*|man|md)/, analysis: Constants.PARSE_BUNDLE],
             techDev           : [pattern: ~/.*(?i)(c|css|go|groovy|gradle|java|javascript|js|php|schema|sh)/, analysis: Constants.PARSE_BUNDLE],
             config            : [pattern: ~/.*(?i)(cfg|config.*|pem|properties|xml|yaml)/, analysis: Constants.PARSE_BUNDLE],
-            data              : [pattern: ~/.*(?i)(avro|bundle|csv|dat|db|jsonl?d?|lst|mdb.?|orc|parquet|tab)/, analysis: Constants.TRACK_BUNDLE],
+//            data              : [pattern: ~/.*(?i)(avro|bundle|csv|dat|db|jsonl?d?|lst|mdb.?|orc|parquet|tab)/, analysis: Constants.TRACK_BUNDLE],
             archives          : [pattern: ~/.*(?i)(bz2|cab|dmg|ear|img|iso|msi|rar|tar.gz|tgz|war)/, analysis: Constants.TRACK_BUNDLE],
             media             : [pattern: ~/.*(?i)(avi|bmp|gif|ico|jpe?g|kra|mp3|mpe?g|ogg|png|wav)/, analysis: Constants.PARSE_BUNDLE],
             communication     : [pattern: ~/.*(?i)(eml|vcf)/, analysis: Constants.PARSE_BUNDLE],
@@ -90,19 +90,14 @@ namePatterns {
 // regex labeling/analysis based path rather than name (for folders and files -- assumes this is for FSObjects (folders/files)
 pathPatterns {
     folders = [
-            binariesFolder : [pattern: ~/(?i)[\/\\](s?bin)[\/\\]?/, analysis: Constants.TRACK_BUNDLE],
-            workFolder     : [pattern: ~/(?i).*[\/\\](lucidworks|oconeco|work).*/, analysis: Constants.PARSE_BUNDLE],
-            systemFolder   : [pattern: ~/(?i)[\/\\](Windows|Program Files.*|\/lib(x?32|64|exec)?\b|share|include)\b.*/, analysis: Constants.TRACK_BUNDLE],
-            dataFolder     : [pattern: ~/.*(\/data\/).*/, analysis: Constants.TRACK_BUNDLE],
-            downloadsFolder: [pattern: ~/.*(\/[dD]ownloads?]\/).*/, analysis: Constants.TRACK_BUNDLE],
-            optFolder      : [pattern: ~/.*(\/opt\/?).*/, analysis: Constants.TRACK_BUNDLE],
-            varFolder      : [pattern: ~/.*(\/var\/?).*/, analysis: Constants.TRACK_BUNDLE],
-            configFolder   : [pattern: ~/(\/etc\b).*/, analysis: Constants.PARSE_BUNDLE],
-            manualsFolder  : [pattern: ~/(\/man\b).*/, analysis: Constants.PARSE_BUNDLE],
+            ignoreFolder : [pattern: ~/(?i)(ignore)/, analysis: Constants.TRACK_BUNDLE],
+            contentFolder : [pattern: ~/(?i)(content)/, analysis: Constants.TRACK_BUNDLE],
+            testFolder     : [pattern: ~/(?i)(test|demo)/, analysis: Constants.PARSE_BUNDLE],
     ]
+
     files = [
-            testFiles  : [pattern: ~/(?i).*(test).*/, analysis: Constants.TRACK_BUNDLE],
-            solrFiles: [pattern: ~/(?i)(managed-schema|solrconfig).*/, analysis: Constants.TRACK_BUNDLE],
-            interestingFiles: [pattern: ~/(?i)(future|predictions|fuzzy|vector|license).*/, analysis: Constants.PARSE_BUNDLE],
+            testFiles  : [pattern: ~/(?i).*([\\/\\]test\w*).*/, analysis: Constants.TRACK_BUNDLE],
+            contentFiles: [pattern: ~/(?i).*(content).*/, analysis: Constants.PARSE_BUNDLE],
+            interestingFiles: [pattern: ~/(?i).*(interest.*\b|predictions|fuzzy|vector|license).*/, analysis: Constants.PARSE_BUNDLE],
     ]
 }

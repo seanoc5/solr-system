@@ -218,9 +218,6 @@ class BaseAnalyzer {
     Map<String, Map<String, Object>> analyze(SavableObject object) {
         log.debug "analyze object: $object"
         if (object) {
-            if (object.archive) {
-                log.info "\t\t\t\tARCHIVE File: $object"
-            }
             if (object.dedup) {
                 log.debug "\t\talready have dedup string:(${object.dedup}) in object:($object)"
             } else {
@@ -233,8 +230,9 @@ class BaseAnalyzer {
                 Map ignoreMap = [(Constants.IGNORE): [pattern: '', analysis: [], (Constants.LABEL_MATCH): Constants.NO_MATCH]]
                 object.matchedLabels = ignoreMap
             } else {
-                object.matchedLabels = applyLabelMaps(object)
-
+                def lm = applyLabelMaps(object)
+                log.debug "\t\tMatched label: $lm"
+//                object.matchedLabels << lm
                 object.matchedLabels.each { String label, Map labelMatchMap ->
                     def analysis = labelMatchMap.analysis
                     if (analysis instanceof List) {
@@ -353,23 +351,35 @@ class BaseAnalyzer {
         if (object.groupObject) {
             Map<String, Map<String, Object>> nameMap = groupNameMap
             if (nameMap) {
-                results << applyLabels(object, object.name, nameMap)
+                Map<String, Map<String, Object>> r = applyLabels(object, object.name, nameMap, "groupName")
+                r.each { String key, Map map ->
+                    results.put(key, map)
+                }
             }
 
             Map<String, Map<String, Object>> pathMap = groupPathMap
             if (pathMap) {
-                results << applyLabels(object, object.path, pathMap)
+                Map<String, Map<String, Object>> r = applyLabels(object, object.name, nameMap, "groupPath")
+                r.each { String key, Map map ->
+                    results.put(key, map)
+                }
             }
 
         } else if (object.type == FSFile.TYPE) {
             Map<String, Map<String, Object>> nameMap = this.itemNameMap
             if (nameMap) {
-                results << applyLabels(object, object.name, nameMap)
+                Map<String, Map<String, Object>> r = applyLabels(object, object.name, nameMap, "itemName")
+                r.each { String key, Map map ->
+                    results.put(key, map)
+                }
             }
 
             Map<String, Map<String, Object>> pathMap = itemPathMap
             if (pathMap) {
-                results << applyLabels(object, object.path, nameMap)
+                Map<String, Map<String, Object>> r = applyLabels(object, object.path, pathMap, "itemPath")
+                r.each { String key, Map map ->
+                    results.put(key, map)
+                }
             }
         }
         return results
@@ -383,13 +393,13 @@ class BaseAnalyzer {
      * @param labelMap the child map which should have 'pattern' and 'analysis' values
      * @return all matching map entries, focused on entry keys which become item labels in solr (or other persistence???)
      */
-    Map<String, Map<String, Object>> applyLabels(SavableObject object, String nameOrPath, Map<String, Map<String, Object>> labelMap) {
+    Map<String, Map<String, Object>> applyLabels(SavableObject object, String nameOrPath, Map<String, Map<String, Object>> labelMap, String labelType) {
         Map<String, Map<String, Object>> matchingLabels = [:]
-        log.debug "\t\tapplyLabels: name($nameOrPath) -> object($object)"
+        log.debug "\t\tapplyLabels: name($nameOrPath) -> object(${object.path}) -- labelMap:$labelMap"
         def defaultLabel = null
         labelMap.each { label, mapVal ->
             if (mapVal.pattern) {
-                log.info "\t\tLabel($label) - map($mapVal)"
+                log.debug "\t\tLabel($label) - map($mapVal)"
                 Pattern pattern = mapVal.pattern
                 Matcher matcher = pattern.matcher(nameOrPath)
 //                if (name ==~ pattern) {
@@ -400,9 +410,10 @@ class BaseAnalyzer {
                     } else {
                         mapVal.put(Constants.LABEL_MATCH, pattern.pattern() + " => (default matching?? '.*'??")
                     }
-                    object.labels << label
-                    matchingLabels.put(label, mapVal)
-                    log.debug "\t\tMatch: $label name($nameOrPath) -- $mapVal "
+                    String s =  labelType + ':' + label
+                    object.labels << s
+                    object.matchedLabels.put(s, mapVal)
+                    log.debug "\t\tMatch:$s name($nameOrPath) -- $mapVal "
                 } else {
                     log.debug "${Constants.NO_MATCH}, obj($object) name($nameOrPath) LABEL($label)::pattern($pattern)"
                 }
@@ -411,20 +422,18 @@ class BaseAnalyzer {
                 defaultLabel = label
             }
         }
-        if (matchingLabels.size() > 0) {
+        if (object.labels.size() > 0) {
             log.debug "found matching label, no need for default"
         } else {
             log.debug "\t\t----No matching labels found for name($object)"
             if (defaultLabel) {
-                object.labels << defaultLabel
+                object.labels << labelType + ' ' + defaultLabel
                 Map map = labelMap.get(defaultLabel)
                 map.put(Constants.LABEL_MATCH, Constants.NO_MATCH)
-                matchingLabels.put(defaultLabel, map)
-                // todo -- revisit, hackish approach
-
+                object.matchedLabels.put(defaultLabel, map)
             }
         }
-        return matchingLabels
+        return object.matchedLabels
     }
 
     def track(SavableObject object) {

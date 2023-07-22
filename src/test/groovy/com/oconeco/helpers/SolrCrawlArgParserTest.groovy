@@ -28,7 +28,7 @@ class SolrCrawlArgParserTest extends Specification {
         cfgFile.canRead()
 
         config != null
-        fnameMap.keySet().containsAll(['ignore', 'default'])
+        fnameMap.keySet().containsAll(['ignore', 'office', 'system', 'web', 'tectDev', 'track'])
     }
 
 }

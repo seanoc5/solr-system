@@ -1,23 +1,22 @@
 package com.oconeco.models
 
+import com.oconeco.analysis.BaseAnalyzer
 import com.oconeco.helpers.Constants
 import spock.lang.Specification
-
-import java.util.regex.Pattern
 
 class FSFileTest extends Specification {
     String locationName = 'spock'
     String crawlName = 'test'
 
-    String objectsName = 'objects.json'
+    String jsonName = 'jq.lst'
     String zipName = 'datasources.zip'
     String tarName = 'combinedTestContent.tgz'
 
-    File jsonFile = new File(getClass().getResource("/content/${objectsName}").toURI())
+    File contentFolder = new File(getClass().getResource("/content").toURI())
+    File jsonFile = new File(getClass().getResource("/content/testsub/subfolder2/subfolder3/$jsonName").toURI())
+//    File jsonFile = new File(getClass().getResource("/content/${jsonName}").toURI())
     File zipFile = new File(getClass().getResource("/content/${zipName}").toURI())
     File tarFile = new File(getClass().getResource("/content/${tarName}").toURI())
-    Pattern ignoreFiles = Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE]
-    Pattern ignoreFolders = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]
 
     FSFolder parentFolder = new FSFolder(jsonFile.parentFile, null, locationName, crawlName)
 
@@ -29,7 +28,7 @@ class FSFileTest extends Specification {
         then:
         fsFile.id.startsWith(fsFile.locationName)
         fsFile.id.endsWith(fsFile.name)
-        fsFile.name == objectsName
+        fsFile.name == jsonName
         fsFile.path.endsWith(jsonFile.name)
         fsFile.type == FSFile.TYPE
         fsFile.thing instanceof File
@@ -147,6 +146,33 @@ class FSFileTest extends Specification {
 //        bz2Entries.size()==8
     }
 */
+
+    def "analyze content files files with Analyzer configured from configTest "() {
+        given:
+        ConfigObject config = new ConfigSlurper().parse(getClass().getResource('/configs/configTest.groovy'))
+        BaseAnalyzer analyzer = new BaseAnalyzer(config)
+        FSFile fsj = new FSFile(jsonFile, null,locationName, crawlName)
+        FSFile fst = new FSFile(tarFile, null,locationName, crawlName)
+        FSFile fsz = new FSFile(zipFile, null,locationName, crawlName)
+        def files = [fsj, fst, fsz]
+
+        when:
+        def rj = analyzer.analyze(fsj)
+        def rt = analyzer.analyze(fst)
+        def rz = analyzer.analyze(fsz)
+        def resultsList = analyzer.analyze(files)
+
+        then:
+        rj.size()==3
+        rj.keySet().containsAll(['track', 'testFiles', 'contentFiles'])
+        rt.keySet().containsAll(['archives', 'testFiles', 'contentFiles'])
+        resultsList instanceof List<Map<String, Map<String, Object>>>
+
+//        resultsList.keySet().containsAll(['content', 'workFolder'])
+//        resultsList.get(content).keySet().containsAll(['pattern', 'analysis', Constants.LABEL_MATCH])
+    }
+
+
 
 
 }
