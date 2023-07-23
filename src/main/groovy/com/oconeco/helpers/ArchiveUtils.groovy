@@ -73,7 +73,9 @@ class ArchiveUtils {
      * @return objects which are archives (to then extract information about archive entries (like a virtual filesystem)
      */
     static List<SavableObject> gatherArchiveObjects(List<SavableObject> objects){
-        List<SavableObject> archiveObjects = objects.findAll {it.archive}
+        List<SavableObject> archiveObjects = objects.findAll {
+            it.archive
+        }
         return archiveObjects
     }
 }

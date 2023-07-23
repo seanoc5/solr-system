@@ -1,7 +1,6 @@
 package com.oconeco.crawler
 
 import com.oconeco.analysis.FileSystemAnalyzer
-import com.oconeco.difference.BaseDifferenceChecker
 import com.oconeco.difference.SolrDifferenceChecker
 import com.oconeco.helpers.Constants
 import com.oconeco.models.FSFile
@@ -15,7 +14,6 @@ import org.apache.logging.log4j.Logger
 import org.apache.solr.common.SolrDocument
 import org.apache.solr.common.SolrDocumentList
 import org.apache.tika.parser.AutoDetectParser
-import org.apache.tika.parser.Parser
 import org.apache.tika.sax.BodyContentHandler
 import spock.lang.Specification
 
@@ -108,7 +106,7 @@ class LocalFileSystemCrawlerTest extends Specification {
 //        List<SavableObject> archiveItems = []
 
         when:
-        List<SavableObject> crawlResults = crawler.crawlFolderFiles(startFSFolder, analyzer)
+        List<SavableObject> crawlResults = crawler.crawlFolderChildren(startFSFolder, analyzer)
         def archiveFiles = startFSFolder.childItems.findAll { FSObject fsObject ->
             fsObject.archive
         }

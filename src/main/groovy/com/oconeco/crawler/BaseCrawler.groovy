@@ -117,7 +117,7 @@ class BaseCrawler {
             boolean shouldIgnore = analyzer.shouldIgnore(currentFolder)
 
             if (accessible) {
-                rc = currentFolder.buildDedupString()       // create dedup AFTER we have collected relevant file sizes
+                String dedupString = currentFolder.buildDedupString()       // create dedup AFTER we have collected relevant file sizes
                 if (shouldIgnore) {
                     log.info "\t\t----IGNORABLE folder:($currentFolder) matchedLabels:($currentFolder.matchedLabels)"
                     fvr = FileVisitResult.SKIP_SUBTREE
@@ -125,16 +125,18 @@ class BaseCrawler {
                     log.debug "\t\t----Not ignorable folder: $currentFolder"
                     // todo -- refactor, this is uber-hacky... for speed skip checking folder sizes, for completeness, crawl files and use the totalled size of non-ignored files
                     if(differenceChecker.checkGroupSizes) {
-                        def rc = crawlFolderFiles(currentFolder, analyzer)
+                        List<SavableObject> list = crawlFolderFiles(currentFolder, analyzer)
+                        log.debug "\t\tFolder files crawled (WITH checking folder sizes) size: ${list.size()}"
                     }
 
                     //Note compareFSFolderToSavedDocMap will save diff status in object, for postDir assessment/analysis
                     BaseDifferenceStatus diffStatus = differenceChecker.compareCrawledGroupToSavedGroup(currentFolder, existingSolrFolderDocs)
-//                    BaseDifferenceStatus diffStatus = differenceChecker.compareCrawledDocToSavedDoc(currentFolder, existingSolrFolderDocs)
 
+                    // todo -- refactor, this is uber-hacky... for speed skip checking folder sizes, for completeness, crawl files and use the totalled size of non-ignored files
                     if(!differenceChecker.checkGroupSizes && diffStatus.significantlyDifferent) {
                         log.debug "\t\tcrawl folder files after comparing (without file sizes): $currentFolder"
-                        def rc = crawlFolderFiles(currentFolder, analyzer)
+                        List<SavableObject> list = crawlFolderFiles(currentFolder, analyzer)
+                        log.debug "\t\tFolder files crawled (WITHOUT checking folder sizes) size: ${list.size()}"
                     }
 
                     fvr = FileVisitResult.CONTINUE // note continue through tree, separate analysis of updating done later
@@ -154,6 +156,7 @@ class BaseCrawler {
         long cnt = 0
         startDir.traverse(options) { File folder ->
             cnt++
+            log.info "$cnt) traversing file(folder?): $folder"
             if (folder.isDirectory()) {
                 FSFolder childFolder = new FSFolder(folder, null, locationName, crawlName)
                 boolean ignoreFolder = analyzer.shouldIgnore(childFolder)

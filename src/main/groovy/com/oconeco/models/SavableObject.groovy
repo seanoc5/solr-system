@@ -69,6 +69,9 @@ abstract class SavableObject {
     // todo -- look into using categories as well?
     /** type assigned programmatically (by this package's analysis code) */
     List<String> labels = []
+    List<String> parentLabels = []
+    List<String> ancestorLabels = []
+
     /** user tagging */
     List<String> tags = []
     /** machine learning clusters (unsupervised) */
@@ -109,12 +112,31 @@ abstract class SavableObject {
         if (parent) {
             this.parent = parent
             this.depth = parent.depth + 1
+
         } else {
             log.debug "no valid parent given: $thing"
         }
         this.locationName = locationName
         this.crawlName = crawlName
+
         log.debug "Creating savable object thing: $thing"
+    }
+
+    def addAncestorLabels(){
+        Map addedLabels = [:]
+        if(parent.labels) {
+            this.parentLabels.addAll(parent.labels)
+            addedLabels.parentLabels = parentLabels
+        }
+        if(parent.parentLabels) {
+            this.ancestorLabels.addAll(parent.parentLabels)
+            addedLabels.grandParentLabels = parent.parentLabels
+        }
+        if(parent.ancestorLabels) {
+            this.ancestorLabels.addAll(parent.ancestorLabels)
+            addedLabels.ancestorLabels = parent.ancestorLabels
+        }
+        return addedLabels
     }
 
 
@@ -145,15 +167,15 @@ abstract class SavableObject {
             sid.setField(SolrSystemClient.FLD_CHILD_ITEM_COUNT, childItems.size())
 
             StringBuilder sbChildNames = new StringBuilder()
-            StringBuilder sbChildLabels = new StringBuilder()
+//            StringBuilder sbChildLabels = new StringBuilder()
             this.childItems.each {
                 sbChildNames.append(it.name + '\n')
-                if (it.labels) {
-                    sbChildLabels.append(it.labels.join('\n') + '\n')
+                it.labels.each {String lbl ->
+//                    sbChildLabels.append(it.labels.join('\n') + '\n')
+                    sid.addField(SolrSystemClient.FLD_CHILD_ITEM_LABELS, lbl)
                 }
             }
             sid.addField(SolrSystemClient.FLD_CHILD_ITEM_NAMES, sbChildNames.toString())
-            sid.addField(SolrSystemClient.FLD_CHILD_ITEM_LABELS, sbChildLabels.toString())
         } else {
             log.debug "\t\tno child items for object:($this)"
         }
@@ -186,6 +208,12 @@ abstract class SavableObject {
         }
 
         sid.setField(SolrSystemClient.FLD_LABELS, labels)
+        parentLabels.each{
+            sid.setField(SolrSystemClient.FLD_PARENT_LABELS, it)
+        }
+        ancestorLabels.each{
+            sid.setField(SolrSystemClient.FLD_ANCESTOR_LABELS, it)
+        }
 
         if (tags) {
             sid.setField(SolrSystemClient.FLD_TAG_SS, tags)
@@ -280,7 +308,7 @@ abstract class SavableObject {
     String toString() {
         String s = null
         if (labels) {
-            s = "${type}:(${name}) [depth:$depth] :: (${labels[0]})"
+            s = "${type}:(${name}) [depth:$depth] :: (${labels})"
         } else if (ignore) {
             s = "${type}:(${name}) [depth:$depth] :: [IGNORE]"
         } else {

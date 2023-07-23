@@ -13,6 +13,7 @@ import org.apache.solr.client.solrj.response.QueryResponse
 import org.apache.solr.client.solrj.response.UpdateResponse
 import org.apache.solr.common.SolrInputDocument
 import org.apache.solr.common.util.NamedList
+
 /**
  * Looking at helper class to save solr_system (file crawl to start with content to solr
  */
@@ -39,8 +40,14 @@ class SolrSystemClient extends BaseClient {
     public static String FLD_HIDDEN_B = "hidden_b"
     public static String FLD_EXTENSION_SS = "extension_ss"
 
+    /** tags are "human" labels */
     public static String FLD_TAG_SS = "tag_ss"
+    /** labels are system (i.e. programatically) assigned */
     public static String FLD_LABELS = "label_ss"
+    /** parent (group/folder) item labels are more relevant than ancestor/grandparent labels */
+    public static String FLD_PARENT_LABELS = "parentLabel_ss"
+    public static String FLD_ANCESTOR_LABELS = "ancestorLabel_ss"
+
     public static String FLD_OS_NAME = "operatingSystem_s"
     public static String FLD_CHILD_ITEM_NAMES = "childNames_txt_en"
     public static String FLD_CHILD_ITEM_LABELS = "childLabels_ss"
@@ -185,7 +192,7 @@ class SolrSystemClient extends BaseClient {
     @Override
     def saveObjects(List<SavableObject> objects, int commitWithinMS = 1000) {
         UpdateResponse resp
-        if(objects) {
+        if (objects) {
             String firstId = objects[0].id
             log.debug "\t\t++++Adding solrInputDocuments, size: ${objects.size()} -- first ID:($firstId)"
             List<SolrInputDocument> solrInputDocuments = objects.collect { it.toPersistenceDocument() }

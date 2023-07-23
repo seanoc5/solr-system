@@ -1,3 +1,5 @@
+package misc
+
 import org.apache.commons.compress.archivers.ArchiveEntry
 import org.apache.commons.compress.archivers.ArchiveInputStream
 import org.apache.commons.compress.archivers.jar.JarArchiveEntry

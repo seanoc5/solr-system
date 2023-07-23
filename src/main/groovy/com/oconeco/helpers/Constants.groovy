@@ -35,7 +35,7 @@ class Constants {
 
     public static final Map<String, Pattern> DEFAULT_FOLDERNAME_PATTERNS = [
             // csv|
-            ignore       : ~/.*(?i)(${SOLR_INDEX_FOLDER_PATTERN}|\.gradle.?|\.m2|RECYCLE.BIN|assets|build|classes|caches?|chrome|deleteme.*|engine|flatpack|git|github|google-chrome|heritrix.*ignore.*|never_index|node_modules|packages?|Partitions|pkgs?|plugins?|repo|repository|skins?|skipme.*|snapshots?|System\b.*|svn|target|te?mp|trash|vscode)/,
+            ignore       : ~/.*\/(${SOLR_INDEX_FOLDER_PATTERN}|\.gradle.?|\.m2|RECYCLE.BIN|assets|build|classes|caches?|chrome|deleteme.*|engine|flatpack|git|github|google-chrome|heritrix.*ignore.*|never_index|node_modules|packages?|Partitions|pkgs?|plugins?|repo|repository|skins?|skipme.*|snapshots?|System\b.*|svn|target|te?mp|(\w+-?)?trash|vscode)/,
             backups      : ~/.*(?i)(backups?|bkups?|old|timeshift)/,
             configuration: ~/.*(?i)(configs)/,
             documents    : ~/.*([Dd]ocuments|[Dd]esktop)/,

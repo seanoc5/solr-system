@@ -1,7 +1,6 @@
 package com.oconeco.analysis
 
 import com.oconeco.helpers.Constants
-import com.oconeco.models.FSFile
 import com.oconeco.models.FSObject
 import com.oconeco.models.SavableObject
 import org.apache.logging.log4j.LogManager
@@ -9,17 +8,16 @@ import org.apache.logging.log4j.core.Logger
 import org.apache.tika.exception.TikaException
 import org.apache.tika.exception.WriteLimitReachedException
 import org.apache.tika.metadata.Metadata
+import org.apache.tika.parser.AutoDetectParser
 
 //import org.apache.logging.log4j.core.Logger
 
-import org.apache.tika.parser.AutoDetectParser
 import org.apache.tika.parser.ParseContext
 import org.apache.tika.parser.Parser
 import org.apache.tika.sax.BodyContentHandler
 
 import java.util.regex.Matcher
 import java.util.regex.Pattern
-
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -218,35 +216,22 @@ class BaseAnalyzer {
     Map<String, Map<String, Object>> analyze(SavableObject object) {
         log.debug "analyze object: $object"
         if (object) {
-            if (object.dedup) {
-                log.debug "\t\talready have dedup string:(${object.dedup}) in object:($object)"
-            } else {
-                String dd = object.buildDedupString()
-                log.warn "\t\tBuilt dedup string:($dd) in analyze($object) call "
-            }
-
-            if (shouldIgnore(object)) {
-                log.info "\t\t....Ignore object ($object) (skipping majority of `analyze(object)` method"
-                Map ignoreMap = [(Constants.IGNORE): [pattern: '', analysis: [], (Constants.LABEL_MATCH): Constants.NO_MATCH]]
-                object.matchedLabels = ignoreMap
-            } else {
-                def lm = applyLabelMaps(object)
-                log.debug "\t\tMatched label: $lm"
+            def lm = applyLabelMaps(object)
+            log.debug "\t\tMatched label: $lm"
 //                object.matchedLabels << lm
-                object.matchedLabels.each { String label, Map labelMatchMap ->
-                    def analysis = labelMatchMap.analysis
-                    if (analysis instanceof List) {
-                        analysis.each { String analysisName ->
-                            log.debug "\t\t....Apply analysis: $label->$analysisName -- object (${object}) -- matched on: ${labelMatchMap.get(Constants.LABEL_MATCH)}"
+            object.matchedLabels.each { String label, Map labelMatchMap ->
+                def analysis = labelMatchMap.analysis
+                if (analysis instanceof List) {
+                    analysis.each { String analysisName ->
+                        log.debug "\t\t....Apply analysis: $label->$analysisName -- object (${object}) -- matched on: ${labelMatchMap.get(Constants.LABEL_MATCH)}"
 
-                            def rc = this.doAnalysis(analysisName, object)
-                            log.debug "\t\tdoAnalysis($label) results: $rc"
-                        }
-                    } else {
-                        log.info "\t\tNothing to process? $label - $analysis"
+                        def rc = this.doAnalysis(analysisName, object)
+                        log.debug "\t\tdoAnalysis($label) results: $rc"
                     }
-                    // todo - more code here
+                } else {
+                    log.info "\t\tNothing to process? $label - $analysis"
                 }
+                // todo - more code here
             }
         } else {
             log.warn "Null SavableObject($object) -- bug??? nothing to analyze here"
@@ -299,9 +284,14 @@ class BaseAnalyzer {
                 results = this.track(object)
                 break
             case 'parse':
-                log.debug "\t\t....Do analysis named '$analysisName' on object $object (size:${object.size})"
-                results = this.parse(object)
-                String mime = results?.metadata?.get('Content-Type')
+                if (object?.thing) {
+                    log.debug "\t\t....Do analysis named '$analysisName' on object $object (size:${object.size})"
+                    results = this.parse(object)
+                    String mime = results?.metadata?.get('Content-Type')
+                } else {
+                    log.warn "Object thing:(${object.thing}) is not valid: $object"
+                }
+
                 break
 
             case Constants.SOURCE_CODE:
@@ -348,35 +338,35 @@ class BaseAnalyzer {
     Map<String, Map<String, Object>> applyLabelMaps(SavableObject object) {
         Map<String, Map<String, Object>> results = [:]
         log.debug "\t\tapplyLabelMaps: $object"
-        if (object.groupObject) {
-            Map<String, Map<String, Object>> nameMap = groupNameMap
-            if (nameMap) {
-                Map<String, Map<String, Object>> r = applyLabels(object, object.name, nameMap, "groupName")
+        if (object.groupObject){
+            if(groupNameMap) {
+                Map<String, Map<String, Object>> r = applyLabels(object, object.name, groupNameMap, "groupName")
+                r.each { String key, Map map ->
+                    results.put(key, map)
+                }
+            } else {
+                log.warn "\t\tno groupNameMap to analyze with, skipping--object: $object"
+            }
+
+            if (groupPathMap) {
+                Map<String, Map<String, Object>> r = applyLabels(object, object.path, groupPathMap, "groupPath")
                 r.each { String key, Map map ->
                     results.put(key, map)
                 }
             }
 
-            Map<String, Map<String, Object>> pathMap = groupPathMap
-            if (pathMap) {
-                Map<String, Map<String, Object>> r = applyLabels(object, object.name, nameMap, "groupPath")
+        } else  {
+            // if not a group, assume this is an item
+            // todo -- is there any other option beyond group or item???
+            if (itemNameMap) {
+                Map<String, Map<String, Object>> r = applyLabels(object, object.name, itemNameMap, "itemName")
                 r.each { String key, Map map ->
                     results.put(key, map)
                 }
             }
 
-        } else if (object.type == FSFile.TYPE) {
-            Map<String, Map<String, Object>> nameMap = this.itemNameMap
-            if (nameMap) {
-                Map<String, Map<String, Object>> r = applyLabels(object, object.name, nameMap, "itemName")
-                r.each { String key, Map map ->
-                    results.put(key, map)
-                }
-            }
-
-            Map<String, Map<String, Object>> pathMap = itemPathMap
-            if (pathMap) {
-                Map<String, Map<String, Object>> r = applyLabels(object, object.path, pathMap, "itemPath")
+            if (itemPathMap) {
+                Map<String, Map<String, Object>> r = applyLabels(object, object.path, itemPathMap, "itemPath")
                 r.each { String key, Map map ->
                     results.put(key, map)
                 }
@@ -410,7 +400,7 @@ class BaseAnalyzer {
                     } else {
                         mapVal.put(Constants.LABEL_MATCH, pattern.pattern() + " => (default matching?? '.*'??")
                     }
-                    String s =  labelType + ':' + label
+                    String s = labelType + ':' + label
                     object.labels << s
                     object.matchedLabels.put(s, mapVal)
                     log.debug "\t\tMatch:$s name($nameOrPath) -- $mapVal "
@@ -494,8 +484,7 @@ class BaseAnalyzer {
                             if (object.mimeType?.containsIgnoreCase('image')) {
                                 log.debug "\t\tno content for object:($object) which is mimetype:(${object.mimeType}) - no content really expected..."
                             } else {
-                                log.info "\t\tno content found for SavableObject:($object) in parse(object) method -- mimetype:(${object.mimeType})"
-
+                                log.info "\t\tno content found for SavableObject:(${object.path}) in parse(object) method -- mimetype:(${object.mimeType})"
                             }
                         }
                     } else {
@@ -519,7 +508,11 @@ class BaseAnalyzer {
             }
             long end = System.currentTimeMillis()
             long elapsed = end - start
-            log.info "\t\t....parse(object:$object) -- (content size:${content?.size()}) -- Elapsed time: ${elapsed}ms (${elapsed / 1000} sec)"
+            try {
+                log.info "\t\t....parse(object:$object) -- (content size:${content?.size()}) -- Elapsed time: ${elapsed}ms (${elapsed / 1000} sec)"
+            } catch (NullPointerException npe){
+                log.warn "Problems with object:($object) or content:${content?.class.name}"
+            }
 
         } else {
             log.info "\t\t\t\tno size for object.thing (${object.thing} -- size:${object.size}) to analyze (zero-len object/file??), skipping 'parse' analysis "

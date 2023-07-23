@@ -1,10 +1,11 @@
 package com.oconeco.models
 
-
+import com.oconeco.helpers.Constants
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.core.Logger
 import org.apache.solr.common.SolrInputDocument
 
+import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 /**
@@ -40,13 +41,29 @@ class FSFolder extends FSObject {
 
     FSFolder(File srcFolder, SavableObject parent, String locationName, String crawlName, Pattern ignoreName, Pattern ignorePath = null) {
         this(srcFolder, parent, locationName, crawlName)
-        if(srcFolder.name ==~ ignoreName){
-            log.info "\t\tIgnore this folder -- name(${this.name}) matches ignore name pattern:($ignoreName)"
-            ignore = true
+        Matcher matcher = (srcFolder.name =~ ignoreName)
+        this.ignore = matcher.matches()
+        if (ignore) {
+            String match = matcher.group(1)
+            labels << Constants.IGNORE
+            Map ml = [(Constants.IGNORE): [pattern: ignoreName, (Constants.LABEL_MATCH): match]]
+            matchedLabels = ml
+            log.info "\t\tIGNORE: processing a FSFolder:($this), this matches group name ignore (${ignoreName} "
+        } else {
+            log.debug "\t\tprocess: processing a FSFolder:($this), this does NOT match group name ignore (${ignoreName}"
         }
-        if(ignorePath && srcFolder.path ==~ ignorePath){
-            log.info "\t\tIgnore this folder -- path(${this.path}) matches ignore path pattern:($ignorePath)"
-            ignore = true
+
+        if (ignorePath) {
+            Matcher matcherPath = (srcFolder.path =~ ignorePath)
+            if (matcherPath.matches()) {
+                String match = matcherPath.group(1)
+                labels << Constants.IGNORE
+                Map ml = [(Constants.IGNORE): [pattern: ignorePath, (Constants.LABEL_MATCH): match]]
+                matchedLabels = ml
+
+                log.info "\t\tIgnore this folder -- path(${this.path}) matches ignore path pattern:($ignorePath)"
+                ignore = true
+            }
         }
 
     }
@@ -61,9 +78,14 @@ class FSFolder extends FSObject {
         return sid
     }
 
-    List<SavableObject> gatherAnalyzableThings(){
-        List<SavableObject> savableThings = this.childItems + this
-        return savableThings
+
+    /**
+     * Simple placeholder, more advanced SavableOject implementations may add logic to what is analyzable
+     * @return
+     */
+    List<SavableObject> gatherAnalyzableChildren() {
+        List<SavableObject> analyzableChildren = this.childItems.findAll { !it.ignore }
+        return analyzableChildren
     }
 
 }

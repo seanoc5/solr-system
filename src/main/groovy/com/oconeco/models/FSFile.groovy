@@ -67,11 +67,11 @@ class FSFile extends FSObject {
     FSFile(File f, SavableObject parent, String locationName, String crawlName, Pattern ignoreName, Pattern ignorePath=null) {
         this(f, parent, locationName, crawlName)
         if (name ==~ ignoreName) {
-            log.info "\t\tIgnore this folder -- name(${this.name}) matches ignore name pattern:($ignoreName)"
+            log.debug "\t\tIgnore this file -- NAME:(${this.name}) matches ignore name pattern:($ignoreName)"
             ignore = true
         }
         if (ignorePath && path ==~ ignorePath) {
-            log.info "\t\tIgnore this folder -- path(${this.path}) matches ignore path pattern:($ignorePath)"
+            log.debug "\t\tIgnore this file -- PATH:(${this.path}) matches ignore path pattern:($ignorePath)"
             ignore = true
         }
     }

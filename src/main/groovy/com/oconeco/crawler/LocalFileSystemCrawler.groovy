@@ -105,6 +105,7 @@ class LocalFileSystemCrawler {
 
         log.info "\t\tcrawlFolders() loc=$locationName:cn=$crawlName -> Starting crawl of folder: ($startDir) [existing solrFolderDocs:${existingSolrFolderDocs?.size()}]"
         Path startPath = startDir.toPath()   // Path so we can 'relativize` to get relative depth of this crawl
+        Map<File, FSObject> folderMap = [:]
         FSFolder currentFolder = null
         int cnt = 0
 
@@ -115,7 +116,10 @@ class LocalFileSystemCrawler {
             FileVisitResult fvr = FileVisitResult.CONTINUE      // set default to continue/process
             boolean accessible = f.exists() && f.canRead() && f.canExecute()
 
-            currentFolder = new FSFolder(f, null, this.locationName, crawlName)
+            File parentFile = f.getParentFile()
+            FSFolder parentFolder = folderMap.get(parentFile)
+            currentFolder = new FSFolder(f, parentFolder, this.locationName, crawlName)
+            def foo1 = folderMap.put(f, currentFolder)
             int depth = getRelativeDepth(startPath, f)
             currentFolder.depth = depth
             boolean shouldIgnore = analyzer.shouldIgnore(currentFolder)
@@ -131,7 +135,7 @@ class LocalFileSystemCrawler {
 
                     // todo -- refactor, this is uber-hacky... for speed skip checking folder sizes, for completeness, crawl files and use the totalled size of non-ignored files
                     if (differenceChecker.checkGroupSizes) {
-                        def rc = crawlFolderFiles(currentFolder, analyzer)
+                        def rc = crawlFolderChildren(currentFolder, analyzer)
                     }
 
                     //Note compareFSFolderToSavedDocMap will save diff status in object, for postDir assessment/analysis
@@ -141,19 +145,22 @@ class LocalFileSystemCrawler {
 
                     // note continue through tree, separate analysis of updating done later
                     if (shouldUpdate) {
+                        log.info "\t\t----SHOULD UPDATE folder ($currentFolder) --differences:(${diffStatus.differences}) "
+
                         if(!differenceChecker.checkGroupSizes) {
                             // todo -- refactor, this is uber-hacky... for speed skip checking folder sizes, for completeness, crawl files and use the totalled size of non-ignored files
-                            def rc = crawlFolderFiles(currentFolder, analyzer)
-                            log.debug "\t\tcrawl folder files after comparing (without file sizes): $currentFolder"
+                            Map<String, List<SavableObject>> crawlResults = crawlFolderChildren(currentFolder, analyzer)
+                            log.debug "\t\tcrawl folder files (count: ${crawlResults.size()}) after comparing (without file sizes): $currentFolder"
                         }
 
-                        log.info "\t\t----SHOULD UPDATE folder ($currentFolder) --differences:(${diffStatus.differences}) "
-                        List<SavableObject> savableObjects = currentFolder.gatherAnalyzableThings()
-
-                        def doAnalysisresults = analyzer.analyze(savableObjects)
+                        def folderAnalysis = analyzer.analyze(currentFolder)
+                        List<SavableObject> analyzableChildren = currentFolder.gatherAnalyzableChildren()
+                        def doAnalysisresults = analyzer.analyze(analyzableChildren)
                         log.debug "\t\tdoAnalysisresults: $doAnalysisresults to currentFolder: $currentFolder"
+
                         // --------------- SAVE FOLDER AND CHILDREM
-                        def response = persistenceClient.saveObjects((savableObjects))
+                        def folderAndChildren = analyzableChildren + currentFolder  //.add(currentFolder)
+                        def response = persistenceClient.saveObjects(folderAndChildren)
                         log.info "\t\t$cnt) ++++Save folder (${currentFolder.path}--depth:${currentFolder.depth}) -- Children count:(item:${currentFolder.childItems.size()} groups:${currentFolder.childGroups.size()}) -- Differences:${diffStatus.differences} -- response: $response"
                         results.updated << currentFolder
 
@@ -225,9 +232,10 @@ class LocalFileSystemCrawler {
      * @param analyzer
      * @return the folder's (newly added?) children
      */
-    List<SavableObject> crawlFolderFiles(FSFolder fsFolder, BaseAnalyzer analyzer) {
+    Map<String, List<SavableObject>> crawlFolderChildren(FSFolder fsFolder, BaseAnalyzer analyzer) {
         log.info "\t\t....call to crawlFolderFiles($fsFolder, ${analyzer.class.simpleName})..."
 //        Map<String, Map<String, Object>> results = [:]
+        Map<String, List<FSObject>> results = [:]
         int countAdded = 0
         if (fsFolder.size) {
             log.warn "FSFolder($fsFolder) size already set??? reseting to 0 as we crawlFolderFiles (with ignore patterns)..."
@@ -237,42 +245,48 @@ class LocalFileSystemCrawler {
         int cnt = 0
         if (fsFolder.thing instanceof File) {
             File folder = fsFolder.thing
-            folder.eachFile { File f ->
-                cnt++
-                SavableObject child = null
-                if (f.isDirectory()) {
-                    child = new FSFolder(f, fsFolder, locationName, fsFolder.crawlName, analyzer.ignoreGroup)
-                } else {
-                    child = new FSFile(f, fsFolder, locationName, fsFolder.crawlName, analyzer.ignoreItem)
-                }
-
-                if (child.ignore) {
-                    log.debug "\t\t\t\tignoring child: $child "
-                } else {
-                    countAdded++
-                    log.debug "\t\tAdding child:($child) to folder($fsFolder)"
-                    if (child.type == FSFile.TYPE) {
-                        fsFolder.childItems << child
-                        fsFolder.size += child.size
-                        // todo -- revisit this semi-hidden folder size counting, is there a better/more explicit way?
+            if(folder.isDirectory()) {
+                folder.eachFile { File f ->
+                    cnt++
+                    SavableObject child = null
+                    if (f.isDirectory()) {
+                        child = new FSFolder(f, fsFolder, locationName, fsFolder.crawlName, analyzer.ignoreGroup)
                     } else {
-                        fsFolder.childGroups << child
-                        log.debug "\t\tskip incrementing parent folder size, becuase this ($child) is not a File (Should be folder???)"
+                        child = new FSFile(f, fsFolder, locationName, fsFolder.crawlName, analyzer.ignoreItem)
+                    }
+
+                    if (child.ignore) {
+                        log.debug "\t\t\t\tignoring child: $child "
+                    } else {
+                        countAdded++
+                        log.debug "\t\tAdding child:($child) to folder($fsFolder)"
+                        if (child.type == FSFile.TYPE) {
+                            fsFolder.childItems << child
+                            fsFolder.size += child.size
+                            // todo -- revisit this semi-hidden folder size counting, is there a better/more explicit way?
+                        } else {
+                            fsFolder.childGroups << child
+                            log.debug "\t\tskip incrementing parent folder size, becuase this ($child) is not a File (Should be folder???)"
+                        }
                     }
                 }
-            }
-            if (fsFolder.size > 0) {
-                log.debug "\t\tfolder:($fsFolder) size: ${fsFolder.size}"
+                if (fsFolder.size > 0) {
+                    log.debug "\t\tfolder:($fsFolder) size: ${fsFolder.size}"
+                } else {
+                    log.info "\t\tfolder:($fsFolder) size: ${fsFolder.size}"
+                }
+                def rc = fsFolder.buildDedupString()            // todo -- should this be "hidden" here???
+                log.debug "\t\tBuilt fsFolder($fsFolder) dedup string(${fsFolder.dedup})"
+
+                results = [groups:fsFolder.childGroups, items:fsFolder.childItems]
+
             } else {
-                log.info "\t\tfolder:($fsFolder) size: ${fsFolder.size}"
+                log.warn "crawlFolderFiles($fsFolder) is not a directory somehow....?"
             }
-            def rc = fsFolder.buildDedupString()            // todo -- should this be "hidden" here???
-            log.debug "\t\tBuilt fsFolder($fsFolder) dedup string(${fsFolder.dedup})"
         } else {
-            log.warn "fsFolder.thing(${fsFolder.thing}) is not a file!! bug??"
+            log.warn "fsFolder.thing(${fsFolder.thing}) is not a file(much less a directory)!! bug??"
         }
         // todo -- fixme - quick hack while separating child items and groups
-        def results = fsFolder.childGroups + fsFolder.childItems
         return results
     }
 

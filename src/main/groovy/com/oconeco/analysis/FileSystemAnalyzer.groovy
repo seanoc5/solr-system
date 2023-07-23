@@ -1,10 +1,12 @@
 package com.oconeco.analysis
 
+import com.oconeco.models.SavableObject
 import org.apache.logging.log4j.core.Logger
 import org.apache.logging.log4j.LogManager
 
 import org.apache.tika.parser.Parser
 import org.apache.tika.sax.BodyContentHandler
+
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -26,5 +28,26 @@ class FileSystemAnalyzer extends BaseAnalyzer {
      */
     FileSystemAnalyzer(Map<String, Map<String, Object>> folderNameMap, Map<String, Map<String, Object>> fileNameMap, Map<String, Map<String, Object>> folderPathMap = null, Map<String, Map<String, Object>> filePathMap = null, Parser parser = null, BodyContentHandler handler = null) {
         super(folderNameMap, fileNameMap, folderPathMap, filePathMap, parser, handler)
+    }
+
+    @Override
+    Map<String, Map<String, Object>> analyze(SavableObject object) {
+        def analysis = super.analyze(object)
+
+        if (object.childItems) {
+            object.childItems.each {
+                def addedLabelsMap = it.addAncestorLabels()
+            }
+            log.info "\t\t${object.path} --> added ancestor labels map (${object.labels}) for ${object.childItems.size()} child items"
+        }
+
+        if (object.childGroups) {
+            object.childGroups.each {
+                def addedLabelsMap = it.addAncestorLabels()
+            }
+            log.info "\t\t${object.path} --> added ancestor labels map (${object.labels}) for ${object.childGroups.size()} child groups"
+        }
+
+        return analysis
     }
 }
