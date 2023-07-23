@@ -79,8 +79,8 @@ namePatterns {
             securedSystemFolder: [pattern: ~/[\\\/](sbin)[\\\/]/, analysis: [Constants.TRACK_BUNDLE]],          // track ignored folders, but do not descend/crawl
             logsFolder         : [pattern: ~/[\\\/](logs?)[\\\/]/, analysis: [Constants.TRACK_BUNDLE]],          // track ignored folders, but do not descend/crawl
             backupsFolder      : [pattern: ~/[\\\/](bkup|backups?)[\\\/]/, analysis: [Constants.TRACK_BUNDLE]],          // track ignored folders, but do not descend/crawl
-            configurationFolder: [pattern: ~/[\\\/](etc|config(s|uration)?)[\\\/]/, analysis: [Constants.PARSE_BUNDLE]],          // track ignored folders, but do not descend/crawl
-            outFolder          : [pattern: ~/[\\\/](out|class(es)?|build)[\\\/]/, analysis: [Constants.PARSE_BUNDLE]],          // track ignored folders, but do not descend/crawl
+            configurationFolder: [pattern: ~/[\\\/](etc|config(s|uration)?)[\\\/]/, analysis: [Constants.TRACK_BUNDLE]],          // track ignored folders, but do not descend/crawl
+            outFolder          : [pattern: ~/[\\\/](out|class(es)?|build)[\\\/]/, analysis: [Constants.TRACK_BUNDLE]],          // track ignored folders, but do not descend/crawl
             unlabeled          : [pattern: null, analysis: Constants.TRACK_BUNDLE]
     ]
 

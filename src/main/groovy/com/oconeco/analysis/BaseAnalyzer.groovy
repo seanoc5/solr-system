@@ -9,15 +9,16 @@ import org.apache.tika.exception.TikaException
 import org.apache.tika.exception.WriteLimitReachedException
 import org.apache.tika.metadata.Metadata
 import org.apache.tika.parser.AutoDetectParser
+import org.apache.tika.parser.ParseContext
 
 //import org.apache.logging.log4j.core.Logger
 
-import org.apache.tika.parser.ParseContext
 import org.apache.tika.parser.Parser
 import org.apache.tika.sax.BodyContentHandler
 
 import java.util.regex.Matcher
 import java.util.regex.Pattern
+
 /**
  * @author :    sean
  * @mailto :    seanoc5@gmail.com
@@ -54,7 +55,7 @@ class BaseAnalyzer {
     Map<String, Map<String, Object>> itemPathMap
 
     Parser tikaParser = null
-    BodyContentHandler tikaBodyHandler = null
+//    BodyContentHandler tikaBodyHandler = null
     int MAX_BODY_CHARS = 10 * 1024 * 1024       // todo -- revisit :: 10 mb of text...??
 //    int MAX_BODY_CHARS = 1000 * 1000 * 1000
 
@@ -121,12 +122,6 @@ class BaseAnalyzer {
         } else {
             this.tikaParser = new AutoDetectParser();
         }
-        if (tikaBodyHandler) {
-            this.tikaBodyHandler = tikaBodyHandler
-        } else {
-            this.tikaBodyHandler = new BodyContentHandler(-1);
-        }
-
     }
 
 
@@ -285,9 +280,13 @@ class BaseAnalyzer {
                 break
             case 'parse':
                 if (object?.thing) {
-                    log.debug "\t\t....Do analysis named '$analysisName' on object $object (size:${object.size})"
-                    results = this.parse(object)
-                    String mime = results?.metadata?.get('Content-Type')
+                    if (object.groupObject) {
+                        log.info "\t\tNo parse method created for group item (yet): $object -- path:${object.path}"
+                    } else {
+                        log.debug "\t\t....Do analysis named '$analysisName' on object $object (size:${object.size})"
+                        results = this.parse(object)
+                        //String mime = results?.metadata?.get('Content-Type')
+                    }
                 } else {
                     log.warn "Object thing:(${object.thing}) is not valid: $object"
                 }
@@ -338,8 +337,8 @@ class BaseAnalyzer {
     Map<String, Map<String, Object>> applyLabelMaps(SavableObject object) {
         Map<String, Map<String, Object>> results = [:]
         log.debug "\t\tapplyLabelMaps: $object"
-        if (object.groupObject){
-            if(groupNameMap) {
+        if (object.groupObject) {
+            if (groupNameMap) {
                 Map<String, Map<String, Object>> r = applyLabels(object, object.name, groupNameMap, "groupName")
                 r.each { String key, Map map ->
                     results.put(key, map)
@@ -355,7 +354,7 @@ class BaseAnalyzer {
                 }
             }
 
-        } else  {
+        } else {
             // if not a group, assume this is an item
             // todo -- is there any other option beyond group or item???
             if (itemNameMap) {
@@ -445,73 +444,11 @@ class BaseAnalyzer {
     Map parse(SavableObject object) {
         Map results = [:]
         if (object.size > 0) {
-            String content
-            Metadata metadata
             log.debug "\t\tparse(object:$object) starting..."
-            long start = System.currentTimeMillis()
-
-            if (tikaBodyHandler && tikaParser) {
-                try (InputStream inputStream = object.thing.newInputStream()) {
-                    if (inputStream) {
-                        metadata = new Metadata();
-                        BodyContentHandler handler = new BodyContentHandler(MAX_BODY_CHARS)
-                        // todo -- switch approach, to proper handler
-                        ParseContext context = new ParseContext();
-                        tikaParser.parse(inputStream, handler, metadata, context);
-
-                        if (metadata) {
-                            log.debug "metadata: $metadata"
-                            object.metadata = metadata
-                            String ctype = metadata.get('Content-Type')
-                            if (ctype) {
-                                if (!object.mimeType) {
-                                    object.mimeType = ctype
-                                    log.debug "\t\tsetting object ($object) mimetype to tika Content type:($ctype)"
-
-                                } else {
-                                    log.debug "\t\tobject ($object) mimetype already set:(${object.mimeType}) -- same as tika Content type?($ctype)??"
-                                }
-                            }
-                        } else {
-                            log.warn "No metadata? $srcfile -- meta: $metadata"
-                        }
-                        content = handler.toString()
-                        if (content) {
-                            object.content = content
-                            object.contentSize = content.size()
-                            log.debug "\t\t$object) Content size:(${content.size()})"
-                        } else {
-                            if (object.mimeType?.containsIgnoreCase('image')) {
-                                log.debug "\t\tno content for object:($object) which is mimetype:(${object.mimeType}) - no content really expected..."
-                            } else {
-                                log.info "\t\tno content found for SavableObject:(${object.path}) in parse(object) method -- mimetype:(${object.mimeType})"
-                            }
-                        }
-                    } else {
-                        log.warn "No input Stream?)"
-                    }
-
-                } catch (WriteLimitReachedException writeLimitReachedException) {
-                    log.error "Tika write limit reached exception: $writeLimitReachedException -- object:${object}"
-                } catch (LinkageError linkageError) {
-                    log.error "Tika linkage error exception: $linkageError -- object:${object}"
-                } catch (FileNotFoundException fne) {
-                    log.error "File not found exception: $fne -- object:${object}"
-                } catch (NoSuchFieldError nsfe) {
-                    log.error "Tika exception: $nsfe -- object:${object}"
-                } catch (TikaException tikaException) {
-                    log.error "Tika exception: $tikaException -- object:${object}"
-                }
-                results = [content: content, metadata: metadata]
+            if (object.groupObject) {
+                log.warn "No parsing implmented for group objects yet:($object) -- path: ${object.path}"
             } else {
-                log.warn "No tikaParser($tikaParser) or tikaBodyHandler:($tikaBodyHandler), no parsing possible"
-            }
-            long end = System.currentTimeMillis()
-            long elapsed = end - start
-            try {
-                log.info "\t\t....parse(object:$object) -- (content size:${content?.size()}) -- Elapsed time: ${elapsed}ms (${elapsed / 1000} sec)"
-            } catch (NullPointerException npe){
-                log.warn "Problems with object:($object) or content:${content?.class.name}"
+                results = parseAndUpdateItem(object)
             }
 
         } else {
@@ -530,6 +467,79 @@ class BaseAnalyzer {
                 ", groupPathMap.keyset=" + groupPathMap?.keySet() +
                 ", itemPathMap.keyset=" + itemPathMap?.keySet() +
                 '}';
+    }
+
+
+    LinkedHashMap<Object, Object> parseAndUpdateItem(SavableObject object) {
+        Map results = [:]
+        long start = System.currentTimeMillis()
+        String content
+        Metadata metadata = new Metadata();
+
+        if (tikaParser) {
+            try (InputStream inputStream = object.thing.newInputStream()) {
+                if (inputStream) {
+                    BodyContentHandler handler = new BodyContentHandler(MAX_BODY_CHARS)
+                    ParseContext context = new ParseContext();
+
+                    // todo -- check on thread safety (and gains/value of reusing this if multithreaded
+                    // note: https://tika.apache.org/1.23/api/org/apache/tika/parser/RecursiveParserWrapper.html -- this is NOT thread safe..
+                    tikaParser.parse(inputStream, handler, metadata, context);
+
+                    if (metadata) {
+                        log.debug "metadata: $metadata"
+                        object.metadata = metadata
+                        String ctype = metadata.get('Content-Type')
+                        if (ctype) {
+                            if (!object.mimeType) {
+                                object.mimeType = ctype
+                                log.debug "\t\tsetting object ($object) mimetype to tika Content type:($ctype)"
+
+                            } else {
+                                log.debug "\t\tobject ($object) mimetype already set:(${object.mimeType}) -- same as tika Content type?($ctype)??"
+                            }
+                        }
+                    } else {
+                        log.warn "No metadata? $srcfile -- meta: $metadata"
+                    }
+                    content = handler.toString()
+                    if (content) {
+                        object.content = content
+                        object.contentSize = content.size()
+                        log.debug "\t\t$object) Content size:(${content.size()})"
+                    } else {
+                        if (object.mimeType?.containsIgnoreCase('image')) {
+                            log.debug "\t\tno content for object:($object) which is mimetype:(${object.mimeType}) - no content really expected..."
+                        } else {
+                            log.info "\t\tno content found for SavableObject:(${object.path}) in parse(object) method -- mimetype:(${object.mimeType})"
+                        }
+                    }
+                    long end = System.currentTimeMillis()
+                    long elapsed = end - start
+                    metadata.parseTimeMS = elapsed
+                    results = [content: content, metadata: metadata]
+                    log.info "\t\t....parse(object:$object) -- (content size:${content?.size()}) -- Elapsed time: ${elapsed}ms (${elapsed / 1000} sec) "
+
+                } else {
+                    log.warn "No input Stream? Object:(${object}) path:(${object.path})"
+                }
+
+            } catch (WriteLimitReachedException writeLimitReachedException) {
+                log.error "Tika write limit reached exception: $writeLimitReachedException -- object:${object}"
+            } catch (LinkageError linkageError) {
+                log.error "Tika linkage error exception: $linkageError -- object:${object}"
+            } catch (FileNotFoundException fne) {
+                log.error "File not found exception: $fne -- object:${object}"
+            } catch (NoSuchFieldError nsfe) {
+                log.error "Tika exception: $nsfe -- object:${object}"
+            } catch (TikaException tikaException) {
+                log.error "Tika exception: $tikaException -- object:${object}"
+            }
+        } else {
+            log.warn "No tikaParser($tikaParser) no parsing possible"
+        }
+
+        results
     }
 
 }
