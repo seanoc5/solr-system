@@ -239,7 +239,7 @@ abstract class SavableObject {
             }
 
             if (ignore) {
-                sid.setField(SolrSystemClient.FLD_IG, parentId)
+                sid.setField(SolrSystemClient.FLD_IGNORE, ignore)
             }
 
             if (content) {
