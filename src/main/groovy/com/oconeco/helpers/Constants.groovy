@@ -5,8 +5,8 @@ import java.util.regex.Pattern
 class Constants {
 
     public static final String LBL_ARCHIVE = 'archive'
-    public static final String LBL_CRAWL = 'crawl'
-    public static final String LBL_IGNORE = 'ignore'
+//    public static final String LBL_CRAWL = 'crawl'
+//    public static final String LBL_IGNORE = 'ignore'
     public static final String LBL_UNKNOWN = 'unknown'
 
     public static final String IGNORE = 'ignore'
@@ -29,6 +29,8 @@ class Constants {
 
     public static final String LABEL_MATCH = 'LabelMatch'
     public static final String NO_MATCH = 'no match'
+    public static final String UNLABELED = 'unlabeled'
+
     public static final String DEFAULT_APP_NAME = 'solr_system'
 
     public static final String SOLR_INDEX_FOLDER_PATTERN = '.*shard\\d+_replica.*'          // don't dive into solr index folders
@@ -46,13 +48,13 @@ class Constants {
             system       : ~/.*(?i)(class|sbt|sbt-\d.*|runtime)/,
     ]
     public static final Map<String, Map<String, Object>> DEFAULT_FOLDERNAME_LOCATE = [
-            (IGNORE): [pattern: DEFAULT_FOLDERNAME_PATTERNS[LBL_IGNORE], analysis: TRACK_BUNDLE],          // track ignored folders, but do not descend/crawl
+            (IGNORE): [pattern: DEFAULT_FOLDERNAME_PATTERNS[IGNORE], analysis: TRACK_BUNDLE],          // track ignored folders, but do not descend/crawl
             'test'  : [pattern: ~/(test.*)/, analysis: TRACK_BUNDLE],
             (TRACK) : [pattern: null, analysis: TRACK_BUNDLE],
     ]
 
     public static final Map<String, Pattern> DEFAULT_FILENAME_PATTERNS = [
-            ignore       : ~/(?i)([.~]*lock.*|_.*|.*\bte?mp|.*\.class|.*\.pem|skipme.*)/,
+            (IGNORE)       : ~/(?i)([.~]*lock.*|_.*|.*\bte?mp|.*\.class|.*\.pem|skipme.*)/,
             office       : ~/.*\.(?i)(accdb|docx?|ods|odp|odt|pptx?|rtf|vsdx?|xlsx?)/,
             system       : ~/.*(\.(?i)(bin|deb|lib|pkg|rpm)|(gcc.*))/,
             archive      : ~/.*\.(?i)(arc|gz|rar|zip|tar.gz|zip)/,

@@ -149,7 +149,7 @@ class LocalFileSystemCrawler {
 
                         if(!differenceChecker.checkGroupSizes) {
                             // todo -- refactor, this is uber-hacky... for speed skip checking folder sizes, for completeness, crawl files and use the totalled size of non-ignored files
-                            Map<String, List<SavableObject>> crawlResults = crawlFolderChildren(currentFolder, analyzer)
+                            List<SavableObject> crawlResults = crawlFolderChildren(currentFolder, analyzer)
                             log.debug "\t\tcrawl folder files (count: ${crawlResults.size()}) after comparing (without file sizes): $currentFolder"
                         }
 
@@ -232,11 +232,10 @@ class LocalFileSystemCrawler {
      * @param analyzer
      * @return the folder's (newly added?) children
      */
-    Map<String, List<SavableObject>> crawlFolderChildren(FSFolder fsFolder, BaseAnalyzer analyzer) {
+    List<SavableObject> crawlFolderChildren(FSFolder fsFolder, BaseAnalyzer analyzer) {
         log.info "\t\t....call to crawlFolderFiles($fsFolder, ${analyzer.class.simpleName})..."
 //        Map<String, Map<String, Object>> results = [:]
-        Map<String, List<FSObject>> results = [:]
-        int countAdded = 0
+        List<FSObject> results = []
         if (fsFolder.size) {
             log.warn "FSFolder($fsFolder) size already set??? reseting to 0 as we crawlFolderFiles (with ignore patterns)..."
         }
@@ -255,36 +254,39 @@ class LocalFileSystemCrawler {
                         child = new FSFile(f, fsFolder, locationName, fsFolder.crawlName, analyzer.ignoreItem)
                     }
 
+                    // include ignored items in return value, but not in child properties
+                    results << child
+
                     if (child.ignore) {
-                        log.debug "\t\t\t\tignoring child: $child "
+                        log.debug "\t\t\t\t$cnt) ignoring child: $child "
                     } else {
-                        countAdded++
                         log.debug "\t\tAdding child:($child) to folder($fsFolder)"
                         if (child.type == FSFile.TYPE) {
                             fsFolder.childItems << child
+                            // update folder 'size' skipping ignored files (patterns)
                             fsFolder.size += child.size
                             // todo -- revisit this semi-hidden folder size counting, is there a better/more explicit way?
                         } else {
                             fsFolder.childGroups << child
-                            log.debug "\t\tskip incrementing parent folder size, becuase this ($child) is not a File (Should be folder???)"
+                            log.debug "\t\t$cnt) skip incrementing parent folder size, becuase this ($child) is not a File (Should be folder???)"
                         }
                     }
                 }
                 if (fsFolder.size > 0) {
-                    log.debug "\t\tfolder:($fsFolder) size: ${fsFolder.size}"
+                    log.debug "\t\t$cnt) folder:($fsFolder) size: ${fsFolder.size}"
                 } else {
-                    log.info "\t\tfolder:($fsFolder) size: ${fsFolder.size}"
+                    log.info "\t\t$cnt) folder:($fsFolder) size: ${fsFolder.size}"
                 }
                 def rc = fsFolder.buildDedupString()            // todo -- should this be "hidden" here???
-                log.debug "\t\tBuilt fsFolder($fsFolder) dedup string(${fsFolder.dedup})"
+                log.debug "\t\t$cnt) Built fsFolder($fsFolder) dedup string(${fsFolder.dedup})"
 
-                results = [groups:fsFolder.childGroups, items:fsFolder.childItems]
+//                results = [groups:fsFolder.childGroups, items:fsFolder.childItems]
 
             } else {
-                log.warn "crawlFolderFiles($fsFolder) is not a directory somehow....?"
+                log.warn "$cnt) crawlFolderFiles($fsFolder) is not a directory somehow....?"
             }
         } else {
-            log.warn "fsFolder.thing(${fsFolder.thing}) is not a file(much less a directory)!! bug??"
+            log.warn "$cnt) fsFolder.thing(${fsFolder.thing}) is not a file(much less a directory)!! bug??"
         }
         // todo -- fixme - quick hack while separating child items and groups
         return results

@@ -74,47 +74,47 @@ println "Ignore pattern: $ignorePattern"
 // note: all of the labels below are optional/customizable.
 namePatterns {
     folders = [
-            ignore             : [pattern: ignorePattern, analysis: [Constants.IGNORE]],          // track ignored folders, but do not descend/crawl
-            systemFolder       : [pattern: ~/[\\\/](Windows|Program Files.*|bin|include|lib(x?32|64|exec)?|share|usr|var)[\\\/]/, analysis: [Constants.TRACK_BUNDLE]],          // track ignored folders, but do not descend/crawl
-            securedSystemFolder: [pattern: ~/[\\\/](sbin)[\\\/]/, analysis: [Constants.TRACK_BUNDLE]],          // track ignored folders, but do not descend/crawl
-            logsFolder         : [pattern: ~/[\\\/](logs?)[\\\/]/, analysis: [Constants.TRACK_BUNDLE]],          // track ignored folders, but do not descend/crawl
-            backupsFolder      : [pattern: ~/[\\\/](bkup|backups?)[\\\/]/, analysis: [Constants.TRACK_BUNDLE]],          // track ignored folders, but do not descend/crawl
-            configurationFolder: [pattern: ~/[\\\/](etc|config(s|uration)?)[\\\/]/, analysis: [Constants.TRACK_BUNDLE]],          // track ignored folders, but do not descend/crawl
-            outFolder          : [pattern: ~/[\\\/](out|class(es)?|build)[\\\/]/, analysis: [Constants.TRACK_BUNDLE]],          // track ignored folders, but do not descend/crawl
-            unlabeled          : [pattern: null, analysis: Constants.TRACK_BUNDLE]
+            ignore             : [pattern: ignorePattern, analysis: [Constants.IGNORE], inherit:true],          // track ignored folders, but do not descend/crawl
+            systemFolder       : [pattern: ~/[\\\/](Windows|Program Files.*|bin|include|lib(x?32|64|exec)?|share|usr|var)[\\\/]/, analysis: [Constants.TRACK_BUNDLE], inherit:true],          // track ignored folders, but do not descend/crawl
+            securedSystemFolder: [pattern: ~/[\\\/](sbin)[\\\/]/, analysis: [Constants.TRACK_BUNDLE], inherit:true],          // track ignored folders, but do not descend/crawl
+            logsFolder         : [pattern: ~/[\\\/](logs?)[\\\/]/, analysis: [Constants.TRACK_BUNDLE], inherit:true],          // track ignored folders, but do not descend/crawl
+            backupsFolder      : [pattern: ~/[\\\/](bkup|backups?)[\\\/]/, analysis: [Constants.TRACK_BUNDLE], inherit:true],          // track ignored folders, but do not descend/crawl
+            configurationFolder: [pattern: ~/[\\\/](etc|config(s|uration)?)[\\\/]/, analysis: [Constants.TRACK_BUNDLE], inherit:true],          // track ignored folders, but do not descend/crawl
+            outFolder          : [pattern: ~/[\\\/](out|class(es)?|build)[\\\/]/, analysis: [Constants.TRACK_BUNDLE], inherit:true],          // track ignored folders, but do not descend/crawl
+            (Constants.UNLABELED)          : [pattern: null, analysis: Constants.TRACK_BUNDLE, inherit:false]
     ]
 
 
     files = [
-            (Constants.IGNORE): [pattern: ~/^(?i)([_.~]+lock.*|[#_~].*|.*\.te?mp|.*\.class)/, analysis: Constants.IGNORE_BUNDLE],
+            (Constants.IGNORE): [pattern: ~/^(?i)([_.~]+lock.*|[#_~].*|.*\.te?mp|.*\.class)/, analysis: Constants.IGNORE_BUNDLE, inherit:true],
 //            (Constants.IGNORE): [pattern: ~/(?i)([_.~]+lock.*|[#_~].*|.*\bte?mp|.*\.class|.*\.pem|skipme.*)/, analysis: Constants.IGNORE_BUNDLE],
-            office            : [pattern: ~/.*\.(?i)(accdb|do[ct]x?|ics|ods|odp|odt|ott|pages|pdf|pptx?|rtf|sxi|vsdx?|xmind|xlsx?)/, analysis: Constants.PARSE_BUNDLE],
-            system            : [pattern: ~/.*(\.(?i)(bin|bundle|cab|deb|dmg|exe|jar|lib|md5|pkg|rpm|so)|(gcc.*))/, analysis: Constants.TRACK_BUNDLE],
-            web               : [pattern: ~/.*(?i)(html?)/, analysis: Constants.PARSE_BUNDLE],
-            instructions      : [pattern: ~/.*(?i)(adoc|readme.*|man|md)/, analysis: Constants.PARSE_BUNDLE],
-            techDev           : [pattern: ~/.*\.(?i)(c|css|go|groovy|gradle|java|javascript|js|php|py|schema|sh)/, analysis: Constants.PARSE_BUNDLE],
-            config            : [pattern: ~/.*(?i)(\.cfg|config.*|\.pem|\.properties|\.xml|\.yaml)/, analysis: Constants.PARSE_BUNDLE],
-            data              : [pattern: ~/.*\.(?i)(avro|bundle|csv|dat|db|jsonl?d?|lst|mdb.?|orc|parquet|tab)/, analysis: Constants.TRACK_BUNDLE],
-            archives          : [pattern: ~/.*\.(?i)(bz2|cab|dmg|ear|img|iso|msi|rar|tar.gz|tgz|war)/, analysis: Constants.TRACK_BUNDLE],
-            media             : [pattern: ~/.*\.(?i)(avi|bmp|gif|ico|jpe?g|kra|mp3|mpe?g|ogg|png|wav)/, analysis: Constants.PARSE_BUNDLE],
-            communication     : [pattern: ~/.*\.(?i)(eml|vcf)/, analysis: Constants.PARSE_BUNDLE],
-            logs              : [pattern: ~/.*(?i)[\\/](.*\.log([.\d_-]+))?/, analysis: Constants.TRACK_BUNDLE],
-            unlabeled         : [pattern: null, analysis: Constants.TRACK_BUNDLE],
+            office            : [pattern: ~/.*\.(?i)(accdb|do[ct]x?|ics|ods|odp|odt|ott|pages|pdf|pptx?|rtf|sxi|vsdx?|xmind|xlsx?)/, analysis: Constants.PARSE_BUNDLE, inherit:true],
+            system            : [pattern: ~/.*(\.(?i)(bin|bundle|cab|deb|dmg|exe|jar|lib|md5|pkg|rpm|so)|(gcc.*))/, analysis: Constants.TRACK_BUNDLE, inherit:true],
+            web               : [pattern: ~/.*(?i)(html?)/, analysis: Constants.PARSE_BUNDLE, inherit:true],
+            instructions      : [pattern: ~/.*(?i)(adoc|readme.*|man|md)/, analysis: Constants.PARSE_BUNDLE, inherit:true],
+            techDev           : [pattern: ~/.*\.(?i)(c|css|go|groovy|gradle|java|javascript|js|php|py|schema|sh)/, analysis: Constants.PARSE_BUNDLE, inherit:true],
+            config            : [pattern: ~/.*(?i)(\.cfg|config.*|\.pem|\.properties|\.xml|\.yaml)/, analysis: Constants.PARSE_BUNDLE, inherit:true],
+            data              : [pattern: ~/.*\.(?i)(avro|bundle|csv|dat|db|jsonl?d?|lst|mdb.?|orc|parquet|tab)/, analysis: Constants.TRACK_BUNDLE, inherit:true],
+            archives          : [pattern: ~/.*\.(?i)(bz2|cab|dmg|ear|img|iso|msi|rar|tar.gz|tgz|war)/, analysis: Constants.TRACK_BUNDLE, inherit:true],
+            media             : [pattern: ~/.*\.(?i)(avi|bmp|gif|ico|jpe?g|kra|mp3|mpe?g|ogg|png|wav)/, analysis: Constants.PARSE_BUNDLE, inherit:true],
+            communication     : [pattern: ~/.*\.(?i)(eml|vcf)/, analysis: Constants.PARSE_BUNDLE, inherit:true],
+            logs              : [pattern: ~/.*(?i)[\\/](.*\.log([.\d_-]+))?/, analysis: Constants.TRACK_BUNDLE, inherit:true],
+            (Constants.UNLABELED)         : [pattern: null, analysis: Constants.TRACK_BUNDLE, inherit:false],
     ]
 }
 
 
 pathPatterns {
     folders = [
-            binariesFolder : [pattern: ~/(?i)[\/\\](s?bin)[\/\\]?/, analysis: Constants.TRACK_BUNDLE],
-            workFolder     : [pattern: ~/(?i).*[\/\\](lucidworks|oconeco|work).*/, analysis: Constants.PARSE_BUNDLE],
-            systemFolder   : [pattern: ~/(?i)[\/\\](Windows|Program Files.*|lib(x?32|64|exec)?\b|share|include)\b.*/, analysis: Constants.TRACK_BUNDLE],
-            dataFolder     : [pattern: ~/.*(\/data\/).*/, analysis: Constants.TRACK_BUNDLE],
-            downloadsFolder: [pattern: ~/.*(\/[dD]ownloads?]\/).*/, analysis: Constants.TRACK_BUNDLE],
-            optFolder      : [pattern: ~/.*(\/opt\/?).*/, analysis: Constants.TRACK_BUNDLE],
-            varFolder      : [pattern: ~/.*(\/var\/?).*/, analysis: Constants.TRACK_BUNDLE],
-            configFolder   : [pattern: ~/.*(\/etc\/).*/, analysis: Constants.PARSE_BUNDLE],
-            manualsFolder  : [pattern: ~/.*(?i)\/(help|info|man)\/.*/, analysis: Constants.PARSE_BUNDLE],
+            binariesFolder : [pattern: ~/(?i)[\/\\](s?bin)[\/\\]?/, analysis: Constants.TRACK_BUNDLE, inherit:true],
+            workFolder     : [pattern: ~/(?i).*[\/\\](lucidworks|oconeco|work).*/, analysis: Constants.PARSE_BUNDLE, inherit:true],
+            systemFolder   : [pattern: ~/(?i)[\/\\](Windows|Program Files.*|lib(x?32|64|exec)?\b|share|include)\b.*/, analysis: Constants.TRACK_BUNDLE, inherit:true],
+            dataFolder     : [pattern: ~/.*(\/data\/).*/, analysis: Constants.TRACK_BUNDLE, inherit:true],
+            downloadsFolder: [pattern: ~/.*(\/[dD]ownloads?]\/).*/, analysis: Constants.TRACK_BUNDLE, inherit:true],
+            optFolder      : [pattern: ~/.*(\/opt\/?).*/, analysis: Constants.TRACK_BUNDLE, inherit:true],
+            varFolder      : [pattern: ~/.*(\/var\/?).*/, analysis: Constants.TRACK_BUNDLE, inherit:true],
+            configFolder   : [pattern: ~/.*(\/etc\/).*/, analysis: Constants.PARSE_BUNDLE, inherit:true],
+            manualsFolder  : [pattern: ~/.*(?i)\/(help|info|man)\/.*/, analysis: Constants.PARSE_BUNDLE, inherit:true],
     ]
     files = []
 }

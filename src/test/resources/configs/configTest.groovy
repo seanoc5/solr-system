@@ -64,7 +64,7 @@ dataSources {
 namePatterns {
 //    "${FSFolder.TYPE}" = [
     folders = [
-            ignore : [pattern: Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE], analysis: [Constants.IGNORE]],
+            ignore : [pattern: Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.IGNORE], analysis: [Constants.IGNORE]],
             test   : [pattern: ~/.*(?i)(test.*)/, analysis: Constants.TRACK_BUNDLE],
             content: [pattern: ~/.*(?i)(content)/, analysis: Constants.PARSE_BUNDLE],
             default: [pattern: '', analysis: Constants.DEFAULT],

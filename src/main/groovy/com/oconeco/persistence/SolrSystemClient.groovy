@@ -21,8 +21,7 @@ class SolrSystemClient extends BaseClient {
     public final Logger log = LogManager.getLogger(this.class.name)
 
     /** upper limit of 'big' queries, e.g. folder lists for a gven crawl */
-    public static int MAX_ROWS_RETURNED = 100000
-
+    public static int MAX_ROWS_RETURNED = 100000    // todo -- add batching if we have more rows than this to get for
 
     // todo -- move this to (BASE) Object hierarchy, leave solrsaver to do the actual saving, not building?
     public static String FLD_PARENT_ID = 'parentId_s'
@@ -32,12 +31,14 @@ class SolrSystemClient extends BaseClient {
     public static String FLD_NAME_S = 'name_s'
     public static String FLD_NAME_T = 'name_txt_en'
 
+    public static String FLD_ARCHIVE = 'archive_b'
+    public static String FLD_COMPRESSED = 'compressed_b'
+    public static String FLD_IGNORE = 'ignore_b'
+    public static String FLD_HIDDEN_B = "hidden_b"
+
     public static String FLD_CREATED_DATE = "createdDate_dt"          // pdate dynamic field
-    // todo - improve owner name extraction/ETL
     public static String FLD_OWNER = "owner_s"                        // varies by operating system...
 
-
-    public static String FLD_HIDDEN_B = "hidden_b"
     public static String FLD_EXTENSION_SS = "extension_ss"
 
     /** tags are "human" labels */
@@ -48,7 +49,7 @@ class SolrSystemClient extends BaseClient {
     public static String FLD_PARENT_LABELS = "parentLabel_ss"
     public static String FLD_ANCESTOR_LABELS = "ancestorLabel_ss"
 
-    public static String FLD_OS_NAME = "operatingSystem_s"
+//    public static String FLD_OS_NAME = "operatingSystem_s"
     public static String FLD_CHILD_ITEM_NAMES = "childNames_txt_en"
     public static String FLD_CHILD_ITEM_LABELS = "childLabels_ss"
     public static String FLD_CHILD_ITEM_COUNT = "childCount_i"
@@ -61,14 +62,14 @@ class SolrSystemClient extends BaseClient {
 
     public static String FLD_CONTENT_BODY = 'content_txt_en'
     public static String FLD_CONTENT_BODY_SIZE = 'contentSize_l'
-    public static String FLD_METADATA = 'metadata_txt_en'           // todo -- consider multivalued field??
+    public static String FLD_METADATA = 'attr_metadata'
+    public static String FLD_DIFFERENCES = 'attr_differences'
 
     Integer SOLR_BATCH_SIZE = 5000
     Integer MIN_FILE_SIZE = 10
     Integer MAX_CONTENT_SIZE = 1024 * 1000 * 100 // (100 MB of text?)
-    Http2SolrClient solrClient
 
-//    Detector detector = null
+    Http2SolrClient solrClient
 
     /**
      * Create helper with a (non-thread safe???) solrClient that is configured for the solr server AND collection

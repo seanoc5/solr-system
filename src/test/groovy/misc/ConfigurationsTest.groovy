@@ -71,7 +71,7 @@ skip = ~/(te?mp|cache|delete)/
 
     def "test regex FOLDER names"() {
         given:
-        Pattern ignoreFolders = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.LBL_IGNORE]
+        Pattern ignoreFolders = Constants.DEFAULT_FOLDERNAME_PATTERNS[Constants.IGNORE]
         List folderNames = ['/a/one/.csv/', 'bin/foo', 'c:\\fonts\\', '/home/sean/.gradle', 'c:\\Program Files', 'test/.m2', '/opt/test/pkgs']
 
         when:
@@ -98,7 +98,7 @@ skip = ~/(te?mp|cache|delete)/
 
     def "test regex FILENAMES"() {
         given:
-        Pattern ignoreFiles = Constants.DEFAULT_FILENAME_PATTERNS[Constants.LBL_IGNORE]
+        Pattern ignoreFiles = Constants.DEFAULT_FILENAME_PATTERNS[Constants.IGNORE]
         List filenames = ['/a/one/~temp', 'bin/foo', 'c:\\fonts\\', '/home/sean/.ssh/key.pem', 'c:\\goodwindows.doc', 'test/foo.temp', '/test/bar.tmp']
 
         when:

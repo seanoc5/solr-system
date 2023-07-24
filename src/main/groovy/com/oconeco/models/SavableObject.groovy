@@ -1,6 +1,7 @@
 package com.oconeco.models
 
 import com.oconeco.difference.BaseDifferenceStatus
+import com.oconeco.helpers.Constants
 import com.oconeco.persistence.SolrSystemClient
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.core.Logger
@@ -51,7 +52,7 @@ abstract class SavableObject {
     boolean hidden = false
 
     /** link to parent (if any) */
-    def parent
+    SavableObject parent
     String parentId
 
     /** links to children (if any) */
@@ -122,199 +123,213 @@ abstract class SavableObject {
         log.debug "Creating savable object thing: $thing"
     }
 
-    def addAncestorLabels(){
-        Map addedLabels = [:]
-        if(parent.labels) {
-            this.parentLabels.addAll(parent.labels)
-            addedLabels.parentLabels = parentLabels
+    def addAncestorLabels() {
+        List addedLabels = []
+        parent.labels.each {
+            if (it.containsIgnoreCase(Constants.UNLABELED)) {
+                log.debug "\t\tSkip label:$it -- $this"
+            } else {
+                this.parentLabels << it
+                addedLabels << it
+            }
         }
-        if(parent.parentLabels) {
-            this.ancestorLabels.addAll(parent.parentLabels)
-            addedLabels.grandParentLabels = parent.parentLabels
-        }
-        if(parent.ancestorLabels) {
-            this.ancestorLabels.addAll(parent.ancestorLabels)
-            addedLabels.ancestorLabels = parent.ancestorLabels
-        }
-        return addedLabels
-    }
+         parent.parentLabels.each {
+             if (it.containsIgnoreCase(Constants.UNLABELED)) {
+                 log.debug "\t\tSkip label:$it -- $this"
+             } else {
+                 this.ancestorLabels << it
+                 addedLabels << it
+             }
 
-
-    /**
-     * create a solr doc with the (most) common params, descendant object will add more details to @SolrInputDocument
-     * @return SolrInputDocument
-     */
-    SolrInputDocument toPersistenceDocument() {
-        SolrInputDocument sid = new SolrInputDocument()
-        sid.setField(SolrSystemClient.FLD_ID, id)
-        sid.setField(SolrSystemClient.FLD_TYPE, type)
-
-        sid.setField(SolrSystemClient.FLD_NAME_S, name)
-        sid.setField(SolrSystemClient.FLD_NAME_T, name)
-        sid.setField(SolrSystemClient.FLD_PATH_S, path)
-        sid.setField(SolrSystemClient.FLD_PATH_T, path)
-        sid.setField(SolrSystemClient.FLD_SIZE, size)
-        sid.setField(SolrSystemClient.FLD_DEPTH, depth)
-
-        sid.setField(SolrSystemClient.FLD_LOCATION_NAME, locationName)
-        if (this.crawlName) {
-            sid.addField(SolrSystemClient.FLD_CRAWL_NAME, this.crawlName)
-        } else {
-            log.warn "No crawl name given: ${this}"
+            }
+            if (parent.ancestorLabels) {
+                this.ancestorLabels.addAll(parent.ancestorLabels)
+                addedLabels = parent.ancestorLabels
+            }
+            return addedLabels
         }
 
-        if (childItems) {
-            sid.setField(SolrSystemClient.FLD_CHILD_ITEM_COUNT, childItems.size())
 
-            StringBuilder sbChildNames = new StringBuilder()
+        /**
+         * create a solr doc with the (most) common params, descendant object will add more details to @SolrInputDocument
+         * @return SolrInputDocument
+         */
+        SolrInputDocument toPersistenceDocument() {
+            SolrInputDocument sid = new SolrInputDocument()
+            sid.setField(SolrSystemClient.FLD_ID, id)
+            sid.setField(SolrSystemClient.FLD_TYPE, type)
+
+            sid.setField(SolrSystemClient.FLD_NAME_S, name)
+            sid.setField(SolrSystemClient.FLD_NAME_T, name)
+            sid.setField(SolrSystemClient.FLD_PATH_S, path)
+            sid.setField(SolrSystemClient.FLD_PATH_T, path)
+            sid.setField(SolrSystemClient.FLD_SIZE, size)
+            sid.setField(SolrSystemClient.FLD_DEPTH, depth)
+
+            sid.setField(SolrSystemClient.FLD_ARCHIVE, archive)
+            sid.setField(SolrSystemClient.FLD_COMPRESSED, compressed)
+
+            sid.setField(SolrSystemClient.FLD_LOCATION_NAME, locationName)
+            if (this.crawlName) {
+                sid.addField(SolrSystemClient.FLD_CRAWL_NAME, this.crawlName)
+            } else {
+                log.warn "No crawl name given: ${this}"
+            }
+
+            if (childItems) {
+                sid.setField(SolrSystemClient.FLD_CHILD_ITEM_COUNT, childItems.size())
+
+                StringBuilder sbChildNames = new StringBuilder()
 //            StringBuilder sbChildLabels = new StringBuilder()
-            this.childItems.each {
-                sbChildNames.append(it.name + '\n')
-                it.labels.each {String lbl ->
-//                    sbChildLabels.append(it.labels.join('\n') + '\n')
-                    sid.addField(SolrSystemClient.FLD_CHILD_ITEM_LABELS, lbl)
+                this.childItems.each {
+                    sbChildNames.append(it.name + '\n')
+                    it.labels.each { String lbl ->
+                        if (lbl.containsIgnoreCase()) {
+                            log.debug "\t\tskip adding label of u"
+                        }
+                        sid.addField(SolrSystemClient.FLD_CHILD_ITEM_LABELS, lbl)
+                    }
+                }
+                sid.addField(SolrSystemClient.FLD_CHILD_ITEM_NAMES, sbChildNames.toString())
+            } else {
+                log.debug "\t\tno child items for object:($this)"
+            }
+
+            if (childGroups) {
+                sid.setField(SolrSystemClient.FLD_CHILD_GROUP_COUNT, childGroups.size())
+
+                StringBuilder sbChildGroupNames = new StringBuilder()
+                this.childGroups.each {
+                    sbChildGroupNames.append(it.name + '\n')
+                }
+                sid.addField(SolrSystemClient.FLD_CHILD_GROUP_NAMES, sbChildGroupNames.toString())
+            } else {
+                log.debug "\t\tno child groups for this($this)"
+            }
+
+
+            sid.setField(SolrSystemClient.FLD_CREATED_DATE, createdDate)
+
+            // todo -- consider switching to a batch time, rather than creating a new timestamp for each doc
+            sid.setField(SolrSystemClient.FLD_INDEX_DATETIME, new Date())
+            if (lastModifiedDate) {
+                sid.setField(SolrSystemClient.FLD_LAST_MODIFIED, lastModifiedDate)
+            } else {
+                log.warn "No modified date for savableObject: $this"
+            }
+
+            if (hidden) {
+                sid.setField(SolrSystemClient.FLD_HIDDEN_B, hidden)
+            }
+
+            sid.setField(SolrSystemClient.FLD_LABELS, labels)
+            parentLabels.each {
+                sid.setField(SolrSystemClient.FLD_PARENT_LABELS, it)
+            }
+            ancestorLabels.each {
+                sid.setField(SolrSystemClient.FLD_ANCESTOR_LABELS, it)
+            }
+
+            if (tags) {
+                sid.setField(SolrSystemClient.FLD_TAG_SS, tags)
+            }
+
+            if (parentId) {
+                sid.setField(SolrSystemClient.FLD_PARENT_ID, parentId)
+            }
+
+            if (ignore) {
+                sid.setField(SolrSystemClient.FLD_IG, parentId)
+            }
+
+            if (content) {
+                sid.setField(SolrSystemClient.FLD_CONTENT_BODY, content)
+                if (contentSize) {
+                    sid.setField(SolrSystemClient.FLD_CONTENT_BODY_SIZE, contentSize)
+                } else {
+                    sid.setField(SolrSystemClient.FLD_CONTENT_BODY_SIZE, content.size())
                 }
             }
-            sid.addField(SolrSystemClient.FLD_CHILD_ITEM_NAMES, sbChildNames.toString())
-        } else {
-            log.debug "\t\tno child items for object:($this)"
-        }
-
-        if (childGroups) {
-            sid.setField(SolrSystemClient.FLD_CHILD_GROUP_COUNT, childGroups.size())
-
-            StringBuilder sbChildGroupNames = new StringBuilder()
-            this.childGroups.each {
-                sbChildGroupNames.append(it.name + '\n')
+            metadata.each {
+                sid.setField(SolrSystemClient.FLD_METADATA, it)
             }
-            sid.addField(SolrSystemClient.FLD_CHILD_GROUP_NAMES, sbChildGroupNames.toString())
-        } else {
-            log.debug "\t\tno child groups for this($this)"
-        }
 
-
-        sid.setField(SolrSystemClient.FLD_CREATED_DATE, createdDate)
-
-        // todo -- consider switching to a batch time, rather than creating a new timestamp for each doc
-        sid.setField(SolrSystemClient.FLD_INDEX_DATETIME, new Date())
-        if (lastModifiedDate) {
-            sid.setField(SolrSystemClient.FLD_LAST_MODIFIED, lastModifiedDate)
-        } else {
-            log.warn "No modified date for savableObject: $this"
-        }
-
-        if (hidden) {
-            sid.setField(SolrSystemClient.FLD_HIDDEN_B, hidden)
-        }
-
-        sid.setField(SolrSystemClient.FLD_LABELS, labels)
-        parentLabels.each{
-            sid.setField(SolrSystemClient.FLD_PARENT_LABELS, it)
-        }
-        ancestorLabels.each{
-            sid.setField(SolrSystemClient.FLD_ANCESTOR_LABELS, it)
-        }
-
-        if (tags) {
-            sid.setField(SolrSystemClient.FLD_TAG_SS, tags)
-        }
-
-        if (parentId) {
-            sid.setField(SolrSystemClient.FLD_PARENT_ID, parentId)
-        }
-
-        if (content) {
-            sid.setField(SolrSystemClient.FLD_CONTENT_BODY, content)
-            if (contentSize) {
-                sid.setField(SolrSystemClient.FLD_CONTENT_BODY_SIZE, contentSize)
+            if (dedup) {
+                log.debug "\t\tDedup already set: $dedup"
+                sid.setField(SolrSystemClient.FLD_DEDUP, dedup)
             } else {
-                sid.setField(SolrSystemClient.FLD_CONTENT_BODY_SIZE, content.size())
+                log.warn "\t\tNo dedup string set?? ${this}"
             }
-        }
-        if (metadata) {
-            sid.setField(SolrSystemClient.FLD_METADATA, metadata)
-        }
 
-        if (dedup) {
-            log.debug "\t\tDedup already set: $dedup"
-            sid.setField(SolrSystemClient.FLD_DEDUP, dedup)
-//        } else if (type && name && size != null) {
-//            dedup = buildDedupString()        // NOTE: no need for dedup if this is analyzing children
-//            if (dedup) {
-//                sid.setField(SolrSystemClient.FLD_DEDUP, dedup)
-//                log.warn "\t\tDid not have a dedup ($dedup) -- now we do as we build solrInput doc: $this"
-//            } else {
-//                log.warn "\t\tno dedup value set??? $this"
-//            }
-//        } else {
-//            log.warn "\t\t.....Cannot reliably build a dedup string, missing type:$type, or name:$name, or size:$size"
-        }
-
-        // debugging?? add full matched label, with regex and match group... useful??
-        if (matchedLabels) {
-            sid.setField(SolrSystemClient.FLD_MATCHED_LABELS_COUNT, matchedLabels.size())
-            matchedLabels.each {
-                sid.addField(SolrSystemClient.FLD_MATCHED_LABELS, it.toString())
+            // debugging?? add full matched label, with regex and match group... useful??
+            if (matchedLabels) {
+                sid.setField(SolrSystemClient.FLD_MATCHED_LABELS_COUNT, matchedLabels.size())
+                matchedLabels.each {
+                    sid.addField(SolrSystemClient.FLD_MATCHED_LABELS, it.toString())
+                }
             }
+
+            differenceStatus.each { BaseDifferenceStatus bds ->
+                sid.addField(SolrSystemClient.FLD_DIFFERENCES, bds.toString())
+            }
+
+            return sid
         }
 
-        return sid
-    }
 
-
-    /** base/default combination to signal duplicate savable objects
-     * override as needed to get better duplicate detection
-     * @return string with groupable values that should flag duplicates (ala solr facet counts)
-     */
-    String buildDedupString() {
-        String prevDedup = dedup
-        if (type && name && size != null) {
-            log.debug "\t\tgood params for dedup: (type && name && size != null): (type:$type  name:$name  size:$size)"
-        } else {
-            log.warn "Something is null: (type && name && size == null): (type:$type  name:$name  size:$size)"
-        }
-        dedup = SavableObject.buildDedupString(type, name, size)
-        if (prevDedup) {
-            if (!prevDedup.equalsIgnoreCase(dedup)) {
-                log.info "\t\tAlready had a dedup:($prevDedup), it was DIFFERENT from new/current dedup ($dedup)?? "
+        /** base/default combination to signal duplicate savable objects
+         * override as needed to get better duplicate detection
+         * @return string with groupable values that should flag duplicates (ala solr facet counts)
+         */
+        String buildDedupString() {
+            String prevDedup = dedup
+            if (type && name && size != null) {
+                log.debug "\t\tgood params for dedup: (type && name && size != null): (type:$type  name:$name  size:$size)"
             } else {
-                log.debug "\t\tAlready had a dedup:($prevDedup), same as new/current dedup ($dedup)?? "
+                log.warn "Something is null: (type && name && size == null): (type:$type  name:$name  size:$size)"
             }
-        }
-        return dedup
-    }
-
-    static String buildDedupString(String type, String name, long size) {
-        String dedup = type + ':' + name + '::' + size
-    }
-
-
-    /**
-     * Build a basic id (solr uniqify)
-     * @param location name of source (hostname, external disk name, email account...)
-     * @param path that uniquely identifies a given item in the given 'location' name
-     * @return concatonated string uniquely identifying this item (duplicate ids overwrite/replace any previous Solr Doc item)
-     */
-    static String buildId(String location, String path) {
-        String s = location + ':' + path
-        return s
-    }
-
-
-    /**
-     * custom string return value for this
-     * @return string/label
-     */
-    String toString() {
-        String s = null
-        if (labels) {
-            s = "${type}:(${name}) [depth:$depth] :: (${labels})"
-        } else if (ignore) {
-            s = "${type}:(${name}) [depth:$depth] :: [IGNORE]"
-        } else {
-            s = "${type}:(${name}) [depth:$depth] "
+            dedup = SavableObject.buildDedupString(type, name, size)
+            if (prevDedup) {
+                if (!prevDedup.equalsIgnoreCase(dedup)) {
+                    log.info "\t\tAlready had a dedup:($prevDedup), it was DIFFERENT from new/current dedup ($dedup)?? "
+                } else {
+                    log.debug "\t\tAlready had a dedup:($prevDedup), same as new/current dedup ($dedup)?? "
+                }
+            }
+            return dedup
         }
 
-        return s
+        static String buildDedupString(String type, String name, long size) {
+            String dedup = type + ':' + name + '::' + size
+        }
+
+
+        /**
+         * Build a basic id (solr uniqify)
+         * @param location name of source (hostname, external disk name, email account...)
+         * @param path that uniquely identifies a given item in the given 'location' name
+         * @return concatonated string uniquely identifying this item (duplicate ids overwrite/replace any previous Solr Doc item)
+         */
+        static String buildId(String location, String path) {
+            String s = location + ':' + path
+            return s
+        }
+
+
+        /**
+         * custom string return value for this
+         * @return string/label
+         */
+        String toString() {
+            String s = null
+            if (labels) {
+                s = "${type}:(${name}) [depth:$depth] :: (${labels})"
+            } else if (ignore) {
+                s = "${type}:(${name}) [depth:$depth] :: [IGNORE]"
+            } else {
+                s = "${type}:(${name}) [depth:$depth] "
+            }
+
+            return s
+        }
     }
-}

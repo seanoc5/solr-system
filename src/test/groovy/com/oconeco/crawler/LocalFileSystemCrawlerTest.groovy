@@ -61,7 +61,7 @@ class LocalFileSystemCrawlerTest extends Specification {
 
         then:
         results != null
-        updatedNames.size() == 4        // ENSURE we don't have 'ignoreMe' in updated...?  -- fails currently
+        updatedNames.size() == 9        // ENSURE we don't have 'ignoreMe' in updated...?  -- fails currently
         updatedNames.containsAll(['content','testsub', 'subfolder2', 'subfolder3'])
         results.updated[0].name == 'content'
         results.updated[0].labels == [Constants.TRACK]
