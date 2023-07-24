@@ -153,6 +153,7 @@ class LocalFileSystemCrawler {
                             log.debug "\t\tcrawl folder files (count: ${crawlResults.size()}) after comparing (without file sizes): $currentFolder"
                         }
 
+                        // todo -- consider refactoring to call FSFolder.doAnalysis(analyzer) and have it analyze itself, and its children....?
                         def folderAnalysis = analyzer.analyze(currentFolder)
                         List<SavableObject> analyzableChildren = currentFolder.gatherAnalyzableChildren()
                         def doAnalysisresults = analyzer.analyze(analyzableChildren)
@@ -220,6 +221,12 @@ class LocalFileSystemCrawler {
     }
 
 
+    /**
+     * Find the saved group to compare crawled group to when checking for changed (or current-ness)
+     * @param existingSolrFolderDocs
+     * @param currentFolder
+     * @return saved item from collection pulled from persistence (i.e. solr query for all groupItems/folders in a given crawl (for an overarching location))
+     */
     Map findMatchingSavedGroup(Map<String, SolrDocument> existingSolrFolderDocs, FSFolder currentFolder) {
         SolrDocument savedGroup = existingSolrFolderDocs?.get(currentFolder.id)
         return savedGroup
@@ -227,7 +234,7 @@ class LocalFileSystemCrawler {
 
 
     /**
-     * Crawl the folder and use the analyzer to determin what folder contents (files, subdirs) to add as 'children'
+     * Crawl the folder and use the analyzer to determine what folder contents (files, subdirs) to add as 'children'
      * @param fsFolder
      * @param analyzer
      * @return the folder's (newly added?) children

@@ -45,8 +45,9 @@ class Constants {
             communication: ~/.*(?i)(mail)/,
             system       : ~/.*(?i)(class|sbt|sbt-\d.*|runtime)/,
     ]
+    public static final Pattern DEFAULT_FOLDERNAME_IGNORE = ~/(gradle|\.m2|RECYCLE.*|assets|build|classes|caches?|git|google-chrome|pkgs?|plugins?|repo|repository|skins?|svn|target|te?mp)/
     public static final Map<String, Map<String, Object>> DEFAULT_FOLDERNAME_LOCATE = [
-            (IGNORE): [pattern: DEFAULT_FOLDERNAME_PATTERNS[LBL_IGNORE], analysis: TRACK_BUNDLE],          // track ignored folders, but do not descend/crawl
+            (IGNORE): [pattern: DEFAULT_FOLDERNAME_IGNORE, analysis: TRACK_BUNDLE],          // track ignored folders, but do not descend/crawl
             'test'  : [pattern: ~/(test.*)/, analysis: TRACK_BUNDLE],
             (TRACK) : [pattern: null, analysis: TRACK_BUNDLE],
     ]

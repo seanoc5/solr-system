@@ -123,6 +123,7 @@ abstract class SavableObject {
     }
 
     def addAncestorLabels(){
+        log.info "\t\t addAncestorLabels() (object:$this) -> parent:($parent) -- parent labels:(${parent.labels}"
         Map addedLabels = [:]
         if(parent.labels) {
             this.parentLabels.addAll(parent.labels)

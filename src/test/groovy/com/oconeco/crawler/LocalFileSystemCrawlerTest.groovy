@@ -10,7 +10,7 @@ import com.oconeco.models.SavableObject
 import com.oconeco.persistence.SolrSystemClient
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
-
+import org.apache.pdfbox.jbig2.decoder.mmr.MMRConstants
 import org.apache.solr.common.SolrDocument
 import org.apache.solr.common.SolrDocumentList
 import org.apache.tika.parser.AutoDetectParser
@@ -34,8 +34,8 @@ class LocalFileSystemCrawlerTest extends Specification {
     Path startFolder = Path.of(getClass().getResource('/content').toURI())
     SolrSystemClient client = new SolrSystemClient('http://oldie:8983/solr/solr_system')
     SolrDocumentList existingSolrFolderDocsBlank = []
-    File startFile = new File(getClass().getResource('/content').toURI())
-    FSFolder startFSFolder = new FSFolder(startFile, null, locationName, crawlName)
+    File startDir = new File(getClass().getResource('/content').toURI())
+    FSFolder startFSFolder = new FSFolder(startDir, null, locationName, crawlName)
     SolrDifferenceChecker differenceChecker = new SolrDifferenceChecker()
 //    BaseDifferenceChecker differenceChecker = new BaseDifferenceChecker()
     FileSystemAnalyzer analyzer = new FileSystemAnalyzer(Constants.DEFAULT_FOLDERNAME_LOCATE, Constants.DEFAULT_FILENAME_LOCATE)
@@ -49,7 +49,7 @@ class LocalFileSystemCrawlerTest extends Specification {
 
         AutoDetectParser parser = new AutoDetectParser();
         BodyContentHandler handler = new BodyContentHandler(-1);
-        FileSystemAnalyzer analyzerParsing = new FileSystemAnalyzer(folderLabels, fileLabels, null, null, parser,handler)
+        FileSystemAnalyzer analyzerParsing = new FileSystemAnalyzer(folderLabels, fileLabels, null, null, parser, handler)
 
         LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, client, differenceChecker)
         Map<String, SolrDocument> existingSolrFolderDocs = null
@@ -62,7 +62,7 @@ class LocalFileSystemCrawlerTest extends Specification {
         then:
         results != null
         updatedNames.size() == 4        // ENSURE we don't have 'ignoreMe' in updated...?  -- fails currently
-        updatedNames.containsAll(['content','testsub', 'subfolder2', 'subfolder3'])
+        updatedNames.containsAll(['content', 'testsub', 'subfolder2', 'subfolder3'])
         results.updated[0].name == 'content'
         results.updated[0].labels == [Constants.TRACK]
         results.updated[0].matchedLabels.get(Constants.TRACK).analysis == [Constants.TRACK]
@@ -95,32 +95,57 @@ class LocalFileSystemCrawlerTest extends Specification {
         results.current.size() == 1
         results.current[0].name == 'content'
         results.updated.size() == 3
-        results.updated.collect {it.name}.containsAll(['testsub', 'subfolder2', 'subfolder3'])
+        results.updated.collect { it.name }.containsAll(['testsub', 'subfolder2', 'subfolder3'])
     }
 
 
     def 'process archives in content folder'() {
         given:
         LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, client, differenceChecker)
-//        List<FSFile> archiveFSFiles = []
-//        List<SavableObject> archiveItems = []
 
         when:
-        List<SavableObject> crawlResults = crawler.crawlFolderChildren(startFSFolder, analyzer)
-        def archiveFiles = startFSFolder.childItems.findAll { FSObject fsObject ->
+        Map<String, List<FSObject>> crawlResults = crawler.crawlFolderChildren(startFSFolder, analyzer)
+        List<SavableObject> archiveFiles = startFSFolder.childItems.findAll { FSObject fsObject ->
             fsObject.archive
         }
         FSFile testzip = archiveFiles.find { it.name == 'test.zip' }
-        def testzipEntries = testzip.gatherArchiveEntries()
+        List<SavableObject> testzipEntries = testzip.gatherArchiveEntries()
         FSFile fuzzy = archiveFiles.find { it.name == 'fuzzywuzzy.tar.gz' }
-        def fuzzyEntries = fuzzy.gatherArchiveEntries()
+        List<SavableObject> fuzzyEntries = fuzzy.gatherArchiveEntries()
 
+        def gzipFsFile = crawlResults.items.find { FSFile fsFile -> fsFile.name == 'validate-license.sh.gz' }
+
+        def folderAnalysis = analyzer.analyze(startFSFolder)
+        List<SavableObject> analyzableChildren = startFSFolder.gatherAnalyzableChildren()
+        def childrenAnalysisresults = analyzer.analyze(analyzableChildren)
+
+        List subCrawls = []
+        List groupsAnalysis = []
+        List itemsAnalysis = []
+        startFSFolder.childGroups.each { FSFolder fsFolder ->
+            def rcCrawl = crawler.crawlFolderChildren(fsFolder, analyzer)
+            def grpAn = analyzer.analyze(fsFolder)
+            groupsAnalysis << grpAn
+            println "GRoup analysis: $grpAn"
+            fsFolder.childItems.each {
+                def itemAnalysis =  analyzer.analyze(it)
+                println "\t\tItem analysis: $itemAnalysis"
+                itemsAnalysis << itemAnalysis
+            }
+            subCrawls << rcCrawl
+        }
 
         then:
         archiveFiles.size() == 5
         testzipEntries.size() == 5
         fuzzyEntries.size() == 123
-//        archiveItems.size() == 174
+        gzipFsFile.archive == false
+
+        folderAnalysis != null
+        childrenAnalysisresults != null
+        subCrawls.size() == 2
+        groupsAnalysis.size() == 2
+        itemsAnalysis.size() > 1
     }
 
 
