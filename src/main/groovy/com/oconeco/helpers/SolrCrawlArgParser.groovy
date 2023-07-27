@@ -96,8 +96,17 @@ class SolrCrawlArgParser {
         if (options.folderss) {
             List<String> ds = options.folderss
             int cnt = ds.size()
-            Map dsMap = ds.collectEntries { it.split(':') }
-            log.info "\t\tReplace config folders ($localFolders) with folders from command line args: ($dsMap) "
+            Map dsMap = ds.collectEntries { String s ->
+                int pos = s.indexOf(':')
+                if (pos) {
+                    String label = s[0..pos - 1]
+                    String path = s[pos+1..-1]
+                    return [(label): path]
+                } else {
+                    log.warn "Cannot parse localfolder command line arg:($s) -- should be: -flabel:/some/path/here"
+                }
+            }
+            log.info "\t\tUsing command line folder args: ($dsMap) to verride config localfolders ($localFolders) "
             config?.dataSources.localFolders = dsMap
         }
 

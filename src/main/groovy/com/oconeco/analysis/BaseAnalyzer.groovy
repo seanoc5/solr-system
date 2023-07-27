@@ -165,7 +165,7 @@ class BaseAnalyzer {
                         object.labels << Constants.IGNORE
                         Map ml = [(Constants.IGNORE): [pattern: this.ignoreGroup, (Constants.LABEL_MATCH): match]]
                         object.matchedLabels = ml
-                        log.info "\t\tIGNORE: processing a groupObject ($object), this matches group name ignore (${this.ignoreGroup} "
+                        log.info "\t\tIGNORE: processing a groupObject ($object), this MATCHES group name ignore (${this.ignoreGroup} "
                     } else {
                         log.debug "\t\tprocess: processing a groupObject ($object), this does NOT match group name ignore (${this.ignoreGroup}, so we should PROCESS it"
                     }

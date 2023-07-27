@@ -32,7 +32,7 @@ class LocalFileSystemCrawlerTest extends Specification {
     String locationName = 'spock'
     String crawlName = 'test'
     Path startFolder = Path.of(getClass().getResource('/content').toURI())
-    SolrSystemClient client = new SolrSystemClient('http://oldie:8983/solr/solr_system')
+    SolrSystemClient client = new SolrSystemClient('http://localhost:8983/solr/solr_system')
     SolrDocumentList existingSolrFolderDocsBlank = []
     File startDir = new File(getClass().getResource('/content').toURI())
     FSFolder startFSFolder = new FSFolder(startDir, null, locationName, crawlName)
@@ -104,6 +104,7 @@ class LocalFileSystemCrawlerTest extends Specification {
         LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, client, differenceChecker)
 
         when:
+        List<SavableObject> cr = crawler.crawlFolders(startFSFolder, analyzer)
         List<SavableObject> crawlResults = crawler.crawlFolderChildren(startFSFolder, analyzer)
         def archiveFiles = startFSFolder.childItems.findAll { FSObject fsObject ->
             fsObject.archive
@@ -113,7 +114,7 @@ class LocalFileSystemCrawlerTest extends Specification {
         FSFile fuzzy = archiveFiles.find { it.name == 'fuzzywuzzy.tar.gz' }
         List<SavableObject> fuzzyEntries = fuzzy.gatherArchiveEntries()
 
-        def gzipFsFile = crawlResults.items.find { FSFile fsFile -> fsFile.name == 'validate-license.sh.gz' }
+        def gzipFsFile = crawlResults.find { FSObject obj -> obj.name == 'validate-license.sh.gz' }
 
         def folderAnalysis = analyzer.analyze(startFSFolder)
         List<SavableObject> analyzableChildren = startFSFolder.gatherAnalyzableChildren()

@@ -134,6 +134,8 @@ class FSFile extends FSObject {
                                 log.debug "is archive: $f"
                             }
                         }
+                    } catch (FileNotFoundException e) {
+                        log.warn "File ($f) FileNotFound exception checking if we have an archive: $e (perhaps some other process has it open and locked???)"
                     } catch (IOException e) {
                         log.warn "File ($f) io exception checking if we have an archive: $e"
                     }

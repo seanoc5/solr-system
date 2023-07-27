@@ -54,7 +54,7 @@ crawlMap.each { String crawlName, String startPath ->
     }
 
     File startDir = new File(startPath)
-    def existingFolderSolrDocs = crawler.getSavedGroupDocs(crawlName)
+    def existingFolderSolrDocs = crawler.getSavedGroupDocs(crawlName, startPath)
     log.info "\t\tcrawl map item with label:'$crawlName' - startpath:'$startPath' -- numFound preCrawl: $numFoundPreCrawl -- existingSolrFolderDocs: ${existingFolderSolrDocs.size()}"
     Map<String, List<FSFolder>> crawlFolders = crawler.crawlFolders(crawlName, startDir, existingFolderSolrDocs, analyzer)
     if (crawlFolders.updated) {

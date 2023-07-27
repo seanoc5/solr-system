@@ -325,7 +325,7 @@ class LocalFileSystemCrawler {
      * @param fl
      * @return
      */
-    Map<String, SolrDocument> getSavedGroupDocs(String crawlName, String fq = "type_s:${FSFolder.TYPE}", String fl = this.checkFolderFields, int maxRowsReturned = SolrSystemClient.MAX_ROWS_RETURNED) {
+    Map<String, SolrDocument> getSavedGroupDocs(String crawlName, String startPath = "", String fq = "type_s:${FSFolder.TYPE}", String fl = this.checkFolderFields, int maxRowsReturned = SolrSystemClient.MAX_ROWS_RETURNED) {
         SolrQuery sq = new SolrQuery('*:*')
         sq.setRows(maxRowsReturned)
         sq.setFilterQueries(fq)
@@ -333,8 +333,13 @@ class LocalFileSystemCrawler {
         // NOTE Crawler objects have an intrinsic connection to a specific crawl "location" (i.e. machine/filesystem, or browser/email account,...)
         String filterLocation = SolrSystemClient.FLD_LOCATION_NAME + ':' + locationName
         sq.addFilterQuery(filterLocation)
+
         // the crawlName is a subset of the larger location, this is dynamic where location is fixed (for this crawler)
         String filterCrawl = SolrSystemClient.FLD_CRAWL_NAME + ':' + crawlName
+        if (startPath){
+            // if we have a valid start path, get all folders by crawl name AND all folders UNDER the start path
+            filterCrawl += " OR ${SolrSystemClient.FLD_PATH_T}:\"${startPath}*\""
+        }
         sq.addFilterQuery(filterCrawl)
 
         sq.setFields(fl)

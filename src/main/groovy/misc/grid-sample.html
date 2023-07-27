@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Testing grid layout (for postman...)</title>
+    <style>
+        * {
+          box-sizing: border-box;
+        }
+        .wrapper {
+          max-width: 940px;
+          margin: 0 auto;
+        }
+
+        .wrapper > div {
+          border: 2px solid rgb(233 171 88);
+          border-radius: 5px;
+          background-color: rgba(233 171 88 / 0.5);
+          padding: 1em;
+          color: #d9480f;
+        }
+
+        .wrapper {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 10px;
+          grid-auto-rows: minmax(100px, auto);
+        }
+        .one {
+          grid-column: 1 / 3;
+          grid-row: 1;
+        }
+        .two {
+          grid-column: 2 / 4;
+          grid-row: 1 / 3;
+        }
+        .three {
+          grid-column: 1;
+          grid-row: 2 / 5;
+        }
+        .four {
+          grid-column: 3;
+          grid-row: 3;
+        }
+        .five {
+          grid-column: 2;
+          grid-row: 4;
+        }
+        .six {
+          grid-column: 3;
+          grid-row: 4;
+        }
+    </style>
+</head>
+<body>
+<div>
+    <a href="http://localhost:63342/solr-system/solr-system.main/misc/grid-sample.html?_ijt=9cde8hqp80n9l1shk5urt5vr2l&_ij_reload=RELOAD_ON_SAVE">Sample link</a>
+</div>
+<div class="wrapper">
+  <div class="one">One 1</div>
+  <div class="two">Two 2</div>
+  <div class="three">Three</div>
+  <div class="four">Four</div>
+  <div class="five">Five</div>
+  <div class="six">Six</div>
+</div>
+
+</body>
+</html>
