@@ -40,11 +40,16 @@ class ArchFile extends SavableObject {
             } else {
                 log.warn "could not get folder name for arch entry: $ae"
             }
-            String ext = FilenameUtils.getExtension(name)
-            if (ext) {
-                this.extension = ext
-            } else {
-                log.debug "\t\tno extension found for name: ${ae.name} (ext:$ext)"
+
+            try {
+                String ext = FilenameUtils.getExtension(name)
+                if (ext) {
+                    this.extension = ext
+                } else {
+                    log.debug "\t\tno extension found for name: ${ae.name} (ext:$ext)"
+                }
+            } catch (IllegalArgumentException illegalArgumentException){
+                log.warn "Problem getting extension for name:($name) -- does it have an illegal character?? perhaps a colon?? Exception:$illegalArgumentException"
             }
 
             if (parentId) {

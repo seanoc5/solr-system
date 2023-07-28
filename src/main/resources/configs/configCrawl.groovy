@@ -9,7 +9,7 @@ import java.util.regex.Pattern
  * and/or parsing (tika metadata and content) depending on regex patterns
  * for groups (folders) and items (files), both name and 'path'
  */
-solrUrl = "http://oldie:8983/solr/solr_system"
+solrUrl = "http://localhost:8983/solr/solr_system"
 locationName = Inet4Address.localHost.getHostName()
 
 // can be overriden b
@@ -66,9 +66,9 @@ dataSources {
 
 
 solrIgnore = '.*shard\\d+_replica.*'          // don't dive into solr index folders
-folderIgnoreSystem = /RECYCLE.BIN|google-chrome|packages?|Partitions|pkgs?|snapshots?|System\b.*|te?mp|[\w_-]*trash/
-folderIgnoreUser = /\.gradle.?|\.m2|assets|build|classes|caches?|deleteme.*|engine|flatpack|git|github|google-chrome|heritrix.*ignore.*|never_index|node_modules|packages?|plugins?|repo|repository|skins?|skipme.*|svn|target|vscode/
-ignorePattern = Pattern.compile("($folderIgnoreSystem|$folderIgnoreUser)")
+folderIgnoreSystem = /RECYCLE.BIN|google-chrome|packages?|Partitions|pkgs?|snapshots?|System\b.*|te?mp|[\w_-]*trash|[._#~]*Trash.*/
+folderIgnoreUser = /\.gradle.?|\.m2|assets|build|classes|[._#~-]*cache.*|deleteme.*|engine|flatpack|git|github|google-chrome|heritrix.*ignore.*|never_index|node_modules|packages?|plugins?|repo|repository|skins?|skipme.*|svn|target|vscode/
+ignorePattern = Pattern.compile("($folderIgnoreSystem|$folderIgnoreUser)",  Pattern.CASE_INSENSITIVE)
 println "Ignore pattern: $ignorePattern"
 
 // note: all of the labels below are optional/customizable.

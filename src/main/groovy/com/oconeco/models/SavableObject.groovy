@@ -3,6 +3,7 @@ package com.oconeco.models
 import com.oconeco.difference.BaseDifferenceStatus
 import com.oconeco.helpers.Constants
 import com.oconeco.persistence.SolrSystemClient
+import org.apache.commons.math3.geometry.spherical.oned.Arc
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.core.Logger
 import org.apache.solr.common.SolrInputDocument
@@ -257,6 +258,8 @@ abstract class SavableObject {
             if (dedup) {
                 log.debug "\t\tDedup already set: $dedup"
                 sid.setField(SolrSystemClient.FLD_DEDUP, dedup)
+            } else if (this.type== ArchFolder.TYPE){
+                log.debug "\t\tArchFolder no dedup string set (not needed?) ${this}"
             } else {
                 log.warn "\t\tNo dedup string set?? ${this}"
             }

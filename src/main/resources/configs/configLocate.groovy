@@ -43,7 +43,7 @@ dataSources {
 
 solrIgnore = '.*shard\\d+_replica.*'          // don't dive into solr index folders
 folderIgnoreSystem = /RECYCLE.BIN/
-folderIgnoreUser = /__.*|\.gradle.?|\.m2|${solrIgnore}|assets|build|classes|[#$_.~-]*caches?|engine|flatpack|git|github|google-chrome|heritrix.*|never_index|node_modules|(site-)?packages?|plugins?|repo|repository|skins?|skipme.*|svn|target|vscode/
+folderIgnoreUser = /__.*|\.gradle.?|\.m2|${solrIgnore}|assets|build|classes|[#$_.~ca-]*cache[s\d]*|engine|flatpack|git|github|google-chrome|heritrix.*|never_index|node_modules|(site-)?packages?|pkgs?|plugins?|repo|repository|skins?|skipme.*|svn|target|vscode/
 ignorePattern = Pattern.compile(/($folderIgnoreSystem|$folderIgnoreUser)/)
 println "Ignore pattern: $ignorePattern"
 

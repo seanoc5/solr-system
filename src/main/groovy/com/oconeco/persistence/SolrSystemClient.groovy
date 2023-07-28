@@ -9,6 +9,8 @@ import org.apache.solr.client.solrj.SolrServerException
 import org.apache.solr.client.solrj.impl.BaseHttpSolrClient.RemoteSolrException
 import org.apache.solr.client.solrj.impl.Http2SolrClient
 import org.apache.solr.client.solrj.request.CollectionAdminRequest
+import org.apache.solr.client.solrj.request.LukeRequest
+import org.apache.solr.client.solrj.response.LukeResponse
 import org.apache.solr.client.solrj.response.QueryResponse
 import org.apache.solr.client.solrj.response.UpdateResponse
 import org.apache.solr.common.SolrInputDocument
@@ -101,6 +103,16 @@ class SolrSystemClient extends BaseClient {
         final List<String> liveNodes = (List<String>) cluster.get("live_nodes");
 
         log.info("Found " + liveNodes.size() + " live nodes");
+        return response
+    }
+
+    def getSchemaInformation(String collectionName) {
+//        LukeRequest lukeRequest = new LukeRequest("/$collectionName/admin/luke")
+        LukeRequest lukeRequest = new LukeRequest()
+        lukeRequest.addField('id,name*, path_s')
+        lukeRequest.includeIndexFieldFlags = true
+        lukeRequest.showSchema = true
+        LukeResponse response = lukeRequest.process(solrClient, collectionName);
         return response
     }
 
@@ -250,6 +262,10 @@ class SolrSystemClient extends BaseClient {
         SolrQuery sq = new SolrQuery(query)
         QueryResponse resp = this.query(sq)
         return resp
+    }
+
+    def exportDocuments(SolrQuery solrQuery) {
+
     }
 
 

@@ -240,10 +240,9 @@ class LocalFileSystemCrawler {
      * @return the folder's (newly added?) children
      */
     List<SavableObject> crawlFolderChildren(FSFolder fsFolder, BaseAnalyzer analyzer) {
-        log.info "\t\t....call to crawlFolderFiles($fsFolder, ${analyzer.class.simpleName})..."
-//        Map<String, Map<String, Object>> results = [:]
+        log.debug "\t\t....call to crawlFolderFiles($fsFolder, ${analyzer.class.simpleName})..."
         List<FSObject> results = []
-        if (fsFolder.size) {
+        if (fsFolder?.size) {
             log.warn "FSFolder($fsFolder) size already set??? reseting to 0 as we crawlFolderFiles (with ignore patterns)..."
         }
         fsFolder.size = 0
@@ -338,7 +337,7 @@ class LocalFileSystemCrawler {
         String filterCrawl = SolrSystemClient.FLD_CRAWL_NAME + ':' + crawlName
         if (startPath){
             // if we have a valid start path, get all folders by crawl name AND all folders UNDER the start path
-            filterCrawl += " OR ${SolrSystemClient.FLD_PATH_T}:\"${startPath}*\""
+            filterCrawl += " OR ${SolrSystemClient.FLD_PATH_S}:\"${startPath}*\""
         }
         sq.addFilterQuery(filterCrawl)
 

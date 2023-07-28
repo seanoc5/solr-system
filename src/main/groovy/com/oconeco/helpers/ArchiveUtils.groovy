@@ -22,10 +22,20 @@ import java.nio.file.Files
 class ArchiveUtils {
     static final Logger log = LogManager.getLogger(this.class.name)
 
-    static ArchiveInputStream getArchiveInputStream (File archiveFile) throws IOException {
-        log.debug "\t\tProcess archive file: $archiveFile"
+    /**
+     * get appropriate archive input stream -- could not find an existing library, but surely someone has done this better...???!!!!
+     * hacked approach to process zip files with their wonky size set only after getnext entry.... fubar....
+     * @param archiveFile
+     * @param inputstream (hacked approach to be able to close input stream and archive stream
+     * @return
+     * @throws IOException
+     *
+     * todo -- fix this bs... it is all borked-up SoC
+     */
+    static ArchiveInputStream getArchiveInputStream (File archiveFile, InputStream inputStream) throws IOException {
+        log.info "\t\tProcess archive file: $archiveFile"
         ArchiveInputStream ais = null
-        InputStream inputStream = null
+//        InputStream inputStream = null
         if(archiveFile?.exists() && archiveFile.canRead()) {
             String name = archiveFile.name
             String fileType = Files.probeContentType(archiveFile.toPath())
@@ -50,13 +60,13 @@ class ArchiveUtils {
                 }
             } catch (NullPointerException npe) {
                 log.warn "Archive problem (no file>> $archiveFile) -- $npe"
-            } finally {
-                if (inputStream != null) {
-                    log.warn "\t\trefactor inputstream opened, but perhaps not closed?? getArchiveInputStream()"
-//                    inputStream?.close()
-                } else {
-                    log.debug "input stream was null, nothing to close for archive file: $archiveFile"
-                }
+//            } finally {
+//                if (inputStream != null) {
+//                    log.warn "\t\trefactor inputstream opened, but perhaps not closed?? getArchiveInputStream()"
+////                    inputStream?.close()
+//                } else {
+//                    log.debug "input stream was null, nothing to close for archive file: $archiveFile"
+//                }
 //                if (ais != null) {
 //                    ais.close()
 //                }

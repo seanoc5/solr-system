@@ -159,9 +159,9 @@ class FSFile extends FSObject {
     List<SavableObject> gatherArchiveEntries() {
         List<SavableObject> archiveEntries = null
         if (this.isArchive()) {
-            ArchiveInputStream archiveInputStream
-            try {
-                archiveInputStream = ArchiveUtils.getArchiveInputStream(this.thing)
+            File f = ((File)this.thing)
+            try(InputStream inputStream = f.newInputStream(); ArchiveInputStream archiveInputStream = ArchiveUtils.getArchiveInputStream(f, inputStream)) {
+//                archiveInputStream = ArchiveUtils.getArchiveInputStream(this.thing)
                 if (archiveInputStream) {
                     if (archiveInputStream instanceof ZipArchiveInputStream || archiveInputStream instanceof JarArchiveEntry) {
                         archiveEntries = gatherZippyArchiveEntries(archiveInputStream)
@@ -173,13 +173,13 @@ class FSFile extends FSObject {
                 }
             } catch (IOException ioe) {
                 log.warn "IOException: $ioe"
-            } finally {
-                if (archiveInputStream) {
-                    archiveInputStream.close()
-                    log.debug "close Archive input steam: $this"
-                } else {
-                    log.info "do not have a valid Archive input steam to close! this:$this"
-                }
+//            } finally {
+//                if (archiveInputStream) {
+//                    archiveInputStream.close()
+//                    log.debug "close Archive input steam: $this"
+//                } else {
+//                    log.info "do not have a valid Archive input steam to close! this:$this"
+//                }
             }
         } else {
             log.debug "Not an archive, skipping..."

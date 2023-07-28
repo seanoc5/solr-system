@@ -38,14 +38,14 @@ class FileSystemAnalyzer extends BaseAnalyzer {
             object.childItems.each {
                 def addedLabelsMap = it.addAncestorLabels()
             }
-            log.info "\t\t${object.path} --> added ancestor labels map (${object.labels}) for ${object.childItems.size()} child items"
+            log.debug "\t\t${object.path} --> added ancestor labels map (${object.labels}) for ${object.childItems.size()} child items"
         }
 
         if (object.childGroups) {
             object.childGroups.each {
                 def addedLabelsMap = it.addAncestorLabels()
             }
-            log.info "\t\t${object.path} --> added ancestor labels map (${object.labels}) for ${object.childGroups.size()} child groups"
+            log.debug "\t\t${object.path} --> added ancestor labels map (${object.labels}) for ${object.childGroups.size()} child groups"
         }
 
         return analysis

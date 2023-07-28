@@ -6,7 +6,7 @@ plugins {
 }
 
 group 'com.oconeco.solrsystem'
-version '0.4.1'
+version '0.4.2'
 
 repositories {
     mavenCentral()
@@ -14,14 +14,18 @@ repositories {
 
 dependencies {
     // https://mvnrepository.com/artifact/org.apache.groovy/groovy-all
-    implementation group: 'org.apache.groovy', name: 'groovy-all', version: '4.0.11', ext: 'pom'
+//    compile group: 'org.apache.groovy', name: 'groovy-all', version: '4.0.11', ext: 'pom'
+//    compile "org.apache.groovy.groovy-all"
+    // https://mvnrepository.com/artifact/org.apache.groovy/groovy-all
+    implementation 'org.apache.groovy:groovy-all:4.0.11'
+
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
 
     // https://mvnrepository.com/artifact/org.apache.groovy/groovy-cli-picocli
     implementation 'org.apache.groovy:groovy-cli-picocli:4.0.11'
     // implementation, runtimeOnly, testImplementation, and testRuntimeOnly
-    implementation group: 'org.spockframework', name: 'spock-core', version: '2.4-M1-groovy-4.0'
+    testImplementation group: 'org.spockframework', name: 'spock-core', version: '2.4-M1-groovy-4.0'
 //    implementation group: 'net.bytebuddy', name: 'byte-buddy', version: '1.14.2'
     // https://mvnrepository.com/artifact/org.apache.solr/solr-solrj
     implementation group: 'org.apache.solr', name: 'solr-solrj', version: '9.1.1'
