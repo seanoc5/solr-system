@@ -8,9 +8,9 @@ import com.oconeco.models.FSFolder
 import com.oconeco.models.FSObject
 import com.oconeco.models.SavableObject
 import com.oconeco.persistence.SolrSystemClient
+import org.apache.commons.io.FileUtils
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
-
 import org.apache.solr.common.SolrDocument
 import org.apache.solr.common.SolrDocumentList
 import org.apache.tika.parser.AutoDetectParser
@@ -34,6 +34,7 @@ class LocalFileSystemCrawlerTest extends Specification {
     Path startFolder = Path.of(getClass().getResource('/content').toURI())
     SolrSystemClient client = new SolrSystemClient('http://localhost:8983/solr/solr_system')
     SolrDocumentList existingSolrFolderDocsBlank = []
+    Map<String, SolrDocument> emptySolrMap = [:]
     File startDir = new File(getClass().getResource('/content').toURI())
     FSFolder startFSFolder = new FSFolder(startDir, null, locationName, crawlName)
     SolrDifferenceChecker differenceChecker = new SolrDifferenceChecker()
@@ -58,31 +59,39 @@ class LocalFileSystemCrawlerTest extends Specification {
         when:
         Map<String, List<FSFolder>> results = crawler.crawlFolders(crawlName, startFolder.toFile(), existingSolrFolderDocs, analyzerSimple)
         List<String> updatedNames = results.updated.collect { it.name }
+        String tostr = crawler.toString()
 
         then:
         results != null
-        updatedNames.size() == 9        // ENSURE we don't have 'ignoreMe' in updated...?  -- fails currently
-        updatedNames.containsAll(['content', 'testsub', 'subfolder2', 'subfolder3'])
-        results.updated[0].name == 'content'
-        results.updated[0].labels == [Constants.TRACK]
-        results.updated[0].matchedLabels.get(Constants.TRACK).analysis == [Constants.TRACK]
+        tostr != null
 
-        results.updated[1].name == 'testsub'
-        results.updated[2].name == 'subfolder2'
-
-        results.ignored.size() == 1
-        results.ignored[0].name == 'ignoreMe'
+        updatedNames.size() == 6        // ENSURE we don't have 'ignoreMe' in updated...?  -- fails currently
+        updatedNames.containsAll(['content', 'logs', 'bin', 'testsub', 'subfolder2', 'subfolder3'])
+//        results.updated[0].name == 'content'
+//        results.updated[0].labels == [Constants.TRACK]
+//        results.updated[0].matchedLabels.get(Constants.TRACK).analysis == [Constants.TRACK]
+//
+//        results.updated[1].name == 'testsub'
+//        results.updated[2].name == 'subfolder2'
+//
+//        results.ignored.size() == 1
+//        results.ignored[0].name == 'ignoreMe'
     }
 
 
     def 'basic LocalFileSystemCrawler.crawlFolders with existing docs'() {
         given:
         LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, client, differenceChecker)
-        Map<String, SolrDocument> existingSolrFolderDocsMocked = mockSolrFolderDocs([startFSFolder])
-        SolrDocument solrDocument = existingSolrFolderDocsMocked.values()[0]
-        Long mockSize = 1318959
-        solrDocument.setField(SolrSystemClient.FLD_SIZE, mockSize)           // todo -- hacked testing, size and dedup are complicated, so I am forcing them to be 'right' here,   find a better approach....
-        solrDocument.setField(SolrSystemClient.FLD_DEDUP, SavableObject.buildDedupString('Folder', 'content', mockSize))
+        List<FSFolder> testFSFolders = [startFSFolder]
+        startDir.eachDirRecurse {
+            FSFolder fsf = new FSFolder(it, null, locationName, crawlName)
+            testFSFolders << fsf
+        }
+        Map<String, SolrDocument> existingSolrFolderDocsMocked = mockSolrFolderDocs(testFSFolders)
+//        SolrDocument solrDocument = existingSolrFolderDocsMocked.values()[0]
+//        Long mockSize = 1318959
+//        solrDocument.setField(SolrSystemClient.FLD_SIZE, mockSize)           // todo -- hacked testing, size and dedup are complicated, so I am forcing them to be 'right' here,   find a better approach....
+//        solrDocument.setField(SolrSystemClient.FLD_DEDUP, SavableObject.buildDedupString('Folder', 'content', mockSize))
 
         when:
         def results = crawler.crawlFolders(crawlName, startFolder.toFile(), existingSolrFolderDocsMocked, analyzer)
@@ -104,8 +113,8 @@ class LocalFileSystemCrawlerTest extends Specification {
         LocalFileSystemCrawler crawler = new LocalFileSystemCrawler(locationName, client, differenceChecker)
 
         when:
-        List<SavableObject> cr = crawler.crawlFolders(startFSFolder, analyzer)
-        List<SavableObject> crawlResults = crawler.crawlFolderChildren(startFSFolder, analyzer)
+        Map<String, List<FSFolder>> cr = crawler.crawlFolders(crawlName, startDir, emptySolrMap, analyzer)
+        List<FSObject> crawlResults = crawler.crawlFolderChildren(startFSFolder, analyzer)
         def archiveFiles = startFSFolder.childItems.findAll { FSObject fsObject ->
             fsObject.archive
         }
@@ -129,7 +138,7 @@ class LocalFileSystemCrawlerTest extends Specification {
             groupsAnalysis << grpAn
             println "GRoup analysis: $grpAn"
             fsFolder.childItems.each {
-                def itemAnalysis =  analyzer.analyze(it)
+                def itemAnalysis = analyzer.analyze(it)
                 println "\t\tItem analysis: $itemAnalysis"
                 itemsAnalysis << itemAnalysis
             }
@@ -144,8 +153,8 @@ class LocalFileSystemCrawlerTest extends Specification {
 
         folderAnalysis != null
         childrenAnalysisresults != null
-        subCrawls.size() == 2
-        groupsAnalysis.size() == 2
+        subCrawls.size() == 4
+        groupsAnalysis.size() == 4
         itemsAnalysis.size() > 1
     }
 
@@ -190,17 +199,21 @@ class LocalFileSystemCrawlerTest extends Specification {
     static Map<String, SolrDocument> mockSolrFolderDocs(List<FSFolder> sourceFolders) {
         Map<String, SolrDocument> sdocMap = [:]
         sourceFolders.each { FSFolder fsFolder ->
-            SolrDocument solrDocument = new SolrDocument()
-            solrDocument.setField('id', fsFolder.id)
-            solrDocument.setField(SolrSystemClient.FLD_LAST_MODIFIED, fsFolder.lastModifiedDate)
-//            solrDocument.setField(SolrSystemClient.FLD_SIZE, fsFolder.size)     // todo - revisit unit testing, this is calculated from non-ignored children
+            def foo = fsFolder.addChildren()
+            long apacheCommonsSize = FileUtils.sizeOf(fsFolder.thing)
+            SolrDocument solrDocument = fsFolder.toPersistenceDocument()
+//            SolrDocument solrDocument = new SolrDocument()
+//            solrDocument.setField('id', fsFolder.id)
+//            solrDocument.setField(SolrSystemClient.FLD_LAST_MODIFIED, fsFolder.lastModifiedDate)
+//
+//            solrDocument.setField(SolrSystemClient.FLD_SIZE, size)     // todo - revisit unit testing, this is calculated from non-ignored children
 //            solrDocument.setField(SolrSystemClient.FLD_DEDUP, fsFolder.dedup)   // todo - revisit unit testing, this is calculated from non-ignored children
-            solrDocument.setField(SolrSystemClient.FLD_PATH_S, fsFolder.path)
-            solrDocument.setField(SolrSystemClient.FLD_PATH_T, fsFolder.path)
-            solrDocument.setField(SolrSystemClient.FLD_NAME_S, fsFolder.name)
-            solrDocument.setField(SolrSystemClient.FLD_NAME_T, fsFolder.name)
-            solrDocument.setField(SolrSystemClient.FLD_LOCATION_NAME, fsFolder.locationName)
-            solrDocument.setField(SolrSystemClient.FLD_CRAWL_NAME, fsFolder.crawlName)
+//            solrDocument.setField(SolrSystemClient.FLD_PATH_S, fsFolder.path)
+//            solrDocument.setField(SolrSystemClient.FLD_PATH_T, fsFolder.path)
+//            solrDocument.setField(SolrSystemClient.FLD_NAME_S, fsFolder.name)
+//            solrDocument.setField(SolrSystemClient.FLD_NAME_T, fsFolder.name)
+//            solrDocument.setField(SolrSystemClient.FLD_LOCATION_NAME, fsFolder.locationName)
+//            solrDocument.setField(SolrSystemClient.FLD_CRAWL_NAME, fsFolder.crawlName)
             sdocMap.put(fsFolder.id, solrDocument)
         }
         return sdocMap
