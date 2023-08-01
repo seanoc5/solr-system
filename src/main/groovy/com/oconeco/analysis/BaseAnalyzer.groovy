@@ -161,7 +161,10 @@ class BaseAnalyzer {
                     Matcher matcher = (object.name =~ this.ignoreGroup)
                     object.ignore = matcher.matches()
                     if (object.ignore) {
-                        String match = matcher.group(1)
+                        String match = matcher.group(0)
+                        if (matcher.groupCount() > 0) {
+                            match = matcher.group(1)
+                        }
                         object.labels << Constants.IGNORE
                         Map ml = [(Constants.IGNORE): [pattern: this.ignoreGroup, (Constants.LABEL_MATCH): match]]
                         object.matchedLabels = ml
