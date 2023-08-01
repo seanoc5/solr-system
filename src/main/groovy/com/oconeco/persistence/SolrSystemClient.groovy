@@ -310,9 +310,9 @@ class SolrSystemClient extends BaseClient {
                 ", MAX_CONTENT_SIZE=" + MAX_CONTENT_SIZE +
                 ", solrClient=" + solrClient +
 //                ", detector=" + detector +
-                ", parser=" + parser +
-                ", handler=" + handler +
-                ", tikaConfig=" + tikaConfig +
+//                ", parser=" + parser +
+//                ", handler=" + handler +
+//                ", tikaConfig=" + tikaConfig +
                 '}';
     }
 
