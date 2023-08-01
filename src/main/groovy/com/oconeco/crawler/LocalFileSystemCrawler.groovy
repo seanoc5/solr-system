@@ -239,7 +239,7 @@ class LocalFileSystemCrawler {
      * @param analyzer
      * @return the folder's (newly added?) children
      */
-    List<SavableObject> crawlFolderChildren(FSFolder fsFolder, BaseAnalyzer analyzer) {
+    List<FSObject> crawlFolderChildren(FSFolder fsFolder, BaseAnalyzer analyzer) {
         log.debug "\t\t....call to crawlFolderFiles($fsFolder, ${analyzer.class.simpleName})..."
         List<FSObject> results = []
         if (fsFolder?.size) {
@@ -283,7 +283,7 @@ class LocalFileSystemCrawler {
                 } else {
                     log.info "\t\t$cnt) folder:($fsFolder) size: ${fsFolder.size}"
                 }
-                def rc = fsFolder.buildDedupString()            // todo -- should this be "hidden" here???
+                String rc = fsFolder.setDedupString()            // todo -- should this be "hidden" here???
                 log.debug "\t\t$cnt) Built fsFolder($fsFolder) dedup string(${fsFolder.dedup})"
 
 //                results = [groups:fsFolder.childGroups, items:fsFolder.childItems]
@@ -365,7 +365,7 @@ class LocalFileSystemCrawler {
                 ", osName='" + osName + '\'' +
                 ", differenceChecker=" + differenceChecker +
                 ", persistenceClient=" + persistenceClient +
-                ", analyzer=" + analyzer +
+//                ", analyzer=" + analyzer +
                 '}';
     }
 }
