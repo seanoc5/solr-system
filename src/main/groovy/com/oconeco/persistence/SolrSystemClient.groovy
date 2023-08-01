@@ -1,5 +1,6 @@
 package com.oconeco.persistence
 
+import com.oconeco.helpers.Constants
 import com.oconeco.models.SavableObject
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.core.Logger
@@ -7,11 +8,17 @@ import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.client.solrj.SolrRequest
 import org.apache.solr.client.solrj.SolrServerException
 import org.apache.solr.client.solrj.impl.BaseHttpSolrClient.RemoteSolrException
+import org.apache.solr.client.solrj.impl.CloudSolrClient
 import org.apache.solr.client.solrj.impl.Http2SolrClient
 import org.apache.solr.client.solrj.request.CollectionAdminRequest
+import org.apache.solr.client.solrj.request.ConfigSetAdminRequest
 import org.apache.solr.client.solrj.request.LukeRequest
+import org.apache.solr.client.solrj.request.SolrPing
+import org.apache.solr.client.solrj.response.CollectionAdminResponse
+import org.apache.solr.client.solrj.response.ConfigSetAdminResponse
 import org.apache.solr.client.solrj.response.LukeResponse
 import org.apache.solr.client.solrj.response.QueryResponse
+import org.apache.solr.client.solrj.response.SolrPingResponse
 import org.apache.solr.client.solrj.response.UpdateResponse
 import org.apache.solr.common.SolrInputDocument
 import org.apache.solr.common.util.NamedList
@@ -78,7 +85,7 @@ class SolrSystemClient extends BaseClient {
      * todo -- revisit for better approach...
      * @param baseSolrUrl
      */
-    SolrSystemClient(String baseSolrUrl) {
+    SolrSystemClient(String baseSolrUrl = 'http://localhost:8983/solr') {
         log.debug "Constructor baseSolrUrl:$baseSolrUrl"
         buildSolrClient(baseSolrUrl)
     }
@@ -95,7 +102,8 @@ class SolrSystemClient extends BaseClient {
         solrClient.close()
     }
 
-    def getClusterStatus() {
+    LinkedHashMap<String, Iterable<? extends Object>> getClusterStatus() {
+        Map<String, Object> respMap = [:]
         final SolrRequest request = new CollectionAdminRequest.ClusterStatus();
 
         final NamedList<Object> response = solrClient.request(request);
@@ -103,15 +111,19 @@ class SolrSystemClient extends BaseClient {
         final List<String> liveNodes = (List<String>) cluster.get("live_nodes");
 
         log.info("Found " + liveNodes.size() + " live nodes");
-        return response
+        respMap = [response: response, liveNodes: liveNodes]
+        return respMap
     }
 
     def getSchemaInformation(String collectionName) {
+
 //        LukeRequest lukeRequest = new LukeRequest("/$collectionName/admin/luke")
         LukeRequest lukeRequest = new LukeRequest()
-        lukeRequest.addField('id,name*, path_s')
+        List<String> fields = 'id name_s name_txt_en path_s path_txt_en'.split(' ')
+        lukeRequest.setFields(fields)
+//        lukeRequest.addField('*')
         lukeRequest.includeIndexFieldFlags = true
-        lukeRequest.showSchema = true
+        lukeRequest.setShowSchema(true)
         LukeResponse response = lukeRequest.process(solrClient, collectionName);
         return response
     }
@@ -137,6 +149,27 @@ class SolrSystemClient extends BaseClient {
         return result
     }
 
+    def deleteCollection(String collectionName) throws SolrServerException, IOException {
+        CollectionAdminRequest.Delete delete = CollectionAdminRequest.deleteCollection(collectionName)
+        NamedList<Object> result = solrClient.request(delete)
+        return result
+    }
+
+
+    def createConfigSet(String newConfigName, String sourceConfig = "_default") {
+        final ConfigSetAdminRequest.Create adminRequest = new ConfigSetAdminRequest.Create();
+        adminRequest.setConfigSetName(newConfigName);
+        adminRequest.setBaseConfigSetName(sourceConfig);
+
+        final CloudSolrClient cloudSolrClient = new CloudSolrClient.Builder(['http://localhost:8983/solr']).build();
+
+
+        ConfigSetAdminResponse adminResponse = adminRequest.process(solrClient);
+
+        log.info("createConfigSet adminResponse: $adminResponse")
+        cloudSolrClient.close()
+        return adminResponse
+    }
 
     /**
      * Clear the solr collection, but using a path of folders (and children) to clear
@@ -284,4 +317,29 @@ class SolrSystemClient extends BaseClient {
     }
 
 
+    def getCollections() throws IOException, SolrServerException {
+        CollectionAdminRequest.List req = new CollectionAdminRequest.List();
+        CollectionAdminResponse response = req.process(solrClient);
+        List<String> existingCollections = (List<String>) response.getResponse().get("collections");
+        if (existingCollections == null) {
+            existingCollections = new ArrayList<>();
+        }
+        Map collMap = [response:response, collections:existingCollections]
+        return collMap
+    }
+
+    /**
+     * convenience wrapper to check solr collection
+     * @param collectionName
+     * @param distributed
+     * @return
+     * @link https://solr.apache.org/guide/8_3/ping.html
+     */
+    SolrPingResponse ping(String collectionName = Constants.DEFAULT_APP_NAME, boolean distributed = false) {
+        SolrPing ping = new SolrPing()
+        if (distributed) {
+            ping.getParams().add("distrib", "true"); //To make it a distributed request against a collection
+        }
+        SolrPingResponse rsp = ping.process(solrClient, collectionName);
+    }
 }

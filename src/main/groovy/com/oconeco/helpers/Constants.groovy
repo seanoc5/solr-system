@@ -5,8 +5,6 @@ import java.util.regex.Pattern
 class Constants {
 
     public static final String LBL_ARCHIVE = 'archive'
-//    public static final String LBL_CRAWL = 'crawl'
-//    public static final String LBL_IGNORE = 'ignore'
     public static final String LBL_UNKNOWN = 'unknown'
 
     public static final String IGNORE = 'ignore'
@@ -15,7 +13,6 @@ class Constants {
     public static final String TRACK = 'track'
     public static final List<String> TRACK_BUNDLE = [TRACK]
     public static final String PARSE = 'parse'
-//    public static final String BASIC = 'basic'
     public static final List<String> PARSE_BUNDLE = [TRACK, PARSE]
 
     public static final String SOURCE_CODE = 'sourceCode'
@@ -32,8 +29,12 @@ class Constants {
     public static final String UNLABELED = 'unlabeled'
 
     public static final String DEFAULT_APP_NAME = 'solr_system'
+    public static final String ANALYSIS_COLL_NAME = 'system_analysis'       // collection with split and analyzed content
 
     public static final String SOLR_INDEX_FOLDER_PATTERN = '.*shard\\d+_replica.*'          // don't dive into solr index folders
+
+
+    //todo - change 'analysis' label below to 'processing', leave 'analysis' as deeper...er... analysis...
 
     public static final Map<String, Pattern> DEFAULT_FOLDERNAME_PATTERNS = [
             // csv|
