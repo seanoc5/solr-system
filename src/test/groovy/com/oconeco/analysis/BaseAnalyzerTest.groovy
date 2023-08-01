@@ -35,6 +35,7 @@ class BaseAnalyzerTest extends Specification {
         when:
         BaseAnalyzer analyzer = new BaseAnalyzer()
 
+
         then:
         analyzer != null
         analyzer.ignoreGroup != null
