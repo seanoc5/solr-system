@@ -49,7 +49,8 @@ class Constants {
             system       : ~/.*(?i)(class|sbt|sbt-\d.*|runtime)/,
     ]
     public static final Map<String, Map<String, Object>> DEFAULT_FOLDERNAME_LOCATE = [
-            (IGNORE): [pattern: DEFAULT_FOLDERNAME_PATTERNS[IGNORE], analysis: TRACK_BUNDLE],          // track ignored folders, but do not descend/crawl
+//            (IGNORE): [pattern: DEFAULT_FOLDERNAME_PATTERNS[IGNORE], analysis: TRACK_BUNDLE],          // track ignored folders, but do not descend/crawl
+            (IGNORE): [pattern: ~/\.gradle.?|\.m2|RECYCLE.BIN|assets|build|classes|caches?|chrome|delete.*|engine|flatpack|git|github|google-chrome|heritrix.*ignore.*|ignore.*|never_index|node_modules|packages?|Partitions|pkgs?|plugins?|repo|repository|skins?|skipme.*|snapshots?|System\b.*|svn|target|te?mp|vscode/, analysis: TRACK_BUNDLE],          // track ignored folders, but do not descend/crawl
             'test'  : [pattern: ~/(test.*)/, analysis: TRACK_BUNDLE],
             (TRACK) : [pattern: null, analysis: TRACK_BUNDLE],
     ]
