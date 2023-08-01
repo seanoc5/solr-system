@@ -39,7 +39,12 @@ class BaseDifferenceStatus {
      */
     BaseDifferenceStatus(Object crawledObject, Object savedDoc) {
         this.crawledObject = crawledObject
-        this.savedDocument = savedDoc
+        if(savedDoc) {
+            this.savedDocument = savedDoc
+            noMatchingSavedDoc = false
+        } else {
+            log.debug "Invalid savedDoc object:($savedDoc) -- not setting this.savedDocument nor updating `noMatchingSavedDoc` boolean (leaving as: $noMatchingSavedDoc)"
+        }
     }
 
     String toString() {
