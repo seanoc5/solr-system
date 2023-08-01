@@ -67,7 +67,7 @@ class FSFolderTest extends Specification {
         long testSize = 1234
         FSFolder fsFolder = new FSFolder(startFolder, parentFolder, locationName, crawlName)
         fsFolder.size = testSize
-        fsFolder.buildDedupString()
+        fsFolder.setDedupString()
 
         when:
         String dedup = fsFolder.type + ':' + fsFolder.name + '::' + testSize
