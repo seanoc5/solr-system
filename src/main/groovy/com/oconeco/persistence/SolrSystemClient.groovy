@@ -39,6 +39,8 @@ class SolrSystemClient extends BaseClient {
     public static String FLD_PATH_T = 'path_txt_en'
     public static String FLD_NAME_S = 'name_s'
     public static String FLD_NAME_T = 'name_txt_en'
+    public static String FLD_URI_T = 'uri_txt_en'
+    public static String FLD_URI_S = 'uri_s'
 
     public static String FLD_ARCHIVE = 'archive_b'
     public static String FLD_COMPRESSED = 'compressed_b'
@@ -73,6 +75,9 @@ class SolrSystemClient extends BaseClient {
     public static String FLD_CONTENT_BODY_SIZE = 'contentSize_l'
     public static String FLD_METADATA = 'attr_metadata'
     public static String FLD_DIFFERENCES = 'attr_differences'
+
+    public static String FLD_NOTES = 'attr_notes'
+
 
     Integer SOLR_BATCH_SIZE = 5000
     Integer MIN_FILE_SIZE = 10
@@ -235,13 +240,9 @@ class SolrSystemClient extends BaseClient {
     }
 
 
-    @Override
-    def saveObjects(List<SavableObject> objects, int commitWithinMS = 1000) {
+    def saveModels(List<SolrInputDocument> solrInputDocuments, int commitWithinMS = 1000) {
         UpdateResponse resp
-        if (objects) {
-            String firstId = objects[0].id
-            log.debug "\t\t++++Adding solrInputDocuments, size: ${objects.size()} -- first ID:($firstId)"
-            List<SolrInputDocument> solrInputDocuments = objects.collect { it.toPersistenceDocument() }
+        if (solrInputDocuments) {
             try {
                 resp = solrClient.add(solrInputDocuments, commitWithinMS)
                 if (resp.status == 0) {
@@ -259,6 +260,24 @@ class SolrSystemClient extends BaseClient {
                 log.error "Solr server exception: $sse"
                 throw sse
             }
+        } else {
+            log.info "No objects passed to saveObjects($inputDocuments), skipping..."
+        }
+        return resp
+    }
+
+
+    @Override
+    def saveObjects(List<SavableObject> objects, int commitWithinMS = 1000) {
+        UpdateResponse resp
+        if (objects) {
+            String firstId = objects[0].id
+            log.debug "\t\t++++Adding solrInputDocuments, size: ${objects.size()} -- first ID:($firstId)"
+            List<SolrInputDocument> solrInputDocuments = objects.collect {def it ->
+                it.toPersistenceDocument()
+            }
+            resp = saveModels(solrInputDocuments,commitWithinMS)
+
         } else {
             log.info "No objects passed to saveObjects($objects), skipping..."
         }
