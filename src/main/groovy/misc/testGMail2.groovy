@@ -1,3 +1,5 @@
+package misc
+
 import com.sun.mail.imap.IMAPFolder
 import org.apache.log4j.Logger
 import org.apache.solr.client.solrj.SolrQuery
