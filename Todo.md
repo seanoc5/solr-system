@@ -11,7 +11,8 @@
       - text files
       - deeper content analysis
 - Clustering
-- 
+- Bookmarks
+  - try Google cache or Wayback machine for 404 and missing content
 
 
 ## Notes and various
