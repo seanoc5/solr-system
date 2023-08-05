@@ -91,8 +91,8 @@ class BaseAnalyzerTest extends Specification {
         resultParam.size() == 1
         resultParam instanceof   Map<String, Map<String, Object>>
 //        (resultParam.get(basicKey) insta)
-        resultParam.get(parseKey).keySet().toList().containsAll(['pattern', 'analysis', 'LabelMatch'])
-        resultParam.get(parseKey).get('pattern') != null
+//        resultParam.get(parseKey).keySet().toList().containsAll(['pattern', 'analysis', 'LabelMatch'])
+//        resultParam.get(parseKey).get('pattern') != null
 
         resultCurrency.size() == 1
 

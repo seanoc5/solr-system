@@ -36,6 +36,10 @@ dependencies {
 
     implementation "org.apache.tika:tika-core:2.8.0"
 
+    // https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc
+    implementation group: 'org.xerial', name: 'sqlite-jdbc', version: '3.42.0.0'
+
+
 
     // https://mvnrepository.com/artifact/org.apache.lucene/lucene-analyzers-common
 //    implementation group: 'org.apache.lucene', name: 'lucene-analyzers-common', version: '8.11.2'
