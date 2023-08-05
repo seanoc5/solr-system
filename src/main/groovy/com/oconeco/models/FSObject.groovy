@@ -22,6 +22,8 @@ import java.nio.file.attribute.FileTime
  * structure for handling information about a filesystem object,
  */
 class FSObject extends SavableObject {
+    static int TYPE_SEPARATOR = 3
+    public static final int TYPE_CODE = 1
     Logger log = LogManager.getLogger(this.class.name)
     public static final String TYPE = 'FSObject'
 

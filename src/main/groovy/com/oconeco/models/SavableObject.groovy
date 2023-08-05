@@ -82,7 +82,7 @@ abstract class SavableObject {
 
     /** a string that should catch duplicate entries this thing, and hence */
     String dedup = null
-    Metadata metadata
+    Metadata metadata       // todo -- consider either dropping tika connection, or double down on it, currently this is close to a typo....
 
     // these may not be applicable for all, but perhaps enough to move into this base object
     String mimeType
@@ -215,7 +215,7 @@ abstract class SavableObject {
         if (lastModifiedDate) {
             sid.setField(SolrSystemClient.FLD_LAST_MODIFIED, lastModifiedDate)
         } else {
-            log.warn "No modified date for savableObject: $this"
+            log.debug "No modified date for savableObject: $this"
         }
 
         if (hidden) {

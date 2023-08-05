@@ -85,7 +85,7 @@ class SolrSystemClient extends BaseClient {
      * todo -- revisit for better approach...
      * @param baseSolrUrl
      */
-    SolrSystemClient(String baseSolrUrl = 'http://localhost:8983/solr') {
+    SolrSystemClient(String baseSolrUrl = "http://localhost:8983/solr/${Constants.DEFAULT_APP_NAME}") {
         log.debug "Constructor baseSolrUrl:$baseSolrUrl"
         buildSolrClient(baseSolrUrl)
     }
