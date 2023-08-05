@@ -82,7 +82,8 @@ abstract class SavableObject {
 
     /** a string that should catch duplicate entries this thing, and hence */
     String dedup = null
-    Metadata metadata       // todo -- consider either dropping tika connection, or double down on it, currently this is close to a typo....
+    Metadata metadata
+    // todo -- consider either dropping tika connection, or double down on it, currently this is close to a typo....
 
     // these may not be applicable for all, but perhaps enough to move into this base object
     String mimeType
@@ -289,7 +290,7 @@ abstract class SavableObject {
      */
     String buildDedupString() {
         String prevDedup = dedup
-        if (type && name && size != null) {
+        if (type != null && name != null && size != null) {
             log.debug "\t\tgood params for dedup: (type && name && size != null): (type:$type  name:$name  size:$size)"
         } else {
             log.warn "Something is null: (type && name && size == null): (type:$type  name:$name  size:$size)"
@@ -297,9 +298,11 @@ abstract class SavableObject {
         String newDedup = SavableObject.buildDedupString(type, name, size)
         if (prevDedup) {
             if (!prevDedup.equalsIgnoreCase(newDedup)) {
-                log.warn "\t\tAlready had a dedup:($prevDedup), it was DIFFERENT from new/current dedup ($newDedup)??"  // todo change this to info once we have checked logic/code
+                log.warn "\t\tAlready had a dedup:($prevDedup), it was DIFFERENT from new/current dedup ($newDedup)??"
+                // todo change this to info once we have checked logic/code
             } else {
-                log.warn "\t\tAlready had a dedup:($prevDedup), same as new/current dedup ($newDedup)?? "       // todo change this to debug once we have checked logic/code
+                log.warn "\t\tAlready had a dedup:($prevDedup), same as new/current dedup ($newDedup)?? "
+                // todo change this to debug once we have checked logic/code
             }
         }
         return newDedup
