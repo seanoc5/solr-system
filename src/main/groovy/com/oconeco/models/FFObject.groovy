@@ -26,6 +26,7 @@ class FFObject extends SavableObject {
     public static final int MICROS_LEN = '1686926500000000'.length()
     //semi-random microsecond value from an actual bookmark/entry -- ignore the value, just using the magnitude
     public static final String TYPE = 'FFObject'
+    public static final List<String> DEFAULT_CSV_FIELDS = ['id', 'ffId', 'guid', 'idx', 'name', 'path','type','depth', 'createdDate','lastModifiedDate','locationName', 'crawlName']
 
     /** firefox id for tracking/comparison & will concat with type to create SolrSystem id */
     String ffId = ''
@@ -120,8 +121,22 @@ class FFObject extends SavableObject {
         return doc
     }
 
-//    @Override
-//    String buildDedupString() {
-//        String d = "$type:$locationName:$name"
-//    }
+    def toCSVRecord(List<String> fields = DEFAULT_CSV_FIELDS){
+        StringBuilder stringBuilder = new StringBuilder()
+        fields.each { String fldName ->
+            String f = this."$fldName"
+            if (f) {
+                if (f.contains(',') || f.contains(';')) {
+                    stringBuilder.append('"' + f + '", ')
+                } else {
+                    stringBuilder.append("${f}, ")
+                }
+            } else {
+                stringBuilder.append(',')
+            }
+        }
+        return stringBuilder.toString()
+    }
+
+
 }

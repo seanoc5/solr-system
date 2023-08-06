@@ -27,7 +27,7 @@ class FFBookmark extends FFObject {
     public static final String ERROR_MESSAGE = "ERROR MESSAGE!"
     Logger log = LogManager.getLogger(this.class.name)
     public static final String TYPE = 'FFBookmark'
-    long MIN_CACHED_FILE_SIZE = 100     // todo - revisit to see if this should be larger/smaller
+    long MIN_CACHED_FILE_SIZE = 100      // todo - revisit to see if this should be larger/smaller
 
     FFBookmark(def object, SavableObject parent, String locationName, String crawlName) {
         super(object, parent, locationName, crawlName)
