@@ -1,66 +1,74 @@
 package misc
 
+import com.oconeco.persistence.SolrSystemClient
+import javax.mail.Folder;
 import com.sun.mail.imap.IMAPFolder
-import org.apache.log4j.Logger
 import org.apache.solr.client.solrj.SolrQuery
-import org.apache.solr.client.solrj.impl.HttpSolrClient
 import org.apache.solr.client.solrj.response.QueryResponse
 import org.apache.solr.client.solrj.response.UpdateResponse
 import org.apache.solr.common.SolrDocumentList
 import org.apache.solr.common.SolrInputDocument
 
 import javax.mail.*
-import javax.mail.Flags.Flag
-import javax.mail.internet.InternetAddress
+//import javax.mail.Flags.Flag
+//import javax.mail.internet.InternetAddress
 
-Logger log = Logger.getLogger(this.class.name);
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.core.Logger
 
+Logger log = LogManager.getLogger(this.class.name)
 
 String collection = 'mail'
-String urlString = "http://localhost:8983/solr/${collection}";
+String urlString = "http://localhost:8983/solr/${collection}"
 
 log.info "Start: collection: $collection -- urlString: $urlString"
-HttpSolrClient solr = new HttpSolrClient.Builder(urlString).build();
+SolrSystemClient client = new SolrSystemClient()
+
+//)
+//HttpSolrClient solr = new HttpSolrClient.Builder(urlString).build();
 //solr.setParser(new XMLResponseParser());
 
 boolean clearCollection = false
 if(clearCollection){
     log.warn "Clearing collection: $collection"
-    UpdateResponse ursp = solr.deleteByQuery("*:*")
+    UpdateResponse ursp = client.deleteDocuments("*:*")
     log.info "Delete response: $ursp"
-    SolrQuery query = new SolrQuery();
-    query.set("q", "*:*");
-    query.setFields("id, subject, date, type");
-    QueryResponse response = solr.query(query);
-    SolrDocumentList docList = response.getResults();
+    SolrQuery query = new SolrQuery()
+    query.set("q", "*:*")
+    query.setFields("id, *")
+    query.setRows(2)        // arbitrary limit to return a couple, but not full 10
+    QueryResponse response = client.query(query)
+    SolrDocumentList docList = response.getResults()
     log.info "Test query after clear: $docList"
 }
 
-IMAPFolder folder = null;
-Store store = null;
-String subject = null;
-Flag flag = null;
+IMAPFolder folder = null
+Store store = null
+String subject = null
+//Flag flag = null;
+
+
 try {
-    Properties props = System.getProperties();
-    props.setProperty("mail.store.protocol", "imaps");
+    Properties props = System.getProperties()
+    props.setProperty("mail.store.protocol", "imaps")
 
-    Session session = Session.getDefaultInstance(props, null);
+    Session session = Session.getDefaultInstance(props, null)
 
-    store = session.getStore("imaps");
+    store = session.getStore("imaps")
     String user = 'seanoc5@gmail.com'
-    user = 'sean.oconnor@lucidworks.com'
+//    user = 'sean.oconnor@lucidworks.com'
     user = 'sean.oconnor@stvfd.org'
-    user = 'sean@oconeco.com'
+//    user = 'sean@oconeco.com'
     String account = "imap.googlemail.com"
-    account = 'imap.mail.us-east-1.awsapps.com'
-    String password = 'trainhard'
-    password = 'obxFam!8'
-    store.connect(account, user, password);
+//    account = 'imap.mail.us-east-1.awsapps.com'
+    String password = 'Jax@2023'
+//    password = 'obxFam!8'
+    store.connect(account, user, password)
 
 //    folder = (IMAPFolder) store.getFolder("[Gmail]/Accounts");    // This doesn't work for other email account
 //    folder = (IMAPFolder) store.getFolder("[Gmail]/All Mail");    // This doesn't work for other email account
     String folderName = 'INBOX'
-    folder = (IMAPFolder) store.getFolder(folderName);          // This works for both email account
+    folder = (IMAPFolder) store.getFolder(folderName)          // This works for both email account
 
     if (!folder.isOpen()) {
         folder.open(Folder.READ_ONLY)
@@ -81,7 +89,7 @@ try {
         int msgNumber = msg.getMessageNumber()
         subject = msg.getSubject()
         long uid = folder.getUID(msg)
-        log.info("$msgNumber:$uid) $subject");
+        log.info("$msgNumber:$uid) $subject")
 
         SolrInputDocument sid = new SolrInputDocument()
         sid.setField('id', "${user}.${uid}")
@@ -89,27 +97,32 @@ try {
         sid.setField('uid_l', uid)
         sid.setField('username_s', user)
 
-        sid.setField('subject', subject)
-        sid.addField("subject_size_i", subject?.size())
-
-        InternetAddress[] froms = msg.getFrom()
-        if(froms.size()==1){
-            sid.setField('from', froms[0].getAddress())
-        } else if(froms.size() > 1) {
-            log.info "\t\tMore than one from??? $froms"
-            sid.setField('from', froms.collect{InternetAddress ia -> ia.getAddress()})
-            sid.setField('to_count_i', froms.size())
+        if (subject) {
+            sid.setField('subject_txt_en', subject)
+            sid.addField("subject_size_i", subject.size())
         } else {
-            log.info "\t\tNo from??? $msg"
+            log.warn "No subject?? Solr Input doc: ($sid)"
+        }
+
+        Address[] froms = msg.getFrom()
+        if(froms.size()==1){
+            sid.setField('from_t', froms[0])
+            sid.setField('from_s', froms[0])
+        } else if(froms.size() > 1) {
+            log.warn "\t\tMore than one from??? $froms"
+            sid.setField('from', froms[0])
+            sid.addField('attr_notes', "More than one from address??\n${froms}")
+        } else {
+            log.warn "\t\tNo from??? $msg"
         }
 
         [Message.RecipientType.TO, Message.RecipientType.CC, Message.RecipientType.BCC]. each { Message.RecipientType rtype ->
-            InternetAddress[] addys = msg.getRecipients(rtype)
+            Address[] addys = msg.getRecipients(rtype)
             if(addys) {
 //                if (rtype?.toString()?.contains('c')) {
 //                    log.debug "\t\tcopy recipient: ${rtype.toString()}"
 //                }
-                addys.each { InternetAddress addr ->
+                addys.each { Address addr ->
                     def addrPersonal = addr.getPersonal()
                     if(addrPersonal) {
                         sid.addField("${rtype.toString().toLowerCase()}", addr.getAddress())
@@ -173,11 +186,11 @@ try {
 } finally {
     if (folder != null && folder.isOpen()) {
         log.info "Close folder: $folder"
-        folder.close(false);
+        folder.close(false)
     }
     if (store != null) {
         log.info "Close store: $store"
-        store.close();
+        store.close()
     }
 }
 

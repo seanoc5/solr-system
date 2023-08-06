@@ -7,8 +7,6 @@ import com.oconeco.difference.SolrDifferenceChecker
 import com.oconeco.helpers.SolrCrawlArgParser
 import com.oconeco.models.FSFolder
 
-//import com.oconeco.analysis.FolderAnalyzer
-
 import com.oconeco.persistence.SolrSystemClient
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.core.Logger
