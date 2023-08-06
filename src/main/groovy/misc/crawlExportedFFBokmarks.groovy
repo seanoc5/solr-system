@@ -12,8 +12,10 @@ import org.apache.solr.common.SolrInputDocument
 Logger log = LogManager.getLogger(this.class.name);
 String collection = 'solr_system'
 String locationName = 'Firefox Profile'
-String crawlName = 'seanoc5@gmail.com'
-File exportedBookarks = new File("C:/Users/bentc/Desktop/ff-bookmarks-2023-08-04.json")
+String crawlName = 'sean.oconnor@lucidworks.com'
+//File exportedBookarks = new File("C:/Users/bentc/Desktop/ff-bookmarks-2023-08-04.json")
+File exportedBookarks = new File("C:/Users/bentc/Desktop/ff-lucidworks-bookmarks-2023-08-05.json")
+log.info "Using source bookmarks file: ${exportedBookarks.absolutePath}"
 File cacheFolder = new File(exportedBookarks.parentFile, 'cacheFolder')
 if (cacheFolder.exists() && cacheFolder.isDirectory()){
     log.info "Using cache folder:(${cacheFolder.absolutePath}...)"
