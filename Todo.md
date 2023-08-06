@@ -48,6 +48,11 @@
       - `domain` words (`domain`, `word/term`, and `word sense identifier`)
       - `skip` words
 
+## Random thoughts
+- highlight publish dates on pages (reddit/SO/...)
+- answer how-to questions
+- 
+
 ## Crawling
 
 - ~~process archive files~~
