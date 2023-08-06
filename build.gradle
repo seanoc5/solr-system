@@ -71,6 +71,8 @@ dependencies {
     implementation("org.apache.poi:poi-ooxml-full:5.2.2")
 
     implementation("org.jsoup:jsoup:1.16.1")
+    implementation 'javax.mail:mail:1.4.7'
+
 
 }
 
