@@ -4,6 +4,9 @@ import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.core.Logger
 import org.apache.solr.client.solrj.SolrClient
 import org.apache.solr.client.solrj.SolrQuery
+import org.apache.solr.client.solrj.impl.HttpSolrClient
+import org.apache.solr.client.solrj.response.QueryResponse
+import org.apache.solr.common.SolrDocumentList
 
 /**
  * @author :    sean
@@ -13,15 +16,7 @@ import org.apache.solr.client.solrj.SolrQuery
  */
 
 
-//import org.apache.logging.log4j.core.Logger
-import org.apache.logging.log4j.LogManager
-import org.apache.logging.log4j.core.Logger
 
-import org.apache.solr.client.solrj.impl.HttpSolrClient
-import org.apache.solr.client.solrj.response.QueryResponse
-import org.apache.solr.common.SolrDocumentList
-
-//final Logger log = LogManager.getLogger(this.class.name);
 Logger log = LogManager.getLogger(this.class.name);
 
 log.info "Starting ${this.class.name}..."

@@ -3,6 +3,7 @@ package com.oconeco.difference
 
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.core.Logger
+
 /**
  * codify what qualifies as a difference worthy of 're-indexing'
  */
@@ -23,9 +24,6 @@ class SolrDifferenceChecker extends BaseDifferenceChecker {
         BaseDifferenceStatus solrStatus = new BaseDifferenceStatus(crawledGroup, savedGroup)
         compareCrawledGroupToSavedGroup(crawledGroup, savedGroup, solrStatus)
     }
-
-
-
 
 
 /*

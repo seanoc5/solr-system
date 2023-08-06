@@ -90,7 +90,7 @@ class SolrSystemClient extends BaseClient {
      * todo -- revisit for better approach...
      * @param baseSolrUrl
      */
-    SolrSystemClient(String baseSolrUrl = "http://localhost:8983/solr/${Constants.DEFAULT_APP_NAME}") {
+    SolrSystemClient(String baseSolrUrl = "http://localhost:8983/solr/${Constants.DEFAULT_COLL_NAME}") {
         log.debug "Constructor baseSolrUrl:$baseSolrUrl"
         buildSolrClient(baseSolrUrl)
     }
@@ -354,7 +354,7 @@ class SolrSystemClient extends BaseClient {
      * @return
      * @link https://solr.apache.org/guide/8_3/ping.html
      */
-    SolrPingResponse ping(String collectionName = Constants.DEFAULT_APP_NAME, boolean distributed = false) {
+    SolrPingResponse ping(String collectionName = Constants.DEFAULT_COLL_NAME, boolean distributed = false) {
         SolrPing ping = new SolrPing()
         if (distributed) {
             ping.getParams().add("distrib", "true"); //To make it a distributed request against a collection

@@ -28,7 +28,7 @@ class Constants {
     public static final String NO_MATCH = 'no match'
     public static final String UNLABELED = 'unlabeled'
 
-    public static final String DEFAULT_APP_NAME = 'solr_system'
+    public static final String DEFAULT_COLL_NAME = 'solr_system'            // "basic" collection, main search area
     public static final String ANALYSIS_COLL_NAME = 'system_analysis'       // collection with split and analyzed content
 
     public static final String SOLR_INDEX_FOLDER_PATTERN = '.*shard\\d+_replica.*'          // don't dive into solr index folders
