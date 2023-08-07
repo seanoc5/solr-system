@@ -4,6 +4,7 @@ import com.oconeco.helpers.Constants
 import com.oconeco.models.SavableObject
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.core.Logger
+import org.apache.solr.client.solrj.SolrClient
 import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.client.solrj.SolrRequest
 import org.apache.solr.client.solrj.SolrServerException
@@ -83,24 +84,41 @@ class SolrSystemClient extends BaseClient {
     Integer MIN_FILE_SIZE = 10
     Integer MAX_CONTENT_SIZE = 1024 * 1000 * 100 // (100 MB of text?)
 
-    Http2SolrClient solrClient
+    SolrClient solrClient
+    String defaultCollection = Constants.DEFAULT_COLL_NAME
+    def statusReponse
 
     /**
      * Create helper with a (non-thread safe???) solrClient that is configured for the solr server AND collection
      * todo -- revisit for better approach...
      * @param baseSolrUrl
      */
-    SolrSystemClient(String baseSolrUrl = "http://localhost:8983/solr/${Constants.DEFAULT_COLL_NAME}") {
+    SolrSystemClient(String baseSolrUrl = "http://localhost:8983/solr/", String defaultCollection = Constants.DEFAULT_COLL_NAME) {
         log.debug "Constructor baseSolrUrl:$baseSolrUrl"
+        this.defaultCollection = defaultCollection
         buildSolrClient(baseSolrUrl)
     }
 
 
     public void buildSolrClient(String baseSolrUrl) {
         log.info "\t\tBuild solr client with baseSolrUrl: $baseSolrUrl"
-        solrClient = new Http2SolrClient.Builder(baseSolrUrl).build()
-        log.debug "\t\tBuilt Solr Client: ${solrClient.baseURL}"
+        solrClient = new Http2SolrClient.Builder(baseSolrUrl)
+// https://solr.apache.org/guide/solr/latest/deployment-guide/solrj.html#other-apis
+//            .withConnectionTimeout(10000)     // not working for some reason
+//            .withSocketTimeout(60000)
+                .build()
+        try {
+//            def pingResponse = solrClient.ping()
+            statusReponse = solrClient.ping('solr_system')
+            log.debug " \t\tBuilt Solr Client:  ${solrClient}"
+
+        } catch (RemoteSolrException rse) {
+            log.warn "Exception: $rse"
+        }
+
+        log.info "Created client: ${solrClient}"
     }
+
 
     public void closeClient(String msg = 'general close call') {
         log.info "Closing solr client with message '$msg' ---- ($solrClient)"
@@ -133,14 +151,14 @@ class SolrSystemClient extends BaseClient {
         return response
     }
 
-    /**
-     * helper/wrapper function to create a new solr collection (i.e. solr_system)
-     * @param collectionName
-     * @param numShards
-     * @param replactionFactor
-     * @param configName - defaults to _default
-     * @return named list of results
-     */
+/**
+ * helper/wrapper function to create a new solr collection (i.e. solr_system)
+ * @param collectionName
+ * @param numShards
+ * @param replactionFactor
+ * @param configName - defaults to _default
+ * @return named list of results
+ */
     NamedList createCollection(String collectionName, Integer numShards, Integer replactionFactor, String configName = '_default') {
         //http://localhost:8983/solr/admin/collections?action=CREATE&name=newCollection&numShards=2&replicationFactor=1
         NamedList result = null
@@ -176,13 +194,13 @@ class SolrSystemClient extends BaseClient {
         return adminResponse
     }
 
-    /**
-     * Clear the solr collection, but using a path of folders (and children) to clear
-     * @param pathToClear
-     * @return solr update response
-     *
-     * todo -- add logic to handle "complex" clear paths -- sym links etc....
-     */
+/**
+ * Clear the solr collection, but using a path of folders (and children) to clear
+ * @param pathToClear
+ * @return solr update response
+ *
+ * todo -- add logic to handle "complex" clear paths -- sym links etc....
+ */
     UpdateResponse deleteDocuments(String deleteQuery, int commitWithinMS = 500, boolean checkBeforeAfter = true) {
         Long beforeCount
         if (checkBeforeAfter) {
@@ -208,11 +226,11 @@ class SolrSystemClient extends BaseClient {
     }
 
 
-    /**
-     * get solr delete query for 'current' crawler info: locationName and crawlName
-     * @param Specific crawler with locationName and crawlName
-     * @return difference between before delete and after delete
-     */
+/**
+ * get solr delete query for 'current' crawler info: locationName and crawlName
+ * @param Specific crawler with locationName and crawlName
+ * @return difference between before delete and after delete
+ */
     Map<String, Object> deleteCrawledDocuments(String locationName, String crawlName) {
         Map<String, Object> results = [:]
         String deleteQuery = SolrSystemClient.FLD_LOCATION_NAME + ':"' + locationName + '" AND ' + SolrSystemClient.FLD_CRAWL_NAME + ':"' + crawlName + '"'
@@ -227,13 +245,13 @@ class SolrSystemClient extends BaseClient {
     }
 
 
-    /**
-     * force a commit.
-     * NOTE: read up on explicit/forced commits, often better to leave solr to handle with proper soft/auto commits
-     * @param waitFlush
-     * @param waitSearcher
-     * @return
-     */
+/**
+ * force a commit.
+ * NOTE: read up on explicit/forced commits, often better to leave solr to handle with proper soft/auto commits
+ * @param waitFlush
+ * @param waitSearcher
+ * @return
+ */
     def commitUpdates(boolean waitFlush = false, boolean waitSearcher = false) {
         log.debug "\t\t____explicit call to solr 'commit' (consider allowing autocommit settings to do this for you...)"
         solrClient.commit(waitFlush, waitSearcher)
@@ -273,10 +291,10 @@ class SolrSystemClient extends BaseClient {
         if (objects) {
             String firstId = objects[0].id
             log.debug "\t\t++++Adding solrInputDocuments, size: ${objects.size()} -- first ID:($firstId)"
-            List<SolrInputDocument> solrInputDocuments = objects.collect {def it ->
+            List<SolrInputDocument> solrInputDocuments = objects.collect { def it ->
                 it.toPersistenceDocument()
             }
-            resp = saveModels(solrInputDocuments,commitWithinMS)
+            resp = saveModels(solrInputDocuments, commitWithinMS)
 
         } else {
             log.info "No objects passed to saveObjects($objects), skipping..."
@@ -285,11 +303,11 @@ class SolrSystemClient extends BaseClient {
     }
 
 
-    /**
-     * convenience method to get a count of documents in index
-     * @param queryToCount (defaults to all docs)
-     * @return
-     */
+/**
+ * convenience method to get a count of documents in index
+ * @param queryToCount (defaults to all docs)
+ * @return
+ */
     def long getDocumentCount(String queryToCount = '*:*', String filterQuery = null) {
         SolrQuery sq = new SolrQuery(queryToCount)
         sq.setFields('')
@@ -336,24 +354,27 @@ class SolrSystemClient extends BaseClient {
     }
 
 
-    def getCollections() throws IOException, SolrServerException {
-        CollectionAdminRequest.List req = new CollectionAdminRequest.List();
-        CollectionAdminResponse response = req.process(solrClient);
-        List<String> existingCollections = (List<String>) response.getResponse().get("collections");
-        if (existingCollections == null) {
-            existingCollections = new ArrayList<>();
-        }
-        Map collMap = [response:response, collections:existingCollections]
-        return collMap
+    CollectionAdminResponse getCollections() throws IOException, SolrServerException {
+        CollectionAdminRequest.List req = new CollectionAdminRequest.List()
+
+        def clusterRequest = new CollectionAdminRequest.ClusterStatus();
+        def foo = solrClient.request(clusterRequest)
+        CollectionAdminResponse car = req.process(solrClient);
+//        List<String> existingCollections = (List<String>) response.getResponse().get("collections");
+//        if (existingCollections == null) {
+//            existingCollections = new ArrayList<>();
+//        }
+//        Map collMap = [response: response, collections: existingCollections]
+        return car
     }
 
-    /**
-     * convenience wrapper to check solr collection
-     * @param collectionName
-     * @param distributed
-     * @return
-     * @link https://solr.apache.org/guide/8_3/ping.html
-     */
+/**
+ * convenience wrapper to check solr collection
+ * @param collectionName
+ * @param distributed
+ * @return
+ * @link https://solr.apache.org/guide/8_3/ping.html
+ */
     SolrPingResponse ping(String collectionName = Constants.DEFAULT_COLL_NAME, boolean distributed = false) {
         SolrPing ping = new SolrPing()
         if (distributed) {
@@ -361,4 +382,5 @@ class SolrSystemClient extends BaseClient {
         }
         SolrPingResponse rsp = ping.process(solrClient, collectionName);
     }
+
 }
