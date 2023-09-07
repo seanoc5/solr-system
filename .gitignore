@@ -10,3 +10,9 @@ solr-system.log*
 heapdump*
 configCrawl.groovy
 duplicates.list.csv
+
+# Ignore Gradle project-specific cache directory
+.gradle
+
+# Ignore Gradle build output directory
+build

@@ -53,14 +53,18 @@ class SolrCrawlArgParser {
 
         String configLocation = options.config
         if (configLocation) {
-            log.info "Config location: $configLocation"
+            log.info "Config location from commandline args: $configLocation"
         } else {
             configLocation = '/configs/configCrawl.groovy'
             log.warn "No Config location given as CLI arg, setting to default: $configLocation"
         }
         URL cfgUrl = SolrCrawlArgParser.class.getResource(configLocation)
-//        def cfgUrl = SolrCrawlArgParser.class.getResource(configLocation)     // todo -- remember that static methods need the getClassLoader() call
         File cfgFile = new File(cfgUrl.toURI())
+        if (cfgFile.exists()&&cfgFile.canRead()){
+            log.debug "good, cfg file exists and is readable"
+        } else {
+            throw new IllegalArgumentException("No valid config file(${cfgFile.absolutePath} found/readable, bailing with forced exception...")
+        }
 
         ConfigObject config = null
         if (cfgFile.exists()) {
@@ -73,14 +77,16 @@ class SolrCrawlArgParser {
 //            URL cfgUrl = cl.getResource(configLocation)
         }
 
+        // -------------------------- Solr Server URL --------------------------
         String solrArg = options.solrUrl
         if (options.solrUrl) {
-            if (solrArg.endsWith('solr')) {
-                config.solrUrl = solrArg + '/' + Constants.DEFAULT_COLL_NAME
-                log.info "\t\tUsing Solr url from Command line (overriding config file): ${options.solrUrl} (NOTE: added default app name:(${Constants.DEFAULT_COLL_NAME})"
-            } else if (solrArg.endsWith('solr/')) {
-                config.solrUrl = solrArg + Constants.DEFAULT_COLL_NAME
-                log.info "\t\tUsing Solr url from Command line (overriding config file): ${options.solrUrl} (NOTE: added default app name:(${Constants.DEFAULT_COLL_NAME})"
+            if (solrArg.endsWith('solr') || solrArg.endsWith('solr/')) {
+//                config.solrUrl = solrArg + '/' + Constants.DEFAULT_COLL_NAME
+//                log.info "\t\tUsing Solr url from Command line (overriding config file): ${options.solrUrl} (NOTE: added default app name:(${Constants.DEFAULT_COLL_NAME})"
+                log.info "\t\tGood, we have a base solr url:($solrArg), this allows switching collections "
+//            } else if (solrArg.endsWith('solr/')) {
+//                config.solrUrl = solrArg + Constants.DEFAULT_COLL_NAME
+//                log.info "\t\tUsing Solr url from Command line (overriding config file): ${options.solrUrl} (NOTE: added default app name:(${Constants.DEFAULT_COLL_NAME})"
             } else {
                 log.info "\t\tUsing Solr url from Command line (overriding config file): ${options.solrUrl}"
                 config.solrUrl = options.solrUrl
@@ -92,6 +98,19 @@ class SolrCrawlArgParser {
             System.exit(-2)
         }
 
+        // -------------------------- DEFAULT COLLECTION --------------------------
+        String argDefaultCollection = options.defaultCollection
+        if (argDefaultCollection && argDefaultCollection!='false') {
+            log.info "\t\tFound default solr collection($argDefaultCollection) in command line options, overrides anything from config file :-)"
+            config.defaultCollection = argDefaultCollection
+        } else if (config.solrDefaultCollection) {
+            log.info "Found default solr collection(${config.solrDefaultCollection}) in config file(${configLocation}), using that :-)"
+        } else {
+            config.solrDefaultCollection = Constants.DEFAULT_COLL_NAME
+            log.warn "No default solr collection found in config file ($configLocation) nor Command line args, setting to hard coded (Constants.groovy) collection:(${Constants.DEFAULT_COLL_NAME})"
+        }
+
+        // -------------------------- get local folders to crawl (can be overridden by cl args --------------------------
         def localFolders = config?.dataSources.localFolders
         if (options.folderss) {
             List<String> ds = options.folderss
@@ -100,7 +119,7 @@ class SolrCrawlArgParser {
                 int pos = s.indexOf(':')
                 if (pos) {
                     String label = s[0..pos - 1]
-                    String path = s[pos+1..-1]
+                    String path = s[pos + 1..-1]
                     return [(label): path]
                 } else {
                     log.warn "Cannot parse localfolder command line arg:($s) -- should be: -flabel:/some/path/here"

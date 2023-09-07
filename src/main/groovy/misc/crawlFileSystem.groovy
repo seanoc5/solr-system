@@ -14,17 +14,16 @@ import org.apache.logging.log4j.core.Logger
 Logger log = LogManager.getLogger(this.class.name);
 log.info "Start ${this.class.name}, with args: $args"
 
-
-
 // call the arg parser to read the config and return a merged config
 ConfigObject config = SolrCrawlArgParser.parse(this.class.simpleName, args)
 
 Map<String, String> crawlMap = config.dataSources.localFolders
 log.info "\t\tCrawl Map (config.dataSources.localFolders): $crawlMap"
 String solrUrl = config.solrUrl
+String defaultCollection = config.solrDefaultCollection
 String locationName = config.locationName
 
-SolrSystemClient solrClient = new SolrSystemClient(solrUrl)
+SolrSystemClient solrClient = new SolrSystemClient(solrUrl, defaultCollection)
 log.info "\t\tSolr Saver created: $solrClient"
 
 long numFoundPreLocation = solrClient.getDocumentCount()

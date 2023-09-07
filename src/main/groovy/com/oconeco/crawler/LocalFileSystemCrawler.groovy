@@ -30,7 +30,8 @@ import java.nio.file.Path
 
 /**
  * Simple local fs crawler, intended to be created for each crawl name/startfolder in a given location
- * review if there is a benefit to having a persistent crawler over multiple folders/names in a given location/source
+ * review if there is a benefit to having a persistent crawler over multiple folders/names in a given location/source.
+ * TODO: consider streamlining crawlFolders with moving existingDocs to object property??
  */
 class LocalFileSystemCrawler {
     static log = LogManager.getLogger(this.class.name);
@@ -153,6 +154,7 @@ class LocalFileSystemCrawler {
                             log.debug "\t\tcrawl folder files (count: ${crawlResults.size()}) after comparing (without file sizes): $currentFolder"
                         }
 
+                        def folderSavedChildren = this.getSavedGroupChildItems(crawlName)
                         // todo -- consider refactoring to call FSFolder.doAnalysis(analyzer) and have it analyze itself, and its children....?
                         def folderAnalysis = analyzer.analyze(currentFolder)
                         List<SavableObject> analyzableChildren = currentFolder.gatherAnalyzableChildren()
@@ -355,6 +357,42 @@ class LocalFileSystemCrawler {
         }
         Map<String, SolrDocument> docsMap = docs.groupBy { it.getFirstValue('id') }
         return docsMap
+    }
+
+
+    /**
+     * get all of the contents (only direct/1st level deep) of the group (i.e. file directory)`
+     * @param parentFolder - map object with `id` prop to allow filtering of child objects to proper parent folder
+     * @param fq - typically/default type_s:File
+     * @param fl - typically only need name, dateModified....?
+     * @param maxRowsReturned - unlikely to be a concern, but including just in case
+     * @return - Map of child items to check for current or need updating
+     */
+    Map<String, SolrDocument> getSavedGroupChildItems(def parentFolder, String fq = "type_s:${FSFile.TYPE}", String fl = this.checkFileFields, int maxRowsReturned = SolrSystemClient.MAX_ROWS_RETURNED) {
+        SolrQuery sq = new SolrQuery('*:*')
+            sq.setRows(maxRowsReturned)
+            sq.setFilterQueries(fq)
+
+            // add filter queries to further limit
+            // NOTE Crawler objects have an intrinsic connection to a specific crawl "location" (i.e. machine/filesystem, or browser/email account,...)
+            String parentFilter = SolrSystemClient.FLD_PARENT_ID + ':' + parentFolder.id
+            sq.addFilterQuery(parentFilter)
+
+
+            sq.setFields(fl)
+
+            QueryResponse response = persistenceClient.query(sq)
+            SolrDocumentList docs = response.results
+            long numFound = response.results.numFound
+            if (docs.size() == maxRowsReturned) {
+                log.warn "getExistingFolders returned lots of rows (${docs.size()}) which equals our upper limit: ${maxRowsReturned}, this is almost certainly a problem.... ${sq}}"
+            } else if (numFound == 0) {
+                log.info "\t\tNo previous/existing solr docs found: $sq"
+            } else {
+                log.debug "\t\tGet existing solr folder docs map, size: ${docs.size()} -- Filters: ${sq.getFilterQueries()}"
+            }
+            Map<String, SolrDocument> docsMap = docs.groupBy { it.getFirstValue('id') }
+            return docsMap
     }
 
 

@@ -9,10 +9,13 @@ import java.util.regex.Pattern
  * and/or parsing (tika metadata and content) depending on regex patterns
  * for groups (folders) and items (files), both name and 'path'
  */
-solrUrl = "http://localhost:8983/solr/solr_system"
+solrUrl = "http://localhost:8983/solr/"
+solrDefaultCollection = 'solr_system'       // todo -- run tests to check this split of collection off solrurl
+//solrUrl = "http://localhost:8983/solr/solr_system"
+
 locationName = Inet4Address.localHost.getHostName()
 
-// can be overriden b
+// TODO - improve docs on what is overridded by SolrCrawlArgParser (e.g. wipeContent, solrUrl, localFolders,...)
 wipeContent = false
 userHome = System.getProperty("user.home")
 // helpful to build default crawl lists for personal crawling across variety of personal machines/os-es
@@ -55,9 +58,9 @@ dataSources {
             Work = "/work"          // i.e. c:/work
             IdeaProjects = "${userHome}/IdeaProjects"
             GoogleDriveLocal = "${userHome}/My Drive"
-            Windows = "c:/Windows"
-            ProgramFiles = "c:/Program Files"
-            ProgramFilesx86 = "c:/Program Files (x86)"
+//            Windows = "c:/Windows"
+//            ProgramFiles = "c:/Program Files"
+//            ProgramFilesx86 = "c:/Program Files (x86)"
 
         }
     }
@@ -69,7 +72,6 @@ solrIgnore = '.*shard\\d+_replica.*'          // don't dive into solr index fold
 folderIgnoreSystem = /RECYCLE.BIN|google-chrome|packages?|Partitions|pkgs?|snapshots?|System\b.*|te?mp|[\w_-]*trash|[._#~]*Trash.*/
 folderIgnoreUser = /\.gradle.?|\.m2|assets|build|classes|[._#~-]*cache.*|deleteme.*|engine|flatpack|git|github|google-chrome|heritrix.*ignore.*|never_index|node_modules|packages?|plugins?|repo|repository|skins?|skipme.*|svn|target|vscode/
 ignorePattern = Pattern.compile("($folderIgnoreSystem|$folderIgnoreUser)",  Pattern.CASE_INSENSITIVE)
-println "Ignore pattern: $ignorePattern"
 
 // note: all of the labels below are optional/customizable.
 namePatterns {

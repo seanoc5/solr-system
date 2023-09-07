@@ -33,15 +33,18 @@
   - content, ML, LLM, NLP
 
 ### Content qualitative analysis
-- text field
-  - all text, irrespective
+- \_text_ field
+  - all text _(with copy-field *)_,
+- body 
+  - unprocessed main content (ie html body. without tags stripped, or possibly tika export of xml/html formatted content)
 - content
   - filtered, de-boilerplated, more analyzed (the good stuff)
 - term analysis
   - shingles
-    - 2, 3, and 4 shingling?
+    - 2-5 shingles (?)
   - outliers (unusual)
   - term halos
+  - context tracking (tbd) -- add something like wordnet word-senses
 
 ### Folders
 
@@ -86,4 +89,19 @@
    - web (?)
 
 
-
+## Supporting collections
+- analysis
+  - (copy) interesting documents to this collection for more advanced analysis
+- vocabulary 
+  - (with specific content, or 'general' context)
+  - terms list, with word-senses where possible
+    - filed: already been filed in system, no further processing/tagging needed (for basic setup)
+    - known: seen, and recognized as needing 'filing' but pending actual processing.
+    - skip: seen and determined to be inconsequential in this context
+    - unknown
+- concepts
+  - taxonomy of concepts (and contexts?)
+    - opinionated selection of concepts and structure
+    - can be customized or adjusted as needed (based on stakeholder agreement)
+    - 
+- logs

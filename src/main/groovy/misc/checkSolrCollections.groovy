@@ -18,6 +18,7 @@ def collMap  = solrSystemClient.getCollections()
 log.info "Collections info map: $collMap "
 List<String> collections = collMap.collections
 
+// ----------------------- Solr_system -----------------------
 if (collections.contains(primaryCollection)){
     log.info "We seem to have default collection named: ${primaryCollection}, no need to create"
 } else {
@@ -27,6 +28,8 @@ if (collections.contains(primaryCollection)){
 def lukeresultsPrimary = solrSystemClient.getSchemaInformation(primaryCollection)
 log.info "Primary collection ($primaryCollection) schema/luke info: $lukeresultsPrimary"
 
+
+// ----------------------- system_analysis -----------------------
 if (collections.contains(Constants.ANALYSIS_COLL_NAME)){
     log.info "We seem to have ANALYSIS collection named: ${Constants.ANALYSIS_COLL_NAME}, no need to create"
 } else {

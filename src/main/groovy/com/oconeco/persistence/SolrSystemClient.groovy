@@ -101,19 +101,19 @@ class SolrSystemClient extends BaseClient {
 
 
     public void buildSolrClient(String baseSolrUrl) {
-        log.info "\t\tBuild solr client with baseSolrUrl: $baseSolrUrl"
-        solrClient = new Http2SolrClient.Builder(baseSolrUrl)
-// https://solr.apache.org/guide/solr/latest/deployment-guide/solrj.html#other-apis
-//            .withConnectionTimeout(10000)     // not working for some reason
-//            .withSocketTimeout(60000)
-                .build()
+        if (this.defaultCollection){
+            log.debug "\t\tBuild solr client with baseSolrUrl: $baseSolrUrl -- default collection(?):${this.defaultCollection}"
+         } else {
+            log.warn "\t\tBuild solr client with baseSolrUrl: $baseSolrUrl -- no default_collection given! Be careful all requests send a specific collection"
+        }
+        solrClient = new Http2SolrClient.Builder(baseSolrUrl).build()
+
         try {
-//            def pingResponse = solrClient.ping()
-            statusReponse = solrClient.ping('solr_system')
-            log.debug " \t\tBuilt Solr Client:  ${solrClient}"
+            statusReponse = solrClient.ping(defaultCollection)
+            log.info " \t\tBuilt Solr Client:  ${solrClient} -- ping response: $statusReponse"
 
         } catch (RemoteSolrException rse) {
-            log.warn "Exception: $rse"
+            log.warn "buildSolrClient() Exception (misconfigured url and defaultCollection??): $rse"
         }
 
         log.info "Created client: ${solrClient}"
@@ -201,14 +201,14 @@ class SolrSystemClient extends BaseClient {
  *
  * todo -- add logic to handle "complex" clear paths -- sym links etc....
  */
-    UpdateResponse deleteDocuments(String deleteQuery, int commitWithinMS = 500, boolean checkBeforeAfter = true) {
+    UpdateResponse deleteDocuments(String deleteQuery, int commitWithinMS = 500, boolean checkBeforeAfter = true, String collection = this.defaultCollection) {
         Long beforeCount
         if (checkBeforeAfter) {
             beforeCount = getDocumentCount(deleteQuery)
             log.info "\t\t$beforeCount count before query: $deleteQuery"
         }
         log.warn "DELETing solr docs: ${this.solrClient.baseURL} -- deleteQuery: $deleteQuery (commit within: $commitWithinMS)"
-        UpdateResponse ursp = solrClient.deleteByQuery(deleteQuery, commitWithinMS)
+        UpdateResponse ursp = solrClient.deleteByQuery(collection, deleteQuery, commitWithinMS)
         UpdateResponse ursp2 = solrClient.commit(true, true)
         int status = ursp.getStatus()
         if (status == 0) {
@@ -252,17 +252,17 @@ class SolrSystemClient extends BaseClient {
  * @param waitSearcher
  * @return
  */
-    def commitUpdates(boolean waitFlush = false, boolean waitSearcher = false) {
+    def commitUpdates(boolean waitFlush = false, boolean waitSearcher = false, String collection = this.defaultCollection) {
         log.debug "\t\t____explicit call to solr 'commit' (consider allowing autocommit settings to do this for you...)"
-        solrClient.commit(waitFlush, waitSearcher)
+        solrClient.commit(collection, waitFlush, waitSearcher)
     }
 
 
-    def saveModels(List<SolrInputDocument> solrInputDocuments, int commitWithinMS = 1000) {
+    def saveModels(List<SolrInputDocument> solrInputDocuments, int commitWithinMS = 1000, String collection = this.defaultCollection) {
         UpdateResponse resp
         if (solrInputDocuments) {
             try {
-                resp = solrClient.add(solrInputDocuments, commitWithinMS)
+                resp = solrClient.add(collection, solrInputDocuments, commitWithinMS)
                 if (resp.status == 0) {
                     log.debug "saveObjects add response: $resp"
                 } else {
@@ -303,39 +303,39 @@ class SolrSystemClient extends BaseClient {
     }
 
 
-/**
- * convenience method to get a count of documents in index
- * @param queryToCount (defaults to all docs)
- * @return
- */
-    def long getDocumentCount(String queryToCount = '*:*', String filterQuery = null) {
+    /**
+     * convenience method to get a count of documents in index
+     * @param queryToCount (defaults to all docs)
+     * @return
+     */
+    def long getDocumentCount(String queryToCount = '*:*', String filterQuery = null, String collection = this.defaultCollection) throws RemoteSolrException {
         SolrQuery sq = new SolrQuery(queryToCount)
         sq.setFields('')
         sq.setRows(0)
         if (filterQuery) {
             sq.addFilterQuery(filterQuery)
         }
-        QueryResponse resp = solrClient.query(sq)
+        QueryResponse resp = solrClient.query(collection, sq)
         long docCount = resp.getResults().numFound
         return docCount
     }
 
 
-    QueryResponse query(SolrQuery sq) {
+    QueryResponse query(SolrQuery sq, String collection = this.defaultCollection) {
         // todo -- add retry if timeout
-        QueryResponse resp = solrClient.query(sq)
+        QueryResponse resp = solrClient.query(collection, sq)
         return resp
     }
 
-    QueryResponse query(String query) {
+    QueryResponse query(String query, String collection = this.defaultCollection) {
         // todo -- add retry if timeout
-        SolrQuery sq = new SolrQuery(query)
+        SolrQuery sq = new SolrQuery(collection, query)
         QueryResponse resp = this.query(sq)
         return resp
     }
 
     def exportDocuments(SolrQuery solrQuery) {
-
+log.warn "TODO -- more code here"
     }
 
 
@@ -346,7 +346,7 @@ class SolrSystemClient extends BaseClient {
                 ", MIN_FILE_SIZE=" + MIN_FILE_SIZE +
                 ", MAX_CONTENT_SIZE=" + MAX_CONTENT_SIZE +
                 ", solrClient=" + solrClient +
-//                ", detector=" + detector +
+                ", defaultCollection=" + defaultCollection +
 //                ", parser=" + parser +
 //                ", handler=" + handler +
 //                ", tikaConfig=" + tikaConfig +
@@ -368,12 +368,12 @@ class SolrSystemClient extends BaseClient {
         return car
     }
 
-/**
- * convenience wrapper to check solr collection
- * @param collectionName
- * @param distributed
- * @return
- * @link https://solr.apache.org/guide/8_3/ping.html
+    /**
+     * convenience wrapper to check solr collection
+     * @param collectionName
+     * @param distributed
+     * @return
+     * @link https://solr.apache.org/guide/8_3/ping.html
  */
     SolrPingResponse ping(String collectionName = Constants.DEFAULT_COLL_NAME, boolean distributed = false) {
         SolrPing ping = new SolrPing()

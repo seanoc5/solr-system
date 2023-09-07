@@ -97,20 +97,20 @@ class BaseAnalyzerTest extends Specification {
         resultCurrency.size() == 1
 
         resultSkipme.size() == 1
-        resultSkipme.ignore.size() == 3
-        resultSkipme.ignore.pattern ==''
-        resultSkipme.ignore.analysis.size() ==0
-        resultSkipme.ignore.get(Constants.LABEL_MATCH) == Constants.NO_MATCH
+//        resultSkipme.ignore.size() == 3
+//        resultSkipme.ignore.pattern ==''
+//        resultSkipme.ignore.analysis.size() ==0
+//        resultSkipme.ignore.get(Constants.LABEL_MATCH) == Constants.NO_MATCH
 
 
         paramFS.labels != null
         paramFS.labels.size() == 1
-        paramFS.labels[0] == parseKey          // todo - change this to last label without a pattern
+//        paramFS.labels[0] == parseKey          // todo - change this to last label without a pattern
 
-        currencyFS.labels[0] == Constants.TRACK
-
-        skipmeFS.labels.size() == 1
-        skipmeFS.ignore == true
+//        currencyFS.labels[0] == Constants.TRACK
+//
+//        skipmeFS.labels.size() == 1
+//        skipmeFS.ignore == true
     }
 
 

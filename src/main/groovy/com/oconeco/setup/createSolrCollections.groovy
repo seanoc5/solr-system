@@ -20,8 +20,8 @@ Logger log = LogManager.getLogger(this.class.name);
 log.info "Starting script: ${this.class.name}..."
 
 ArrayList<String> collsNeeded = [
-        Constants.DEFAULT_COLL_NAME,
-        'system_analysis',
+        Constants.DEFAULT_COLL_NAME,    // solr_system: text_en_min, _text_, copy-fields *->_text_, request handlers: search and browse
+        'system_analysis',              // shingles, text_en_min, (path, content:en_min & shingles), , summary
         'system_vocabulary',
         'system_concepts',
         'system_xlogs',
@@ -55,7 +55,7 @@ FieldTypeDefinition fieldTypeDefinition = new FieldTypeDefinition();
 fieldTypeDefinition.setAttributes(fieldTypeAttributes);
 
 SchemaRequest.AddFieldType addFieldTypeRequest = new SchemaRequest.AddFieldType(fieldTypeDefinition);
-SchemaResponse.UpdateResponse addFieldTypeResponse = addFieldTypeRequest.process(solrClient)
+SchemaResponse.UpdateResponse addFieldTypeResponse = addFieldTypeRequest.process(client)
 
 
 // bad Bito AI suggestionm??
