@@ -1,14 +1,10 @@
 package com.oconeco.parsing
 
-import com.oconeco.helpers.Constants
-import com.oconeco.models.FSFile
-import com.oconeco.models.FSFolder
-import com.oconeco.models.SavableObject
+
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.core.Logger
 import org.apache.tika.Tika
 import org.apache.tika.config.TikaConfig
-import org.apache.tika.detect.Detector
 import org.apache.tika.io.TikaInputStream
 import org.apache.tika.metadata.Metadata
 import org.apache.tika.metadata.TikaCoreProperties
@@ -21,17 +17,26 @@ import org.apache.tika.parser.RecursiveParserWrapper
 import org.apache.tika.sax.BasicContentHandlerFactory
 import org.apache.tika.sax.BodyContentHandler
 import org.apache.tika.sax.RecursiveParserWrapperHandler
-import org.spockframework.compiler.model.ThenBlock
 import spock.lang.Specification
-
-import java.util.regex.Pattern
-
-import static org.apache.tika.metadata.Metadata.*
 
 class TikaTest extends Specification {
     Logger log = LogManager.getLogger(this.class.name);
     File srcFile = new File(getClass().getResource('/content/combinedTestContent.tgz').toURI())
-//    File srcFile = new File(getClass().getResource('/content/FutureTechPredictions.doc').toURI())
+    File docFile = new File(getClass().getResource('/content/FutureTechPredictions.doc').toURI())
+    File htmlFile = new File(getClass().getResource('/content/FutureTechPredictions.doc').toURI())
+
+    def "check if tika parses a webpage with newlines"(){
+        given:
+        InputStream input = new FileInputStream(new File(html));
+        ContentHandler textHandler = new BodyContentHandler();
+        Metadata metadata = new Metadata();
+        AutoDetectParser parser = new AutoDetectParser();
+        parser.parse(input, textHandler, metadata);
+        input.close();
+//        log.info("Title: " + metadata.get("title"));
+//        log.info("Author: " + metadata.get("Author"));
+//        log.info("content: " + textHandler.toString());
+    }
 
     def "tika should detect doc type"() {
         given:

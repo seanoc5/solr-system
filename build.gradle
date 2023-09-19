@@ -30,8 +30,7 @@ dependencies {
     // implementation, runtimeOnly, testImplementation, and testRuntimeOnly
 
     // https://mvnrepository.com/artifact/org.apache.solr/solr-solrj
-    implementation group: 'org.apache.solr', name: 'solr-solrj', version: '9.2.1'  // todo - upgrade to 9.3.x
-
+    implementation group: 'org.apache.solr', name: 'solr-solrj', version: '9.3.0'  // todo - upgrade to 9.3.x
     implementation "org.apache.tika:tika-core:2.8.0"
 
     // https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc
