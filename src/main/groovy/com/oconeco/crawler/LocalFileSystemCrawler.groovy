@@ -154,7 +154,12 @@ class LocalFileSystemCrawler {
                             log.debug "\t\tcrawl folder files (count: ${crawlResults.size()}) after comparing (without file sizes): $currentFolder"
                         }
 
-                        def folderSavedChildren = this.getSavedGroupChildItems(crawlName)
+                        Map<String, SolrDocument> folderSavedChildren = [:]
+                        if(currentFolder?.id) {
+                            folderSavedChildren = this.getSavedGroupChildItems(currentFolder)
+                        } else {
+                            log.debug "No parent folder found, assuming this is a 'fresh' crawl..."
+                        }
                         // todo -- consider refactoring to call FSFolder.doAnalysis(analyzer) and have it analyze itself, and its children....?
                         def folderAnalysis = analyzer.analyze(currentFolder)
                         List<SavableObject> analyzableChildren = currentFolder.gatherAnalyzableChildren()
@@ -375,9 +380,8 @@ class LocalFileSystemCrawler {
 
             // add filter queries to further limit
             // NOTE Crawler objects have an intrinsic connection to a specific crawl "location" (i.e. machine/filesystem, or browser/email account,...)
-            String parentFilter = SolrSystemClient.FLD_PARENT_ID + ':' + parentFolder.id
+            String parentFilter = SolrSystemClient.FLD_PARENT_ID + ":\"${parentFolder.id}\""
             sq.addFilterQuery(parentFilter)
-
 
             sq.setFields(fl)
 
