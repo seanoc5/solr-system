@@ -166,6 +166,7 @@ class SolrSystemClient extends BaseClient {
             CollectionAdminRequest.Create create = CollectionAdminRequest.createCollection(collectionName, numShards, replactionFactor);
 //        def request = new CollectionAdminRequest.create(collectionName, configName, numShards, replactionFactor);
             result = solrClient.request(create)
+            log.info "Create collection result: $result"
         } catch (RemoteSolrException rse) {
             log.error "Remote error: $rse"
         }
