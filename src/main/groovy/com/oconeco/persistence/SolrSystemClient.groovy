@@ -102,7 +102,7 @@ class SolrSystemClient extends BaseClient {
 
     public void buildSolrClient(String baseSolrUrl) {
         if (this.defaultCollection){
-            log.debug "\t\tBuild solr client with baseSolrUrl: $baseSolrUrl -- default collection(?):${this.defaultCollection}"
+            log.info "\t\tBuild solr client with baseSolrUrl: $baseSolrUrl -- default collection(?):${this.defaultCollection}"
          } else {
             log.warn "\t\tBuild solr client with baseSolrUrl: $baseSolrUrl -- no default_collection given! Be careful all requests send a specific collection"
         }
@@ -112,6 +112,10 @@ class SolrSystemClient extends BaseClient {
             statusReponse = solrClient.ping(defaultCollection)
             log.info " \t\tBuilt Solr Client:  ${solrClient} -- ping response: $statusReponse"
 
+        } catch (IOException rse) {
+            log.warn "ioexception() Exception (misconfigured url and defaultCollection??): $rse"
+        } catch (SolrServerException solrServerException) {
+            log.warn "solrServerException() Exception (misconfigured url and defaultCollection??): $solrServerException"
         } catch (RemoteSolrException rse) {
             log.warn "buildSolrClient() Exception (misconfigured url and defaultCollection??): $rse"
         }

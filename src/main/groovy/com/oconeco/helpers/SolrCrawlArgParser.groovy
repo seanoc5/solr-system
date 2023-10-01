@@ -80,9 +80,14 @@ class SolrCrawlArgParser {
         // -------------------------- Solr Server URL --------------------------
         String solrArg = options.solrUrl
         if (options.solrUrl) {
-            if (solrArg.endsWith('solr') || solrArg.endsWith('solr/')) {
+            if (solrArg.endsWith('solr')) {
 //                config.solrUrl = solrArg + '/' + Constants.DEFAULT_COLL_NAME
-//                log.info "\t\tUsing Solr url from Command line (overriding config file): ${options.solrUrl} (NOTE: added default app name:(${Constants.DEFAULT_COLL_NAME})"
+                config.solrUrl = solrArg
+                log.info "\t\tUsing Solr url from Command line (overriding config file): ${options.solrUrl} (NOTE: added default app name:(${Constants.DEFAULT_COLL_NAME})"
+            } else if(config.solrUrl.endsWtith('solr/')){
+                config.solrUrl = solrArg
+//                config.solrUrl = solrArg + Constants.DEFAULT_COLL_NAME
+
                 log.info "\t\tGood, we have a base solr url:($solrArg), this allows switching collections "
 //            } else if (solrArg.endsWith('solr/')) {
 //                config.solrUrl = solrArg + Constants.DEFAULT_COLL_NAME
